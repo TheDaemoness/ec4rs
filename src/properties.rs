@@ -1,5 +1,3 @@
-use patricia_tree::PatriciaMap;
-
 use crate::property::Property;
 
 /// A map of property names to property values.
@@ -9,7 +7,7 @@ use crate::property::Property;
 #[derive(Clone)]
 pub struct Properties {
 	keys: Vec<String>,
-	map: PatriciaMap<String>
+	map: Vec<(usize, String)>
 }
 
 impl Properties {
@@ -17,13 +15,19 @@ impl Properties {
 	pub fn new() -> Properties {
 		Properties {
 			keys: Vec::new(),
-			map: PatriciaMap::new()
+			map: Vec::new()
 		}
+	}
+
+	fn get_idxes(&self, key: &str) -> Result<usize, usize> {
+		self.map.as_slice().binary_search_by_key(&key, |(ki, _)| {
+				self.keys.get(*ki).unwrap().as_str()
+		})
 	}
 
 	/// Retrieve the value for the specified string key.
 	pub fn get(&self, key: impl AsRef<str>) -> Option<&str> {
-		self.map.get(key.as_ref()).map(|x| x.as_str())
+		self.get_idxes(key.as_ref()).ok().and_then(|idx| self.map.get(idx).map(|v| v.1.as_ref()))
 	}
 
 	/// Return the value for the specified property.
@@ -38,21 +42,53 @@ impl Properties {
 		})
 	}
 
-	/// Set the value for a specified string key.
-	pub fn set(&mut self, key: impl AsRef<str>, value: String) -> &mut Self {
-		let key_str = key.as_ref();
-		if self.map.insert(key_str, value).is_none() {
-			self.keys.push(key_str.to_owned())
-		}
-		self
+	fn get_at(&mut self, idx: usize) -> &mut String {
+		&mut self.map.get_mut(idx).unwrap().1
 	}
+
+	fn insert_at(&mut self, idx: usize, key: String, value: String) {
+		self.map.insert(idx, (self.keys.len(), value));
+		self.keys.push(key);
+	}
+
+	/// Set the value for a specified property name.
+	/// Returns the old property value.
+	pub fn insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Option<String> {
+		let key_str = key.as_ref();
+		match self.get_idxes(key_str) {
+			Ok(idx) => {
+				let mut retval = value.into();
+				std::mem::swap(self.get_at(idx), &mut retval);
+				Some(retval)
+			}
+			Err(idx) => {
+				self.insert_at(idx, key_str.to_owned(), value.into());
+				None
+			}
+		}
+	}
+
+	/// Set the value for a specified property name if it doesn't exist.
+	/// If the property already exists, returns a mutable reference to its value, wrap
+	pub fn try_insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
+		let key_str = key.as_ref();
+		#[allow(clippy::unit_arg)]
+		match self.get_idxes(key_str) {
+			Ok(idx)  => Err(self.get_at(idx)),
+			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into()))
+		}
+	}
+}
+
+impl Default for Properties {
+	fn default() -> Properties {Properties::new()}
 }
 
 impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 	fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
 		let mut result = Properties::new();
 		for (k, v) in iter {
-			result.set(k, v.into());
+			result.insert(k, v);
 		}
 		result
 	}
