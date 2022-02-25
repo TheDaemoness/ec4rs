@@ -1,3 +1,4 @@
+mod linereader;
 mod properties;
 pub mod property;
 #[cfg(test)]
