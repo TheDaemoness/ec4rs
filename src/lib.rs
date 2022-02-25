@@ -1,9 +1,13 @@
+#![doc = include_str!("../README.md")]
+#![allow(dead_code)]
+
 mod linereader;
 mod properties;
 pub mod property;
 #[cfg(test)]
 mod tests;
 
-pub const EC_VERSION: &'static str = "0.14.0";
+/// The semantic version of the EditorConfig spec this library complies with.
+pub const EC_VERSION: &str = "0.14.0";
 
 pub use properties::Properties;

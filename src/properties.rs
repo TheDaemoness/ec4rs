@@ -1,7 +1,10 @@
 use crate::property::Property;
 
 /// A map of property names to property values.
-/// When iterated over, returns key/value pairs in the order the keys were first seen.
+///
+/// It features O(log n) lookup and preserves insertion order,
+/// as well as convenience methods for type-safe access and parsing of values.
+///
 /// This structure is case-sensitive.
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone)]
@@ -11,7 +14,7 @@ pub struct Properties {
 }
 
 impl Properties {
-	/// Construct a new, empty Properties object.
+	/// Returns an empty [Properties] object.
 	pub fn new() -> Properties {
 		Properties {
 			keys: Vec::new(),
@@ -25,13 +28,15 @@ impl Properties {
 		})
 	}
 
-	/// Retrieve the value for the specified string key.
+	/// Returns the string value for the specified key.
 	pub fn get(&self, key: impl AsRef<str>) -> Option<&str> {
 		self.get_idxes(key.as_ref()).ok().and_then(|idx| self.map.get(idx).map(|v| v.1.as_ref()))
 	}
 
-	/// Return the value for the specified property.
-	pub fn property<T: Property>(&self) -> Option<Result<T::Output, &str>> {
+	/// Returns the parsed value for the specified [Property].
+	/// Returns `None` if there is no matching key-value pair in this map.
+	/// Returns `Some(Err)` if the key exists but has an unknown/invalid value.
+	pub fn property<T: Property>(&self) -> Option<Result<T::Value, &str>> {
 		self.get(T::key()).map(|v| T::parse_value(v).ok_or(v))
 	}
 
@@ -51,8 +56,8 @@ impl Properties {
 		self.keys.push(key);
 	}
 
-	/// Set the value for a specified property name.
-	/// Returns the old property value.
+	/// Sets the value for a specified key.
+	/// Returns the old value if present.
 	pub fn insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Option<String> {
 		let key_str = key.as_ref();
 		match self.get_idxes(key_str) {
@@ -68,8 +73,9 @@ impl Properties {
 		}
 	}
 
-	/// Set the value for a specified property name if it doesn't exist.
-	/// If the property already exists, returns a mutable reference to its value, wrap
+	/// Attempts to add a new key-value pair.
+	/// Returns `Ok(())` if the key was not already associated with a value.
+	/// Returns a mutable reference to the old value otherwise, and does not update the map.
 	pub fn try_insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
