@@ -57,6 +57,7 @@ macro_rules! property_enum {
 		#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 		#[repr(u8)]
 		#[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
+		#[allow(missing_docs)]
 		pub enum $prop_id {$($variant),+}
 		impl Property for $prop_id {
 			type Value = $prop_id;
