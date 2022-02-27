@@ -132,4 +132,27 @@ impl<R: io::Read> LineReader<R> {
 			}
 		}
 	}
+
+	/// Reads a section.
+	///
+	/// Expects the current line to be a section header.
+	/// Reads lines until the next section header or EOF is found.
+	pub fn read_section(&mut self) -> Result<(Section, bool), LineReadError> {
+		if let Ok(Line::Section(header)) = self.reparse() {
+			let mut section = Section::new(header);
+			loop {
+				match self.next_line() {
+					Err(LineReadError::Eof) => return Ok((section, false)),
+					Err(e)                  => return Err(e),
+					Ok(Line::Section(_))    => return Ok((section, true)),
+					Ok(Line::Nothing)       => (),
+					Ok(Line::Pair(k,v))     => {
+						section.insert(k,v);
+					}
+				}
+			}
+		} else {
+			Err(LineReadError::Invalid)
+		}
+	}
 }
