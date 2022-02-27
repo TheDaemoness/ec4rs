@@ -66,6 +66,6 @@ fn invalid() {
 		"  = nokey",
 	];
 	for line in lines {
-		assert!(matches!(parse_line(line).unwrap_err(), LineReadFail::Invalid))
+		assert!(matches!(parse_line(line).unwrap_err(), LineReadError::Invalid))
 	}
 }

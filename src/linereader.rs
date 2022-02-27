@@ -1,3 +1,5 @@
+use crate::section::Section;
+
 use std::io as io;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -11,13 +13,13 @@ pub enum Line<'a> {
 }
 
 #[derive(Debug)]
-pub enum LineReadFail {
+pub enum LineReadError {
 	Eof,
 	IoError(io::Error),
 	Invalid
 }
 
-type LineReadResult<'a> = Result<Line<'a>, LineReadFail>;
+type LineReadResult<'a> = Result<Line<'a>, LineReadError>;
 
 /// Identifies the line type and extracts relevant slices.
 /// Does not do any lowercasing or anything beyond basic validation.
@@ -33,7 +35,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			Ok(Line::Nothing)
 		} else if let Some(s) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
 			if s.is_empty() {
-				Err(LineReadFail::Invalid)
+				Err(LineReadError::Invalid)
 			} else {
 				Ok(Line::Section(s))
 			}
@@ -41,12 +43,12 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			let key = key_raw.trim_end();
 			let val = val_raw.trim_start();
 			if key.is_empty() || val.is_empty() {
-				Err(LineReadFail::Invalid)
+				Err(LineReadError::Invalid)
 			} else {
 				Ok(Line::Pair(key.trim_end(), val.trim_start()))
 			}
 		} else {
-			Err(LineReadFail::Invalid)
+			Err(LineReadError::Invalid)
 		}
 	}
 }
@@ -88,16 +90,45 @@ impl<R: io::Read> LineReader<R> {
 		parse_line(self.line())
 	}
 
-	/// Read and parse the next line from the stream.
-	pub fn next(&mut self) -> LineReadResult<'_> {
+	/// Reads and parse the next line from the stream.
+	pub fn next_line(&mut self) -> LineReadResult<'_> {
 		self.line.clear();
 		use std::io::BufRead;
 		match self.reader.read_line(&mut self.line) {
-			Err(e) => Err(LineReadFail::IoError(e)),
-			Ok(0) => Err(LineReadFail::Eof),
+			Err(e) => Err(LineReadError::IoError(e)),
+			Ok(0) => Err(LineReadError::Eof),
 			Ok(_) => {
 				self.ticker += 1;
 				self.reparse()
+			}
+		}
+	}
+
+	/// Reads the prelude.
+	///
+	/// Reads lines until the next section header or EOF is found.
+	/// Every [Line::Pair] line is considered invalid unless
+	/// the key is `root` and the value parses into a [`bool`].
+	///
+	/// Returns `Ok(true)` if a `root = true` line was found,
+	/// and returns `Ok(false)` otherwise if no errors occured.
+	pub fn read_prelude(&mut self) -> Result<bool, LineReadError> {
+		let mut is_root = false;
+		loop {
+			match self.next_line() {
+				Err(LineReadError::Eof) => return Ok(is_root),
+				Err(e)                  => return Err(e),
+				Ok(Line::Nothing)       => (),
+				Ok(Line::Section(_))    => return Ok(is_root),
+				Ok(Line::Pair(k, v))    => {
+					if "root".eq_ignore_ascii_case(k) {
+						if let Ok(b) = v.parse::<bool>() {
+							is_root = b;
+							continue
+						}
+					}
+					return Err(LineReadError::Invalid)
+				}
 			}
 		}
 	}
