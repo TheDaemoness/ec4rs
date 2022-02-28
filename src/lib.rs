@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![deny(missing_docs)]
 
+mod ecreader;
 mod linereader;
 mod properties;
 pub mod property;

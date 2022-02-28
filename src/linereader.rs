@@ -12,6 +12,12 @@ pub enum Line<'a> {
 	Pair(&'a str, &'a str),
 }
 
+#[derive(Clone, Copy)]
+pub enum MaybeLast<V> {
+	Last(V),
+	More(V)
+}
+
 #[derive(Debug)]
 pub enum LineReadError {
 	Eof,
@@ -56,19 +62,19 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 /// A struct for extracting valid INI-like lines from text,
 /// suitable for initial parsing of individual .editorconfig files.
 /// Does minimal validation and does not modify the input text in any way.
-pub struct LineReader<R: io::Read> {
+pub struct LineReader<R: io::BufRead> {
 	ticker: usize,
 	line: String,
-	reader: io::BufReader<R>
+	reader: R
 }
 
-impl<R: io::Read> LineReader<R> {
+impl<R: io::BufRead> LineReader<R> {
 	/// Constructs a new line reader.
 	pub fn new(r: R) -> LineReader<R> {
 		LineReader {
 			ticker: 0,
 			line: String::with_capacity(256),
-			reader: io::BufReader::new(r)
+			reader: r
 		}
 	}
 
@@ -110,16 +116,17 @@ impl<R: io::Read> LineReader<R> {
 	/// Every [Line::Pair] line is considered invalid unless
 	/// the key is `root` and the value parses into a [`bool`].
 	///
-	/// Returns `Ok(true)` if a `root = true` line was found,
-	/// and returns `Ok(false)` otherwise if no errors occured.
-	pub fn read_prelude(&mut self) -> Result<bool, LineReadError> {
+	/// Returns a pair of booleans in the Ok variant.
+	/// The first is true if and only if a `root = true` line was found.
+	/// The second is true if and only if EOF was NOT was reached while reading.
+	pub fn read_prelude(&mut self) -> Result<(bool, bool), LineReadError> {
 		let mut is_root = false;
 		loop {
 			match self.next_line() {
-				Err(LineReadError::Eof) => return Ok(is_root),
+				Err(LineReadError::Eof) => return Ok((is_root, false)),
 				Err(e)                  => return Err(e),
 				Ok(Line::Nothing)       => (),
-				Ok(Line::Section(_))    => return Ok(is_root),
+				Ok(Line::Section(_))    => return Ok((is_root, true)),
 				Ok(Line::Pair(k, v))    => {
 					if "root".eq_ignore_ascii_case(k) {
 						if let Ok(b) = v.parse::<bool>() {
@@ -137,6 +144,9 @@ impl<R: io::Read> LineReader<R> {
 	///
 	/// Expects the current line to be a section header.
 	/// Reads lines until the next section header or EOF is found.
+	///
+	/// The boolean that's returned with the [Section] is true
+	/// if and only if EOF was NOT reached while reading.
 	pub fn read_section(&mut self) -> Result<(Section, bool), LineReadError> {
 		if let Ok(Line::Section(header)) = self.reparse() {
 			let mut section = Section::new(header);
