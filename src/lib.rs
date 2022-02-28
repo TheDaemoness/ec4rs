@@ -14,6 +14,7 @@ mod tests;
 /// The semantic version of the EditorConfig spec this library complies with.
 pub const EC_VERSION: &str = "0.14.0";
 
+pub use ecreader::EcReader;
 pub use properties::Properties;
 pub use readerror::ReadError;
 pub use section::Section;
