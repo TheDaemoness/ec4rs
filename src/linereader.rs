@@ -1,4 +1,5 @@
 use crate::section::Section;
+use crate::ReadError;
 
 use std::io as io;
 
@@ -18,14 +19,8 @@ pub enum MaybeLast<V> {
 	More(V)
 }
 
-#[derive(Debug)]
-pub enum LineReadError {
-	Eof,
-	IoError(io::Error),
-	Invalid
-}
 
-type LineReadResult<'a> = Result<Line<'a>, LineReadError>;
+type LineReadResult<'a> = Result<Line<'a>, ReadError>;
 
 /// Identifies the line type and extracts relevant slices.
 /// Does not do any lowercasing or anything beyond basic validation.
@@ -41,7 +36,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			Ok(Line::Nothing)
 		} else if let Some(s) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
 			if s.is_empty() {
-				Err(LineReadError::Invalid)
+				Err(ReadError::InvalidLine)
 			} else {
 				Ok(Line::Section(s))
 			}
@@ -49,12 +44,12 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			let key = key_raw.trim_end();
 			let val = val_raw.trim_start();
 			if key.is_empty() || val.is_empty() {
-				Err(LineReadError::Invalid)
+				Err(ReadError::InvalidLine)
 			} else {
 				Ok(Line::Pair(key.trim_end(), val.trim_start()))
 			}
 		} else {
-			Err(LineReadError::Invalid)
+			Err(ReadError::InvalidLine)
 		}
 	}
 }
@@ -99,10 +94,9 @@ impl<R: io::BufRead> LineReader<R> {
 	/// Reads and parse the next line from the stream.
 	pub fn next_line(&mut self) -> LineReadResult<'_> {
 		self.line.clear();
-		use std::io::BufRead;
 		match self.reader.read_line(&mut self.line) {
-			Err(e) => Err(LineReadError::IoError(e)),
-			Ok(0) => Err(LineReadError::Eof),
+			Err(e) => Err(ReadError::Io(e)),
+			Ok(0) => Err(ReadError::Eof),
 			Ok(_) => {
 				self.ticker += 1;
 				self.reparse()
@@ -119,11 +113,11 @@ impl<R: io::BufRead> LineReader<R> {
 	/// Returns a pair of booleans in the Ok variant.
 	/// The first is true if and only if a `root = true` line was found.
 	/// The second is true if and only if EOF was NOT was reached while reading.
-	pub fn read_prelude(&mut self) -> Result<(bool, bool), LineReadError> {
+	pub fn read_prelude(&mut self) -> Result<(bool, bool), ReadError> {
 		let mut is_root = false;
 		loop {
 			match self.next_line() {
-				Err(LineReadError::Eof) => return Ok((is_root, false)),
+				Err(ReadError::Eof) => return Ok((is_root, false)),
 				Err(e)                  => return Err(e),
 				Ok(Line::Nothing)       => (),
 				Ok(Line::Section(_))    => return Ok((is_root, true)),
@@ -134,7 +128,7 @@ impl<R: io::BufRead> LineReader<R> {
 							continue
 						}
 					}
-					return Err(LineReadError::Invalid)
+					return Err(ReadError::InvalidLine)
 				}
 			}
 		}
@@ -147,12 +141,12 @@ impl<R: io::BufRead> LineReader<R> {
 	///
 	/// The boolean that's returned with the [Section] is true
 	/// if and only if EOF was NOT reached while reading.
-	pub fn read_section(&mut self) -> Result<(Section, bool), LineReadError> {
+	pub fn read_section(&mut self) -> Result<(Section, bool), ReadError> {
 		if let Ok(Line::Section(header)) = self.reparse() {
 			let mut section = Section::new(header);
 			loop {
 				match self.next_line() {
-					Err(LineReadError::Eof) => return Ok((section, false)),
+					Err(ReadError::Eof) => return Ok((section, false)),
 					Err(e)                  => return Err(e),
 					Ok(Line::Section(_))    => return Ok((section, true)),
 					Ok(Line::Nothing)       => (),
@@ -162,7 +156,7 @@ impl<R: io::BufRead> LineReader<R> {
 				}
 			}
 		} else {
-			Err(LineReadError::Invalid)
+			Err(ReadError::InvalidLine)
 		}
 	}
 }

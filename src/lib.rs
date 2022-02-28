@@ -6,6 +6,7 @@ mod ecreader;
 mod linereader;
 mod properties;
 pub mod property;
+mod readerror;
 mod section;
 #[cfg(test)]
 mod tests;
@@ -14,4 +15,5 @@ mod tests;
 pub const EC_VERSION: &str = "0.14.0";
 
 pub use properties::Properties;
+pub use readerror::ReadError;
 pub use section::Section;
