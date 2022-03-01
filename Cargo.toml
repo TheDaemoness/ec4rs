@@ -2,16 +2,19 @@
 
 [package]
 name = "ec4rs"
-description = "An editorconfig core library in pure safe Rust"
-license = "Apache-2.0"
+description = "EditorConfig For Rust"
+license = "apache-2.0"
 homepage = "https://github.com/TheDaemoness/ec4rs"
 repository = "https://github.com/TheDaemoness/ec4rs"
 readme = "README.md"
 keywords = ["editorconfig"]
-categories = ["command-line-utilities", "config", "parser-implementations"]
-
-version = "0.1.0"
+categories = ["config", "parser-implementations"]
 edition = "2021"
+
+authors = ["TheDaemoness"]
+exclude = [".editorconfig"]
+rust-version = "1.59" # std::iter::zip
+version = "0.1.0"
 
 [workspace]
 members = ["tools"]
