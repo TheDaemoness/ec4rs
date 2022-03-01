@@ -36,7 +36,7 @@ impl Properties {
 	/// Returns the parsed value for the specified [Property].
 	/// Returns `None` if there is no matching key-value pair in this map.
 	/// Returns `Some(Err)` if the key exists but has an unknown/invalid value.
-	pub fn property<T: Property>(&self) -> Option<Result<T::Value, &str>> {
+	pub fn property<T: Property>(&self) -> Option<Result<T, &str>> {
 		self.get(T::key()).map(|v| T::parse_value(v).ok_or(v))
 	}
 
