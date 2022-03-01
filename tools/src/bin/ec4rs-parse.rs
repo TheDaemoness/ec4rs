@@ -9,7 +9,7 @@ struct Args {
 	#[clap(default_value = ".editorconfig", short)]
 	filename: OsString,
 	/// Ignored by this implementation
-	#[clap(default_value = ec4rs::EC_VERSION, short = 'b')]
+	#[clap(default_value = ec4rs::version::STRING, short = 'b')]
 	ec_version: String,
 	/// Print test-friendly version information
 	#[clap(short, long)]
@@ -20,7 +20,7 @@ struct Args {
 fn main() {
 	let mut args = Args::parse();
 	if args.version {
-		println!("EditorConfig (ec4rs-parse {}) Version {}", env!("CARGO_PKG_VERSION"), ec4rs::EC_VERSION);
+		println!("EditorConfig (ec4rs-parse {}) Version {}", env!("CARGO_PKG_VERSION"), ec4rs::version::STRING);
 	} else {
 		eprintln!("NYI!");
 	}
