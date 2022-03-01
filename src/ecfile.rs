@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{EcReader, ReadError, Section};
+use crate::{EcReader, Properties, PropertiesSource, ReadError, Section};
 
 /// Convenience wrapper for an [EcReader] that reads files.
 pub struct EcFile {
@@ -34,11 +34,11 @@ impl Iterator for EcFile {
 
 impl std::iter::FusedIterator for EcFile {}
 
-impl crate::PropertiesSource for &mut EcFile {
+impl PropertiesSource for &mut EcFile {
 	/// Adds properties from the file's sections to the specified [Properties] map.
 	///
 	/// Ignores [EcFile::path] when determining applicability.
-	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
 		self.reader.apply_to(props, path)
 	}
 }
@@ -48,7 +48,7 @@ impl crate::PropertiesSource for &mut EcFile {
 /// All the contained files are open for reading and have not had any sections read.
 /// When iterated over, either by using it as an [Iterator]
 /// or by calling [EcFiles::iter],
-/// returns [EcFile]s in the order that they would apply to a [crate::Properties] map.
+/// returns [EcFile]s in the order that they would apply to a [Properties] map.
 pub struct EcFiles(Vec<EcFile>);
 
 impl EcFiles {
@@ -97,11 +97,11 @@ impl Iterator for EcFiles {
 
 impl std::iter::FusedIterator for EcFiles {}
 
-impl crate::PropertiesSource for EcFiles {
-	/// Adds properties from the files' sections to the specified [Properties] map.
+impl PropertiesSource for EcFiles {
+		/// Adds properties from the files' sections to the specified [Properties] map.
 	///
 	/// Ignores the files' paths when determining applicability.
-	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
 		let path = path.as_ref();
 		for EcFile { mut reader , ..} in self {
 			reader.apply_to(props, path)

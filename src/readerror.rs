@@ -1,4 +1,4 @@
-/// Possible errors that can occur while reading editorconfig files.
+/// Possible errors that can occur while reading EditorConfig files.
 #[derive(Debug)]
 pub enum ReadError {
 	/// End-of-file was reached.

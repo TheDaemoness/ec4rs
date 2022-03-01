@@ -1,7 +1,7 @@
 //! Type-safe key-value pair parsers.
 //!
-//! Includes the [crate::property::Property] trait
-//! as well as instances for common properties.
+//! Includes the [Property] trait
+//! as well as enums for common properties.
 
 /// A trait for types that represent properties.
 ///

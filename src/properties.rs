@@ -34,8 +34,10 @@ impl Properties {
 	}
 
 	/// Returns the parsed value for the specified [Property].
-	/// Returns `None` if there is no matching key-value pair in this map.
-	/// Returns `Some(Err)` if the key exists but has an unknown/invalid value.
+	///
+	/// If the key-value pair does not exist, returns `None`.
+	/// If the key-value pair exists but parsing fails, returns a reference to the string value
+	/// to allow the caller to handle unexpected values.
 	pub fn property<T: Property>(&self) -> Option<Result<T, &str>> {
 		self.get(T::key()).map(|v| T::parse_value(v).ok_or(v))
 	}
@@ -57,7 +59,8 @@ impl Properties {
 	}
 
 	/// Sets the value for a specified key.
-	/// Returns the old value if present.
+	///
+	/// If the key was already associated with a value, returns the old value.
 	pub fn insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Option<String> {
 		let key_str = key.as_ref();
 		match self.get_idxes(key_str) {
@@ -73,9 +76,9 @@ impl Properties {
 		}
 	}
 
-	/// Attempts to add a new key-value pair.
-	/// Returns `Ok(())` if the key was not already associated with a value.
-	/// Returns a mutable reference to the old value otherwise, and does not update the map.
+	/// Attempts to add a new key-value pair to the map.
+	///
+	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
 	pub fn try_insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
@@ -103,6 +106,6 @@ impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 /// A trait for types that can add properties to a map.
 pub trait PropertiesSource {
 	/// Adds key-value pairs to a [Properties]
-	/// if and only if this source applies to a file at the specified path.
+	/// if and only if they apply to a file at the specified path.
 	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>);
 }

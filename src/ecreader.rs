@@ -3,9 +3,9 @@ use crate::ReadError;
 use crate::Section;
 use crate::linereader::LineReader;
 
-/// A reader for an EditorConfig file.
+/// A parser for the text of an EditorConfig file.
 ///
-/// This struct reads a file (or any [std::io::BufRead])
+/// This struct wraps any [std::io::BufRead]
 /// and parses the prelude and zero or more sections from it.
 pub struct EcReader<R: io::BufRead> {
 	/// Incidates if a `root = true` line was found in the prelude.
@@ -15,9 +15,6 @@ pub struct EcReader<R: io::BufRead> {
 }
 
 impl<R: io::Read> EcReader<io::BufReader<R>> {
-	/// Constructs a new [EcReader], wrapping the provided source
-	/// in an [std::io::BufReader].
-	///
 	/// See [EcReader::new].
 	pub fn new_buffered(source: R) -> Result<EcReader<io::BufReader<R>>, ReadError> {
 		Self::new(io::BufReader::new(source))
@@ -35,7 +32,7 @@ impl<R: io::BufRead> EcReader<R> {
 		Ok(EcReader {is_root, reader, eof})
 	}
 
-	/// Returns `true` if and only if there is another section to read.
+	/// Returns `true` if there may be another section to read.
 	pub fn has_more(&self) -> bool {
 		self.eof
 	}
