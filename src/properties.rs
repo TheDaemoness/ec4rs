@@ -99,3 +99,10 @@ impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 		result
 	}
 }
+
+/// A trait for types that can add properties to a map.
+pub trait PropertiesSource {
+	/// Adds key-value pairs to a [Properties]
+	/// if and only if this source applies to a file at the specified path.
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>);
+}

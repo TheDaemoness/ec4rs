@@ -34,6 +34,15 @@ impl Iterator for EcFile {
 
 impl std::iter::FusedIterator for EcFile {}
 
+impl crate::PropertiesSource for &mut EcFile {
+	/// Adds properties from the file's sections to the specified [Properties] map.
+	///
+	/// Ignores [EcFile::path] when determining applicability.
+	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+		self.reader.apply_to(props, path)
+	}
+}
+
 /// A directory traverser for finding and opening EditorConfig files.
 ///
 /// All the contained files are open for reading and have not had any sections read.
@@ -87,3 +96,15 @@ impl Iterator for EcFiles {
 }
 
 impl std::iter::FusedIterator for EcFiles {}
+
+impl crate::PropertiesSource for EcFiles {
+	/// Adds properties from the files' sections to the specified [Properties] map.
+	///
+	/// Ignores the files' paths when determining applicability.
+	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+		let path = path.as_ref();
+		for EcFile { mut reader , ..} in self {
+			reader.apply_to(props, path)
+		}
+	}
+}

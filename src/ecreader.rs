@@ -70,4 +70,14 @@ impl<R: io::BufRead> Iterator for EcReader<R> {
 	}
 }
 
-impl <R: io::BufRead> std::iter::FusedIterator for EcReader<R> {}
+impl<R: io::BufRead> std::iter::FusedIterator for EcReader<R> {}
+
+
+impl<R: io::BufRead> crate::PropertiesSource for &mut EcReader<R> {
+	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+		let path = path.as_ref();
+		for section in self.flatten() {
+				section.apply_to(props, path)
+		}
+	}
+}

@@ -17,6 +17,6 @@ pub const EC_VERSION: &str = "0.14.0";
 
 pub use ecfile::{EcFile, EcFiles};
 pub use ecreader::EcReader;
-pub use properties::Properties;
+pub use properties::{Properties, PropertiesSource};
 pub use readerror::ReadError;
 pub use section::Section;

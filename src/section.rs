@@ -34,9 +34,10 @@ impl Section {
 		//TODO: Replace with glob matching.
 		path.as_ref().ends_with(&self.pattern)
 	}
-	/// Appends this section's properties to a [Properties]
-	/// if and only if this section applies to a file at the specified path.
-	pub fn apply_to(&self, path: impl AsRef<Path>, props: &mut Properties) {
+}
+
+impl crate::PropertiesSource for &Section {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
 		if self.applies_to(path) {
 			for (k, v) in self.props.iter() {
 				props.insert(k, v);
