@@ -3,7 +3,7 @@
 #![deny(missing_docs)]
 
 mod ecfile;
-mod ecreader;
+mod ecparser;
 mod linereader;
 mod properties;
 pub mod property;
@@ -14,7 +14,7 @@ pub mod version;
 mod tests;
 
 pub use ecfile::{EcFile, EcFiles};
-pub use ecreader::EcReader;
+pub use ecparser::EcParser;
 pub use properties::{Properties, PropertiesSource};
 pub use readerror::ReadError;
 pub use section::Section;

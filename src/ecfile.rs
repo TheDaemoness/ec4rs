@@ -1,23 +1,23 @@
 use std::path::{Path, PathBuf};
 
-use crate::{EcReader, Properties, PropertiesSource, ReadError, Section};
+use crate::{EcParser, Properties, PropertiesSource, ReadError, Section};
 
-/// Convenience wrapper for an [EcReader] that reads files.
+/// Convenience wrapper for an [EcParser] that reads files.
 pub struct EcFile {
 	/// The path to the open file.
 	pub path: PathBuf,
-	/// An [EcReader] that reads from the file.
-	pub reader: EcReader<std::io::BufReader<std::fs::File>>
+	/// An [EcParser] that reads from the file.
+	pub reader: EcParser<std::io::BufReader<std::fs::File>>
 }
 
 impl EcFile {
-	/// Opens a file for reading and uses it to construct an [EcReader].
+	/// Opens a file for reading and uses it to construct an [EcParser].
 	///
 	/// If the file cannot be opened, wraps the [std::io::Error] in a [ReadError].
 	pub fn open(path: impl Into<PathBuf>) -> Result<EcFile, ReadError> {
 		let path = path.into();
 		let file = std::fs::File::open(&path).map_err(ReadError::Io)?;
-		let reader = EcReader::new_buffered(file)?;
+		let reader = EcParser::new_buffered(file)?;
 		Ok(EcFile {
 			path,
 			reader
