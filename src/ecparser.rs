@@ -28,7 +28,24 @@ impl<R: io::BufRead> EcParser<R> {
 	/// otherwise returns `Err` with the error that occurred during reading.
 	pub fn new(buf_source: R) -> Result<EcParser<R>, ReadError> {
 		let mut reader = LineReader::new(buf_source);
-		let (is_root, eof) = reader.read_prelude()?;
+		let mut is_root = false;
+		let eof = loop {
+			use crate::linereader::Line;
+			match reader.next_line() {
+				Err(ReadError::Eof)  => break true,
+				Err(e)               => return Err(e),
+				Ok(Line::Nothing)    => (),
+				Ok(Line::Section(_)) => break false,
+				Ok(Line::Pair(k, v)) => {
+					if "root".eq_ignore_ascii_case(k) {
+						if let Ok(b) = v.parse::<bool>() {
+							is_root = b;
+						}
+					}
+					// Quietly ignore unknown properties.
+				}
+			}
+		};
 		Ok(EcParser {is_root, reader, eof})
 	}
 
@@ -40,15 +57,28 @@ impl<R: io::BufRead> EcParser<R> {
 	/// Reads a [Section] from the internal source.
 	pub fn read_section(&mut self) -> Result<Section, ReadError> {
 		if !self.eof {
-			match self.reader.read_section() {
-				Ok((section, eof)) => {
-					self.eof = eof;
-					Ok(section)
+			use crate::linereader::Line;
+			if let Ok(Line::Section(header)) = self.reader.reparse() {
+				let mut section = Section::new(header);
+				loop {
+					match self.reader.next_line() {
+						Err(e) => {
+							self.eof = true;
+							if let ReadError::Eof = e {
+								break Ok(section)
+							} else {
+								break Err(e)
+							}
+						}
+						Ok(Line::Section(_)) => break Ok(section),
+						Ok(Line::Nothing)    => (),
+						Ok(Line::Pair(k,v))  => {
+							section.insert(k,v);
+						}
+					}
 				}
-				Err(e) => {
-					self.eof = true;
-					Err(e)
-				}
+			} else {
+				Err(ReadError::InvalidLine)
 			}
 		} else {
 			Err(ReadError::Eof)

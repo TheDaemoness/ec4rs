@@ -1,4 +1,3 @@
-use crate::section::Section;
 use crate::ReadError;
 
 use std::io as io;
@@ -104,59 +103,4 @@ impl<R: io::BufRead> LineReader<R> {
 		}
 	}
 
-	/// Reads the prelude.
-	///
-	/// Reads lines until the next section header or EOF is found.
-	/// Every [Line::Pair] line is considered invalid unless
-	/// the key is `root` and the value parses into a [`bool`].
-	///
-	/// Returns a pair of booleans in the Ok variant.
-	/// The first is true if and only if a `root = true` line was found.
-	/// The second is true if and only if EOF was NOT was reached while reading.
-	pub fn read_prelude(&mut self) -> Result<(bool, bool), ReadError> {
-		let mut is_root = false;
-		loop {
-			match self.next_line() {
-				Err(ReadError::Eof) => return Ok((is_root, false)),
-				Err(e)                  => return Err(e),
-				Ok(Line::Nothing)       => (),
-				Ok(Line::Section(_))    => return Ok((is_root, true)),
-				Ok(Line::Pair(k, v))    => {
-					if "root".eq_ignore_ascii_case(k) {
-						if let Ok(b) = v.parse::<bool>() {
-							is_root = b;
-							continue
-						}
-					}
-					return Err(ReadError::InvalidLine)
-				}
-			}
-		}
-	}
-
-	/// Reads a section.
-	///
-	/// Expects the current line to be a section header.
-	/// Reads lines until the next section header or EOF is found.
-	///
-	/// The boolean that's returned with the [Section] is true
-	/// if and only if EOF was NOT reached while reading.
-	pub fn read_section(&mut self) -> Result<(Section, bool), ReadError> {
-		if let Ok(Line::Section(header)) = self.reparse() {
-			let mut section = Section::new(header);
-			loop {
-				match self.next_line() {
-					Err(ReadError::Eof) => return Ok((section, false)),
-					Err(e)                  => return Err(e),
-					Ok(Line::Section(_))    => return Ok((section, true)),
-					Ok(Line::Nothing)       => (),
-					Ok(Line::Pair(k,v))     => {
-						section.insert(k,v);
-					}
-				}
-			}
-		} else {
-			Err(ReadError::InvalidLine)
-		}
-	}
 }
