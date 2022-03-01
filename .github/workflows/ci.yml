@@ -21,23 +21,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Cache Cargo Directory
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo
+          key: cargo-dir-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Build
+      - name: Build Library
         uses: actions-rs/cargo@v1
         with:
           command: build
-      - name: Test
+      - name: Test Library
         uses: actions-rs/cargo@v1
         with:
           command: test
   clippy:
+    name: Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Cache Cargo Directory
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo
+          key: cargo-dir-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
       - name: Install Clippy
         uses: actions-rs/toolchain@v1
         with:
