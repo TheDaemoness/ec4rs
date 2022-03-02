@@ -27,14 +27,17 @@ pub use section::Section;
 ///
 /// This function does not canonicalize the path,
 /// but will join relative paths onto the current working directory.
-pub fn get_config_for(path: impl AsRef<std::path::Path>) -> Result<Properties, ReadError> {
-	use std::borrow::Cow;
-	let mut path = Cow::from(path.as_ref());
-	// TODO: It might be better for this to be the responsibility of EcFiles::open.
-	if path.is_relative() {
-		path = std::env::current_dir().map_err(ReadError::Io)?.join(&path).into()
-	}
+///
+/// EditorConfig files are assumed to be named `.editorconfig` unless an override
+/// is supplied as the second argument.
+pub fn get_config_for(
+	path: impl AsRef<std::path::Path>,
+	ec_name_override: Option<impl AsRef<std::ffi::OsStr>>
+) -> Result<Properties, ReadError> {
 	let mut retval = Properties::new();
-	EcFiles::open(&path)?.apply_to(&mut retval, &path);
+	match ec_name_override {
+		Some(name) => EcFiles::open_with_name(&path, name.as_ref()),
+		None       => EcFiles::open(&path)
+	}?.apply_to(&mut retval, &path);
 	Ok(retval)
 }

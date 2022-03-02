@@ -60,7 +60,12 @@ impl EcFiles {
 		path: impl AsRef<Path>,
 		ec_filename: &std::ffi::OsStr
 	) -> Result<EcFiles, ReadError> {
-		let mut path = path.as_ref();
+		use std::borrow::Cow;
+		let mut abs_path = Cow::from(path.as_ref());
+		if abs_path.is_relative() {
+			abs_path = std::env::current_dir().map_err(ReadError::Io)?.join(&path).into()
+		}
+		let mut path = abs_path.as_ref();
 		let mut vec = Vec::new();
 		while let Some(dir) = path.parent() {
 			if let Ok(reader) = EcFile::open(dir.join(ec_filename)) {
