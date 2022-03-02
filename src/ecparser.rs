@@ -1,5 +1,5 @@
 use std::io;
-use crate::ReadError;
+use crate::ParseError;
 use crate::Section;
 use crate::linereader::LineReader;
 
@@ -16,7 +16,7 @@ pub struct EcParser<R: io::BufRead> {
 
 impl<R: io::Read> EcParser<io::BufReader<R>> {
 	/// See [EcParser::new].
-	pub fn new_buffered(source: R) -> Result<EcParser<io::BufReader<R>>, ReadError> {
+	pub fn new_buffered(source: R) -> Result<EcParser<io::BufReader<R>>, ParseError> {
 		Self::new(io::BufReader::new(source))
 	}
 }
@@ -26,13 +26,13 @@ impl<R: io::BufRead> EcParser<R> {
 	///
 	/// Returns `Ok` if the prelude was read successfully,
 	/// otherwise returns `Err` with the error that occurred during reading.
-	pub fn new(buf_source: R) -> Result<EcParser<R>, ReadError> {
+	pub fn new(buf_source: R) -> Result<EcParser<R>, ParseError> {
 		let mut reader = LineReader::new(buf_source);
 		let mut is_root = false;
 		let eof = loop {
 			use crate::linereader::Line;
 			match reader.next_line() {
-				Err(ReadError::Eof)  => break true,
+				Err(ParseError::Eof)  => break true,
 				Err(e)               => return Err(e),
 				Ok(Line::Nothing)    => (),
 				Ok(Line::Section(_)) => break false,
@@ -54,8 +54,13 @@ impl<R: io::BufRead> EcParser<R> {
 		self.eof
 	}
 
+	/// Returns the current line number.
+	pub fn line_no(&self) -> usize {
+		self.reader.line_no()
+	}
+
 	/// Reads a [Section] from the internal source.
-	pub fn read_section(&mut self) -> Result<Section, ReadError> {
+	pub fn read_section(&mut self) -> Result<Section, ParseError> {
 		if !self.eof {
 			use crate::linereader::Line;
 			if let Ok(Line::Section(header)) = self.reader.reparse() {
@@ -64,7 +69,7 @@ impl<R: io::BufRead> EcParser<R> {
 					match self.reader.next_line() {
 						Err(e) => {
 							self.eof = true;
-							if let ReadError::Eof = e {
+							if let ParseError::Eof = e {
 								break Ok(section)
 							} else {
 								break Err(e)
@@ -78,20 +83,20 @@ impl<R: io::BufRead> EcParser<R> {
 					}
 				}
 			} else {
-				Err(ReadError::InvalidLine)
+				Err(ParseError::InvalidLine)
 			}
 		} else {
-			Err(ReadError::Eof)
+			Err(ParseError::Eof)
 		}
 	}
 }
 
 impl<R: io::BufRead> Iterator for EcParser<R> {
-	type Item = Result<Section, ReadError>;
+	type Item = Result<Section, ParseError>;
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.read_section() {
 			Ok(r)               => Some(Ok(r)),
-			Err(ReadError::Eof) => None,
+			Err(ParseError::Eof) => None,
 			Err(e)              => Some(Err(e))
 		}
 	}

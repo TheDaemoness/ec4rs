@@ -1,4 +1,4 @@
-use crate::ReadError;
+use crate::ParseError;
 
 use std::io as io;
 
@@ -19,7 +19,7 @@ pub enum MaybeLast<V> {
 }
 
 
-type LineReadResult<'a> = Result<Line<'a>, ReadError>;
+type LineReadResult<'a> = Result<Line<'a>, ParseError>;
 
 /// Identifies the line type and extracts relevant slices.
 /// Does not do any lowercasing or anything beyond basic validation.
@@ -35,7 +35,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			Ok(Line::Nothing)
 		} else if let Some(s) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
 			if s.is_empty() {
-				Err(ReadError::InvalidLine)
+				Err(ParseError::InvalidLine)
 			} else {
 				Ok(Line::Section(s))
 			}
@@ -43,12 +43,12 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 			let key = key_raw.trim_end();
 			let val = val_raw.trim_start();
 			if key.is_empty() || val.is_empty() {
-				Err(ReadError::InvalidLine)
+				Err(ParseError::InvalidLine)
 			} else {
 				Ok(Line::Pair(key.trim_end(), val.trim_start()))
 			}
 		} else {
-			Err(ReadError::InvalidLine)
+			Err(ParseError::InvalidLine)
 		}
 	}
 }
@@ -94,8 +94,8 @@ impl<R: io::BufRead> LineReader<R> {
 	pub fn next_line(&mut self) -> LineReadResult<'_> {
 		self.line.clear();
 		match self.reader.read_line(&mut self.line) {
-			Err(e) => Err(ReadError::Io(e)),
-			Ok(0) => Err(ReadError::Eof),
+			Err(e) => Err(ParseError::Io(e)),
+			Ok(0) => Err(ParseError::Eof),
 			Ok(_) => {
 				self.ticker += 1;
 				self.reparse()

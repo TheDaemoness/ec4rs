@@ -1,4 +1,4 @@
-use crate::ReadError;
+use crate::ParseError;
 use crate::linereader::*;
 
 fn test_lines(lines: &[(&'static str, Line<'static>)]) {
@@ -67,6 +67,6 @@ fn invalid() {
 		"  = nokey",
 	];
 	for line in lines {
-		assert!(matches!(parse_line(line).unwrap_err(), ReadError::InvalidLine))
+		assert!(matches!(parse_line(line).unwrap_err(), ParseError::InvalidLine))
 	}
 }

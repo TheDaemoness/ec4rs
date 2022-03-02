@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{EcParser, Properties, PropertiesSource, ReadError, Section};
+use crate::{EcParser, Properties, PropertiesSource, ParseError, Section, Error};
 
 /// Convenience wrapper for an [EcParser] that reads files.
 pub struct EcFile {
@@ -14,19 +14,28 @@ impl EcFile {
 	/// Opens a file for reading and uses it to construct an [EcParser].
 	///
 	/// If the file cannot be opened, wraps the [std::io::Error] in a [ReadError].
-	pub fn open(path: impl Into<PathBuf>) -> Result<EcFile, ReadError> {
+	pub fn open(path: impl Into<PathBuf>) -> Result<EcFile, ParseError> {
 		let path = path.into();
-		let file = std::fs::File::open(&path).map_err(ReadError::Io)?;
+		let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
 		let reader = EcParser::new_buffered(file)?;
 		Ok(EcFile {
 			path,
 			reader
 		})
 	}
+
+	/// Wrap a [ParseError] in an [Error::InFile].
+	pub fn add_error_conext(&self, error: ParseError) -> Error {
+		Error::InFile(
+			self.path.clone(),
+			self.reader.line_no(),
+			error
+		)
+	}
 }
 
 impl Iterator for EcFile {
-	type Item = Result<Section, ReadError>;
+	type Item = Result<Section, ParseError>;
 	fn next(&mut self) -> Option<Self::Item> {
 		self.reader.next()
 	}
@@ -59,11 +68,11 @@ impl EcFiles {
 	pub fn open_with_name(
 		path: impl AsRef<Path>,
 		ec_filename: &std::ffi::OsStr
-	) -> Result<EcFiles, ReadError> {
+	) -> Result<EcFiles, Error> {
 		use std::borrow::Cow;
 		let mut abs_path = Cow::from(path.as_ref());
 		if abs_path.is_relative() {
-			abs_path = std::env::current_dir().map_err(ReadError::Io)?.join(&path).into()
+			abs_path = std::env::current_dir().map_err(Error::InvalidCwd)?.join(&path).into()
 		}
 		let mut path = abs_path.as_ref();
 		let mut vec = Vec::new();
@@ -80,7 +89,7 @@ impl EcFiles {
 
 	/// Searches for EditorConfig files named `.editorconfig`
 	/// that might apply to a file at the specified path.
-	pub fn open(path: impl AsRef<Path>) -> Result<EcFiles, ReadError> {
+	pub fn open(path: impl AsRef<Path>) -> Result<EcFiles, Error> {
 		Self::open_with_name(path, ".editorconfig".as_ref())
 	}
 

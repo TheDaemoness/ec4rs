@@ -4,11 +4,11 @@
 
 mod ecfile;
 mod ecparser;
+mod error;
 mod fallback;
 mod linereader;
 mod properties;
 pub mod property;
-mod readerror;
 mod section;
 pub mod version;
 #[cfg(test)]
@@ -17,7 +17,7 @@ mod tests;
 pub use ecfile::{EcFile, EcFiles};
 pub use ecparser::EcParser;
 pub use properties::{Properties, PropertiesSource};
-pub use readerror::ReadError;
+pub use error::{Error, ParseError};
 pub use section::Section;
 
 /// Retrieve the [Properties] for a file at the given path.
@@ -34,7 +34,7 @@ pub use section::Section;
 pub fn get_config_for(
 	path: impl AsRef<std::path::Path>,
 	ec_name_override: Option<impl AsRef<std::ffi::OsStr>>
-) -> Result<Properties, ReadError> {
+) -> Result<Properties, Error> {
 	let mut retval = Properties::new();
 	match ec_name_override {
 		Some(name) => EcFiles::open_with_name(&path, name.as_ref()),
