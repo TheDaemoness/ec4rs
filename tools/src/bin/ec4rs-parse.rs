@@ -18,12 +18,14 @@ struct Args {
 }
 
 fn print_config(path: &std::path::Path, filename: Option<&OsString>) {
-	if let Ok(props) = ec4rs::get_config_for(path, filename) {
-		for (key, value) in props.iter() {
-			println!("{} = {}", key, value);
+	match ec4rs::get_config_for(path, filename) {
+		Ok(props) => {
+			for (key, value) in props.iter() {
+				println!("{}={}", key, value);
+			}
 		}
+		Err(e) => eprintln!("{e}")
 	}
-	// TODO: Error reporting!!!
 }
 
 fn main() {
