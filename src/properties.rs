@@ -115,5 +115,9 @@ impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 pub trait PropertiesSource {
 	/// Adds key-value pairs to a [Properties]
 	/// if and only if they apply to a file at the specified path.
-	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>);
+	fn apply_to(
+		self,
+		props: &mut Properties,
+		path: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error>;
 }

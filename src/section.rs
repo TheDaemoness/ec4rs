@@ -37,11 +37,19 @@ impl Section {
 }
 
 impl crate::PropertiesSource for &Section {
-	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
+	/// Adds this section's properties to a [Properties].
+	///
+	/// This implementation is infallible.
+	fn apply_to(
+		self,
+		props: &mut Properties,
+		path: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error> {
 		if self.applies_to(path) {
 			for (k, v) in self.props.iter() {
 				props.insert(k, v);
 			}
 		}
+		Ok(())
 	}
 }

@@ -25,7 +25,7 @@ impl EcFile {
 	}
 
 	/// Wrap a [ParseError] in an [Error::InFile].
-	pub fn add_error_conext(&self, error: ParseError) -> Error {
+	pub fn add_error_context(&self, error: ParseError) -> Error {
 		Error::InFile(
 			self.path.clone(),
 			self.reader.line_no(),
@@ -47,8 +47,17 @@ impl PropertiesSource for &mut EcFile {
 	/// Adds properties from the file's sections to the specified [Properties] map.
 	///
 	/// Ignores [EcFile::path] when determining applicability.
-	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
-		self.reader.apply_to(props, path)
+	/// Returns parse errors wrapped in an [Error::InFile].
+	fn apply_to(
+		self,
+		props: &mut Properties,
+		path: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error> {
+		match self.reader.apply_to(props, path) {
+			Ok(()) => Ok(()),
+			Err(crate::Error::Parse(e)) => Err(self.add_error_context(e)),
+			Err(e) => panic!("unexpected error variant {:?}", e)
+		}
 	}
 }
 
@@ -115,10 +124,15 @@ impl PropertiesSource for EcFiles {
 		/// Adds properties from the files' sections to the specified [Properties] map.
 	///
 	/// Ignores the files' paths when determining applicability.
-	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) {
+	fn apply_to(
+		self,
+		props: &mut Properties,
+		path: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error> {
 		let path = path.as_ref();
-		for EcFile { mut reader , ..} in self {
-			reader.apply_to(props, path)
+		for mut file in self {
+			file.apply_to(props, path)?;
 		}
+		Ok(())
 	}
 }

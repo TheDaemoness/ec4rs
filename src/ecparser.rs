@@ -95,9 +95,9 @@ impl<R: io::BufRead> Iterator for EcParser<R> {
 	type Item = Result<Section, ParseError>;
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.read_section() {
-			Ok(r)               => Some(Ok(r)),
+			Ok(r)                => Some(Ok(r)),
 			Err(ParseError::Eof) => None,
-			Err(e)              => Some(Err(e))
+			Err(e)               => Some(Err(e))
 		}
 	}
 }
@@ -106,10 +106,18 @@ impl<R: io::BufRead> std::iter::FusedIterator for EcParser<R> {}
 
 
 impl<R: io::BufRead> crate::PropertiesSource for &mut EcParser<R> {
-	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) {
+	fn apply_to(
+		self,
+		props: &mut crate::Properties,
+		path: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error> {
 		let path = path.as_ref();
-		for section in self.flatten() {
-				section.apply_to(props, path)
+		for section_result in self {
+			match section_result {
+				Ok(section) => {let _ = section.apply_to(props, path);}
+				Err(error)  => return Err(crate::Error::Parse(error))
+			}
 		}
+		Ok(())
 	}
 }
