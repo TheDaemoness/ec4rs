@@ -11,7 +11,6 @@ pub fn add_fallbacks(props: &mut crate::Properties) {
 		Some(Ok(prop::IndentSize::UseTabWidth)) => {
 			if let Some(value) = props.get(prop::TabWidth::key()) {
 				let value_owned = value.to_owned();
-				std::mem::drop(value);
 				let _ = props.insert(prop::IndentSize::key(), value_owned);
 			}
 		}
