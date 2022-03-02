@@ -4,6 +4,7 @@
 
 mod ecfile;
 mod ecparser;
+mod fallback;
 mod linereader;
 mod properties;
 pub mod property;
@@ -39,5 +40,6 @@ pub fn get_config_for(
 		Some(name) => EcFiles::open_with_name(&path, name.as_ref()),
 		None       => EcFiles::open(&path)
 	}?.apply_to(&mut retval, &path);
+	retval.use_fallbacks();
 	Ok(retval)
 }

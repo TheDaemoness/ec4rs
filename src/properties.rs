@@ -87,6 +87,14 @@ impl Properties {
 			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into()))
 		}
 	}
+
+	/// Add fallback values for certain common key-value pairs.
+	///
+	/// Used to obtain spec-compliant values for [crate::property::IndentSize]
+	/// and [crate::property::TabWidth].
+	pub fn use_fallbacks(&mut self) {
+		crate::fallback::add_fallbacks(self)
+	}
 }
 
 impl Default for Properties {
