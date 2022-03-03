@@ -35,11 +35,23 @@ impl Properties {
 
 	/// Returns the parsed value for the specified [Property].
 	///
-	/// If the key-value pair does not exist, returns `None`.
-	/// If the key-value pair exists but parsing fails, returns a reference to the string value
-	/// to allow the caller to handle unexpected values.
-	pub fn property<T: Property>(&self) -> Option<Result<T, &str>> {
-		self.get(T::key()).map(|v| T::parse_value(v).ok_or(v))
+	/// If parsing fails, returns a reference to the string value unless
+	/// the key is not associated with any value, the value is empty,
+	/// or the value is equal to "unset".
+	pub fn property<T: Property>(&self) -> Result<T, Option<&str>> {
+		if let Some(value) = self.get(T::key()) {
+			if value.is_empty() {
+				Err(None)
+			} else if let Some(parsed) = T::parse_value(value) {
+				Ok(parsed)
+			} else if value == "unset" {
+				Err(None)
+			} else {
+				Err(Some(value))
+			}
+		} else {
+			Err(None)
+		}
 	}
 
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
