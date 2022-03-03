@@ -86,8 +86,12 @@ impl EcFiles {
 		let mut path = abs_path.as_ref();
 		let mut vec = Vec::new();
 		while let Some(dir) = path.parent() {
-			if let Ok(reader) = EcFile::open(dir.join(ec_filename)) {
-				vec.push(reader)
+			if let Ok(file) = EcFile::open(dir.join(ec_filename)) {
+				let should_break = file.reader.is_root;
+				vec.push(file);
+				if should_break {
+					break;
+				}
 			}
 			// TODO: EcFile errors are suppressed here.
 			// Maybe store them in a field or something.
