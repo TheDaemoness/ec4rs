@@ -12,7 +12,7 @@ use splitter::Splitter;
 pub struct Glob(pub(self) Matcher, pub(self) Option<Box<Glob>>);
 
 impl Glob {
-	pub fn parse(glob: &str) -> Result<Glob, super::Error> {
+	pub fn parse(glob: &str) -> Result<Glob, super::ParseError> {
 		parser::parse(glob)
 	}
 

@@ -1,20 +1,20 @@
 use crate::Properties;
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// A section of an EditorConfig file.
 pub struct Section {
-	pattern: PathBuf, //TODO: Replace with a glob matcher.
+	pattern: crate::glob::Glob,
 	props: crate::Properties,
 }
 
 impl Section {
 	/// Constrcts a new Section that applies to files matching the specified pattern.
-	pub fn new(pattern: &str) -> Section {
-		Section {
-			pattern: pattern.into(),
+	pub fn new(pattern: &str) -> Result<Section, crate::ParseError> {
+		Ok(Section {
+			pattern: crate::glob::Glob::parse(pattern)?,
 			props: crate::Properties::new()
-		}
+		})
 	}
 	/// Returns an immutable reference to the internal [Properties] map.
 	pub fn props(&self) -> &Properties {
@@ -30,9 +30,9 @@ impl Section {
 		);
 	}
 	/// Returns true if and only if this section applies to a file at the specified path.
+	#[must_use]
 	pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {
-		//TODO: Replace with glob matching.
-		path.as_ref().ends_with(&self.pattern)
+		self.pattern.matches(path.as_ref())
 	}
 }
 

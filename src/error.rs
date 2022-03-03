@@ -6,7 +6,9 @@ pub enum ParseError {
 	/// An IO read failure occurred.
 	Io(std::io::Error),
 	/// An invalid line was read.
-	InvalidLine
+	InvalidLine,
+	/// The glob pattern in a section header is invalid.
+	InvalidPattern
 }
 
 impl std::fmt::Display for ParseError {
@@ -15,7 +17,8 @@ impl std::fmt::Display for ParseError {
 		match self {
 			Eof   => write!(f, "end of data"),
 			Io(e) => write!(f, "io failure: {}", e),
-			InvalidLine => write!(f, "invalid line")
+			InvalidLine => write!(f, "invalid line"),
+			InvalidPattern => write!(f, "invalid pattern")
 		}
 	}
 }

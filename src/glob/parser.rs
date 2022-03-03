@@ -1,6 +1,6 @@
 use super::{Glob, Matcher};
 
-pub fn parse(glob: &str) -> Result<Glob, crate::Error> {
+pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 	let mut retval = Glob(Matcher::Sep, None);
 	let mut chars = glob.chars().peekable();
 	while let Some(c) = chars.next() {
