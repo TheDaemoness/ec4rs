@@ -1,14 +1,6 @@
-use super::Glob;
+use super::{Glob, Splitter};
 
 use std::collections::BTreeSet;
-
-// TODO: Non-recursive implementation of this algorithm.
-
-// The spec requires an implementation to support section headers up to 1024 chars.
-// The smallest repeatable sequence of chars that will result in recursion is 2:
-// `*` followed by a non-special character.
-// Therefore a recursion depth of 512 should be enough for the worst-case scenario.
-const MAX_RECURSE_DEPTH: usize = 512;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Matcher {
@@ -23,18 +15,19 @@ pub enum Matcher {
 
 fn try_match<'a, 'b>(
 	glob: &'a Glob,
-	splitter: super::Splitter<'b>,
+	splitter: Splitter<'b>,
 	stack: &mut Vec<RestorePoint<'a, 'b>>
-) -> Option<super::Splitter<'b>> {
+) -> Option<Splitter<'b>> {
 	use Matcher::*;
 	let Glob(matcher, _) = glob;
 	Some(match matcher {
 		Sep => splitter.match_sep()?,
 		AnyChar => splitter.match_any(false)?,
 		AnySeq(sep) => {
-			let s = splitter.match_any(*sep)?;
-			stack.push(RestorePoint{glob, splitter: s.clone(), /*idx: 0*/});
-			s
+			if let Some(splitter) = splitter.clone().match_any(*sep) {
+				stack.push(RestorePoint{glob, splitter, /*idx: 0*/});
+			}
+			splitter
 		},
 		Suffix(s) => splitter.match_suffix(s.as_str())?,
 		_ => return None //TODO: Other patterns.
@@ -43,8 +36,8 @@ fn try_match<'a, 'b>(
 
 pub fn matches<'a, 'b>(
 	mut glob: &'a Glob,
-	mut splitter: super::Splitter<'b>
-) -> Option<super::Splitter<'b>> {
+	mut splitter: Splitter<'b>
+) -> Option<Splitter<'b>> {
 	let mut stack = Vec::<RestorePoint<'a, 'b>>::new();
 	/*let mut idx = 0usize;*/
 	loop {
@@ -63,8 +56,8 @@ pub fn matches<'a, 'b>(
 	}
 }
 
-pub struct RestorePoint<'a, 'b> {
+struct RestorePoint<'a, 'b> {
 	glob: &'a Glob,
-	splitter: super::Splitter<'b>,
+	splitter: Splitter<'b>,
 	/*idx: usize*/
 }
