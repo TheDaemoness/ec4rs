@@ -6,6 +6,7 @@ mod ecfile;
 mod ecparser;
 mod error;
 mod fallback;
+mod glob;
 mod linereader;
 mod properties;
 pub mod property;
