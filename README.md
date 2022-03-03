@@ -1,13 +1,18 @@
-_This project is in active developent
-and is not yet fit for purpose._
-
 # ec4rs: EditorConfig For Rust
 [![CI](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml)
 
-An std-only editorconfig library in pure safe Rust.
+An `std`-only EditorConfig library in pure safe Rust.
 
 Name idea shamelessly stolen from [ec4j](https://github.com/ec4j/ec4j).
 
-This project includes:
-* A library for parsing EditorConfig files.
-* An optional binary for testing the above library's compliance.
+_Status note:
+This project is incomplete, but is in active development.
+It implements a subset of EditorConfig
+that should work in most real-world cases.
+Its API may change somewhat prior to the 1.0.0 release._
+
+Current limitations:
+* Only one version of EditorConfig is supported.
+* Only `?`, `\`, `*`, and `**` are supported in glob patterns.
+* Error handling is inflexible.
+* There is no type for storing entire parsed config files in memory.
