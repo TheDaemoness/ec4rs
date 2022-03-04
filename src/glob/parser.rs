@@ -5,6 +5,7 @@ type Chars<'a> = std::iter::Peekable<std::str::Chars<'a>>;
 pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 	let mut retval = Glob(vec![Matcher::Sep]);
 	let mut chars = glob.chars().peekable();
+	let mut stack = super::alt::AltStack::new();
 	while let Some(c) = chars.next() {
 		match c {
 			'\\' => {
@@ -28,16 +29,26 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 						std::cmp::max(a, b)
 					));
 				} else {
-					// TODO: Alternation.
-					retval.append_char('{');
+					stack.push(retval);
+					retval = Glob(vec![]);
 				}
 			}
 			',' => {
-				// Going to need this in the future.
-				retval.append_char(',');
+				if let Some(rejected) = stack.add_alt(retval) {
+					retval = rejected;
+					retval.append_char(',');
+				} else {
+					retval = Glob(vec![]);
+				}
+			}
+			'}' => {
+				retval = stack.add_alt_and_pop(retval);
 			}
 			_ => retval.append_char(c)
 		}
+	}
+	while !stack.is_empty() {
+		retval = stack.add_alt_and_pop(retval);
 	}
 	Ok(retval)
 }

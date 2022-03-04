@@ -1,3 +1,4 @@
+mod alt;
 mod globtype;
 mod matcher;
 mod parser;

@@ -1,3 +1,7 @@
+// TODO: Alternation currently uses a recursive algorithm.
+// This should be replaced with something that saves state in a Vec.
+// A rewrite to allow more-unified backtracking is probably in order.
+
 use super::{Glob, Splitter};
 
 use std::collections::BTreeSet;
@@ -17,7 +21,8 @@ pub enum Matcher {
 fn try_match<'a, 'b>(
 	glob: &'a[Matcher],
 	mut splitter: Splitter<'b>,
-	stack: &mut Vec<RestorePoint<'a, 'b>>
+	idx: usize,
+	stack: &mut Vec<RestorePoint<'a, 'b>>,
 ) -> Option<Splitter<'b>> {
 	use Matcher::*;
 	let matcher = if let Some(m) = glob.last() {
@@ -30,7 +35,7 @@ fn try_match<'a, 'b>(
 		AnyChar => splitter.match_any(false)?,
 		AnySeq(sep) => {
 			if let Some(splitter) = splitter.clone().match_any(*sep) {
-				stack.push(RestorePoint{glob, splitter, /*idx: 0*/});
+				stack.push(RestorePoint{glob, splitter, idx: 0});
 			}
 			splitter
 		},
@@ -64,7 +69,16 @@ fn try_match<'a, 'b>(
 			}
 			splitter
 		}
-		_ => return None //TODO: Alternation.
+		Any(options) => {
+			for (mut idx, option) in options.iter().skip(idx).enumerate() {
+				if let Some(splitter_new) = matches(option, splitter.clone()) {
+					idx += 1;
+					stack.push(RestorePoint{glob, splitter, idx});
+					return Some(splitter_new)
+				}
+			}
+			return None
+		}
 	})
 }
 
@@ -74,9 +88,9 @@ pub fn matches<'a, 'b>(
 ) -> Option<Splitter<'b>> {
 	let mut glob = glob.0.as_slice();
 	let mut stack = Vec::<RestorePoint<'a, 'b>>::new();
-	/*let mut idx = 0usize;*/
+	let mut idx = 0usize;
 	loop {
-		if let Some(splitter_new) = try_match(glob, splitter, &mut stack) {
+		if let Some(splitter_new) = try_match(glob, splitter, idx, &mut stack) {
 			splitter = splitter_new;
 			if let Some((_, next)) = glob.split_last() {
 				glob = next
@@ -84,7 +98,7 @@ pub fn matches<'a, 'b>(
 				break Some(splitter)
 			}
 		} else if let Some(restore) = stack.pop() {
-			RestorePoint{glob, splitter/*, idx*/} = restore;
+			RestorePoint{glob, splitter, idx} = restore;
 		} else {
 			break None;
 		}
@@ -94,5 +108,5 @@ pub fn matches<'a, 'b>(
 struct RestorePoint<'a, 'b> {
 	glob: &'a[Matcher],
 	splitter: Splitter<'b>,
-	/*idx: usize*/
+	idx: usize
 }

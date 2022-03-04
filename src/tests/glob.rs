@@ -25,6 +25,11 @@ fn basic() {
 		["/foo", "./foo", "/bar/foo"],
 		["foo", "/foobar", "/barfoo"]
 	);
+	test(
+		"foo,bar",
+		["/foo,bar"],
+		["/foo", "/bar"]
+	);
 }
 
 #[test]
@@ -133,5 +138,22 @@ fn numrange() {
 		"{2..-1}",
 		["/2", "/1", "/0", "/-1"],
 		["/-2"]
+	);
+}
+
+#[test]
+fn alt() {
+	test(
+		"{foo,bar}",
+		["/foo", "/bar"],
+		["/foo,bar", "/foobar"]
+	);
+}
+#[test]
+fn alt_nested() {
+	test(
+		"{a{bc,cd},e}",
+		["/abc","/acd", "/e"],
+		["/cd"]
 	);
 }
