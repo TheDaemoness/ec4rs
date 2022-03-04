@@ -17,7 +17,7 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 				retval = append(retval, Matcher::AnySeq(matches!(chars.peek(), Some('*'))))
 			}
 			'[' => {
-				(retval, chars) = parse_charset(retval, chars)?;
+				(retval, chars) = parse_charclass(retval, chars)?;
 			}
 			// TODO: {
 			_ => {
@@ -28,7 +28,7 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 	Ok(retval)
 }
 
-fn parse_charset(
+fn parse_charclass(
 	mut glob: Glob, mut chars: std::iter::Peekable<std::str::Chars<'_>>
 ) -> Result<(Glob, std::iter::Peekable<std::str::Chars<'_>>), crate::ParseError> {
 	let restore = chars.clone();
@@ -37,13 +37,13 @@ fn parse_charset(
 		chars.next();
 	}
 	let mut found_end: bool = false;
-	let mut charset = std::collections::BTreeSet::<char>::new();
+	let mut charclass = std::collections::BTreeSet::<char>::new();
 	let mut prev_char: Option<char> = None;
 	while let Some(c) = chars.next() {
 		match c {
 			'\\' => {
 				if let Some(c) = chars.next() {
-					charset.insert(c);
+					charclass.insert(c);
 					prev_char = Some(c);
 				}
 			},
@@ -72,24 +72,24 @@ fn parse_charset(
 						}
 						if let Some(nc) = nc {
 							for c in pc..=nc {
-								charset.insert(c);
+								charclass.insert(c);
 							}
 							prev_char = Some(nc);
 							continue;
 						}
 					}
 				}
-				charset.insert('-');
+				charclass.insert('-');
 				prev_char = Some('-');
 			}
 			_ => {
-				charset.insert(c);
+				charclass.insert(c);
 				prev_char = Some(c);
 			}
 		}
 	}
 	if found_end {
-		match charset.len() {
+		match charclass.len() {
 			0 => {
 				if invert {
 					glob = append(glob, Matcher::AnyChar);
@@ -98,10 +98,10 @@ fn parse_charset(
 				}
 			}
 			1 => {
-				glob = append_char(glob, *charset.iter().next().unwrap());
+				glob = append_char(glob, *charclass.iter().next().unwrap());
 			}
 			_ => {
-				glob = append(glob, Matcher::CharSet(charset, !invert))
+				glob = append(glob, Matcher::CharClass(charclass, !invert))
 			}
 		}
 	} else {

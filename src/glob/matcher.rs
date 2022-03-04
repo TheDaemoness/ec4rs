@@ -9,7 +9,7 @@ pub enum Matcher {
 	AnySeq(bool),
 	Suffix(String),
 	// TODO: Grapheme clusters?
-	CharSet(BTreeSet<char>, bool),
+	CharClass(BTreeSet<char>, bool),
 	Range(isize, isize),
 	Any(Vec<super::Glob>)
 }
@@ -31,7 +31,7 @@ fn try_match<'a, 'b>(
 			splitter
 		},
 		Suffix(s) => splitter.match_suffix(s.as_str())?,
-		CharSet(cs, should_have) => {
+		CharClass(cs, should_have) => {
 			let (splitter, c) = splitter.next_char()?;
 			if cs.contains(&c) != *should_have {
 				return None;

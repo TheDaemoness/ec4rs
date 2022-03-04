@@ -13,6 +13,6 @@ Its API may change somewhat prior to the 1.0.0 release._
 
 Current limitations:
 * Only one version of EditorConfig is supported.
-* Only `?`, `\`, `*`, and `**` are supported in glob patterns.
+* `{}` are not supported in glob patterns.
 * Error handling is inflexible.
 * There is no type for storing entire parsed config files in memory.
