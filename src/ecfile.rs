@@ -13,7 +13,7 @@ pub struct EcFile {
 impl EcFile {
 	/// Opens a file for reading and uses it to construct an [EcParser].
 	///
-	/// If the file cannot be opened, wraps the [std::io::Error] in a [ReadError].
+	/// If the file cannot be opened, wraps the [std::io::Error] in a [ParseError].
 	pub fn open(path: impl Into<PathBuf>) -> Result<EcFile, ParseError> {
 		let path = path.into();
 		let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
@@ -72,13 +72,23 @@ pub struct EcFiles(Vec<EcFile>);
 impl EcFiles {
 	/// Searches for EditorConfig files that might apply to a file at the specified path.
 	///
-	/// This associated function requires you to specify what EditorConfig
-	/// files are named. To use the default of `.editorconfig`, use [EcFiles::open] instead.
-	pub fn open_with_name(
+	/// This function does not canonicalize the path,
+	/// but will join relative paths onto the current working directory.
+	///
+	/// EditorConfig files are assumed to be named `.editorconfig`
+	/// unless an override is supplied as the second argument.
+	pub fn open(
 		path: impl AsRef<Path>,
-		ec_filename: &std::ffi::OsStr
+		filename_override: Option<impl AsRef<std::ffi::OsStr>>
 	) -> Result<EcFiles, Error> {
 		use std::borrow::Cow;
+		let filename = if let Some(ref fno) = filename_override {
+			let oss = fno.as_ref();
+			let path: &std::path::Path = oss.as_ref();
+			path.file_name()
+		} else {
+			None
+		}.unwrap_or_else(|| ".editorconfig".as_ref());
 		let mut abs_path = Cow::from(path.as_ref());
 		if abs_path.is_relative() {
 			abs_path = std::env::current_dir().map_err(Error::InvalidCwd)?.join(&path).into()
@@ -86,7 +96,7 @@ impl EcFiles {
 		let mut path = abs_path.as_ref();
 		let mut vec = Vec::new();
 		while let Some(dir) = path.parent() {
-			if let Ok(file) = EcFile::open(dir.join(ec_filename)) {
+			if let Ok(file) = EcFile::open(dir.join(filename)) {
 				let should_break = file.reader.is_root;
 				vec.push(file);
 				if should_break {
@@ -98,12 +108,6 @@ impl EcFiles {
 			path = dir;
 		}
 		Ok(EcFiles(vec))
-	}
-
-	/// Searches for EditorConfig files named `.editorconfig`
-	/// that might apply to a file at the specified path.
-	pub fn open(path: impl AsRef<Path>) -> Result<EcFiles, Error> {
-		Self::open_with_name(path, ".editorconfig".as_ref())
 	}
 
 	/// Returns an iterator over the contained [EcFiles].
