@@ -3,7 +3,7 @@ pub fn test<'a,'b>(
 	valid:   impl IntoIterator<Item = &'a str>,
 	invalid: impl IntoIterator<Item = &'b str>) {
 	use crate::glob::{parse, matches};
-	let glob = parse(pattern).unwrap();
+	let glob = parse(pattern, crate::options::GlobStyle::default());
 	for path in valid {
 		assert!(
 			matches(&glob, path.as_ref()),
@@ -52,6 +52,15 @@ fn star() {
 		"bar*.foo",
 		["/bar.foo", "/barab.foo", "/baz/bara.foo", "/bar.foo"],
 		["/bar/.foo"]
+	);
+}
+
+#[test]
+fn doublestar() {
+	test(
+		"**.foo",
+		["/a.foo", "/a/a.foo", "/a/b.foo", "/.foo"],
+		[]
 	);
 }
 

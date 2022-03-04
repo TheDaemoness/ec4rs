@@ -1,57 +1,10 @@
+mod test_compliant;
+
+pub use test_compliant::parse as test_compliant;
+
 use super::{Glob, Matcher};
 
 type Chars<'a> = std::iter::Peekable<std::str::Chars<'a>>;
-
-pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
-	let mut retval = Glob(vec![Matcher::Sep]);
-	let mut chars = glob.chars().peekable();
-	let mut stack = super::alt::AltStack::new();
-	while let Some(c) = chars.next() {
-		match c {
-			'\\' => {
-				if let Some(escaped) = chars.next() {
-					retval.append_char(escaped);
-				}
-			}
-			'?' => retval.append(Matcher::AnyChar),
-			'*' => retval.append(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
-			'[' => {
-				(retval, chars) = parse_charclass(retval, chars)?;
-			}
-			'{' => {
-				if let Some((a, b, chars_new)) = parse_range(chars.clone()) {
-					chars = chars_new;
-					retval.append(Matcher::Range(
-						// Reading the spec strictly,
-						// a compliant implementation must handle cases where
-						// the left integer is greater than the right integer.
-						std::cmp::min(a, b),
-						std::cmp::max(a, b)
-					));
-				} else {
-					stack.push(retval);
-					retval = Glob(vec![]);
-				}
-			}
-			',' => {
-				if let Some(rejected) = stack.add_alt(retval) {
-					retval = rejected;
-					retval.append_char(',');
-				} else {
-					retval = Glob(vec![]);
-				}
-			}
-			'}' => {
-				retval = stack.add_alt_and_pop(retval);
-			}
-			_ => retval.append_char(c)
-		}
-	}
-	while !stack.is_empty() {
-		retval = stack.add_alt_and_pop(retval);
-	}
-	Ok(retval)
-}
 
 fn parse_range(mut chars: Chars<'_>) -> Option<(isize, isize, Chars<'_>)> {
 	let parse_int = |chars: &mut Chars<'_>, breaker: char| {
@@ -77,7 +30,7 @@ fn parse_range(mut chars: Chars<'_>) -> Option<(isize, isize, Chars<'_>)> {
 
 fn parse_charclass(
 	mut glob: Glob, mut chars: std::iter::Peekable<std::str::Chars<'_>>
-) -> Result<(Glob, std::iter::Peekable<std::str::Chars<'_>>), crate::ParseError> {
+) -> (Glob, std::iter::Peekable<std::str::Chars<'_>>) {
 	let restore = chars.clone();
 	let invert = matches!(chars.peek(), Some('!'));
 	if invert {
@@ -122,7 +75,7 @@ fn parse_charclass(
 							if pc == '/' || nc == '/' {
 								chars = restore;
 								glob.append_char('/');
-								return Ok((glob, chars));
+								return (glob, chars);
 							}
 							for c in pc..=nc {
 								if c != '/' {
@@ -153,7 +106,8 @@ fn parse_charclass(
 					if invert {
 						glob.append(Matcher::AnyChar);
 					} else {
-						return Err(crate::ParseError::EmptyCharClass);
+						glob.append_char('[');
+						glob.append_char(']');
 					}
 				}
 				1 => glob.append_char(*charclass.iter().next().unwrap()),
@@ -164,5 +118,5 @@ fn parse_charclass(
 		chars = restore;
 		glob.append_char('[');
 	}
-	Ok((glob, chars))
+	(glob, chars)
 }

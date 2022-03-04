@@ -10,11 +10,11 @@ pub struct Section {
 
 impl Section {
 	/// Constrcts a new Section that applies to files matching the specified pattern.
-	pub fn new(pattern: &str) -> Result<Section, crate::ParseError> {
-		Ok(Section {
-			pattern: crate::glob::parse(pattern)?,
+	pub fn new(pattern: &str, style: crate::options::GlobStyle) -> Section {
+		Section {
+			pattern: crate::glob::parse(pattern, style),
 			props: crate::Properties::new()
-		})
+		}
 	}
 	/// Returns an immutable reference to the internal [Properties] map.
 	pub fn props(&self) -> &Properties {
