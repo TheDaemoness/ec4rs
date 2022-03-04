@@ -38,7 +38,7 @@ impl<R: io::BufRead> EcParser<R> {
 				Ok(Line::Section(_)) => break false,
 				Ok(Line::Pair(k, v)) => {
 					if "root".eq_ignore_ascii_case(k) {
-						if let Ok(b) = v.parse::<bool>() {
+						if let Ok(b) = v.to_ascii_lowercase().parse::<bool>() {
 							is_root = b;
 						}
 					}

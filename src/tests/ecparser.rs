@@ -32,6 +32,7 @@ fn empty() {
 fn prelude() {
 	validate("root = true\nroot = false", false, expect![]);
 	validate("root = true", true, expect![]);
+	validate("Root = True", true, expect![]);
 	validate("# hello world", false, expect![]);
 }
 
