@@ -12,7 +12,7 @@ impl Section {
 	/// Constrcts a new Section that applies to files matching the specified pattern.
 	pub fn new(pattern: &str) -> Result<Section, crate::ParseError> {
 		Ok(Section {
-			pattern: crate::glob::Glob::parse(pattern)?,
+			pattern: crate::glob::parse(pattern)?,
 			props: crate::Properties::new()
 		})
 	}
@@ -32,7 +32,7 @@ impl Section {
 	/// Returns true if and only if this section applies to a file at the specified path.
 	#[must_use]
 	pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {
-		self.pattern.matches(path.as_ref())
+		crate::glob::matches(&self.pattern, path.as_ref())
 	}
 }
 

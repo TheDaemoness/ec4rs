@@ -9,22 +9,18 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 		match c {
 			'\\' => {
 				if let Some(escaped) = chars.next() {
-					retval = append_char(retval, escaped);
+					retval.append_char(escaped);
 				}
 			}
-			'?' => {
-				retval = append(retval, Matcher::AnyChar)
-			}
-			'*' => {
-				retval = append(retval, Matcher::AnySeq(matches!(chars.peek(), Some('*'))))
-			}
+			'?' => retval.append(Matcher::AnyChar),
+			'*' => retval.append(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
 			'[' => {
 				(retval, chars) = parse_charclass(retval, chars)?;
 			}
 			'{' => {
 				if let Some((a, b, chars_new)) = parse_range(chars.clone()) {
 					chars = chars_new;
-					retval = append(retval, Matcher::Range(
+					retval.append(Matcher::Range(
 						// Reading the spec strictly,
 						// a compliant implementation must handle cases where
 						// the left integer is greater than the right integer.
@@ -33,16 +29,14 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 					));
 				} else {
 					// TODO: Alternation.
-					retval = append_char(retval, '{');
+					retval.append_char('{');
 				}
 			}
 			',' => {
 				// Going to need this in the future.
-				retval = append_char(retval, ',');
+				retval.append_char(',');
 			}
-			_ => {
-				retval = append_char(retval, c);
-			}
+			_ => retval.append_char(c)
 		}
 	}
 	Ok(retval)
@@ -134,49 +128,16 @@ fn parse_charclass(
 		match charclass.len() {
 			0 => {
 				if invert {
-					glob = append(glob, Matcher::AnyChar);
+					glob.append(Matcher::AnyChar);
 				} else {
 					return Err(crate::ParseError::EmptyCharClass);
 				}
 			}
-			1 => {
-				glob = append_char(glob, *charclass.iter().next().unwrap());
-			}
-			_ => {
-				glob = append(glob, Matcher::CharClass(charclass, !invert))
-			}
+			1 => glob.append_char(*charclass.iter().next().unwrap()),
+			_ => glob.append(Matcher::CharClass(charclass, !invert))
 		}
 	} else {
 		chars = restore;
 	}
 	Ok((glob, chars))
-}
-
-fn append_char(mut glob: Glob, c: char) -> Glob {
-	if c == '/' {
-		append(glob, Matcher::Sep)
-	} else if let Some(Matcher::Suffix(suffix)) = &mut glob.0.last_mut() {
-		suffix.push(c);
-		glob
-	} else {
-		append(glob, Matcher::Suffix(c.to_string()))
-	}
-}
-
-fn append(mut glob: Glob, matcher: Matcher) -> Glob {
-	match &matcher {
-		Matcher::Sep => {
-			if let Some(Matcher::Sep) = &glob.0.last() {
-				return glob
-			}
-		},
-		Matcher::AnySeq(true) => {
-			if let Some(Matcher::AnySeq(true)) = &glob.0.last() {
-				return glob
-			}
-		}
-		_ => ()
-	}
-	glob.0.push(matcher);
-	glob
 }
