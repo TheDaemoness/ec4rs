@@ -80,6 +80,16 @@ fn charclass_basic() {
 }
 
 #[test]
+fn charclass_slash() {
+	// See the brackets_slash_inside tests.
+	test(
+		"a[b/]c",
+		["/a[b/]c"],
+		["/abc", "/a/c"]
+	);
+}
+
+#[test]
 fn charclass_range() {
 	test(
 		"[a-c]",
@@ -143,6 +153,16 @@ fn numrange() {
 
 #[test]
 fn alt() {
+	test(
+		"{foo}",
+		["/foo"],
+		["/{foo}"]
+	);
+	test(
+		"{foo}.bar",
+		["/foo.bar"],
+		["/foo", "/{foo}.bar"]
+	);
 	test(
 		"{foo,bar}",
 		["/foo", "/bar"],

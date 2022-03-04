@@ -118,10 +118,16 @@ fn parse_charclass(
 							}
 						}
 						if let Some(nc) = nc {
-							for c in pc..=nc {
-								charclass.insert(c);
+							// TODO: Cleanup.
+							if pc != '/' && nc != '/' {
+								for c in pc..=nc {
+									if c != '/' {
+										charclass.insert(c);
+									}
+								}
 							}
 							prev_char = Some(nc);
+							}
 							continue;
 						}
 					}
@@ -136,19 +142,25 @@ fn parse_charclass(
 		}
 	}
 	if found_end {
-		match charclass.len() {
-			0 => {
-				if invert {
-					glob.append(Matcher::AnyChar);
-				} else {
-					return Err(crate::ParseError::EmptyCharClass);
+		if charclass.contains(&'/') {
+			chars = restore;
+			glob.append_char('[');
+		} else {
+			match charclass.len() {
+				0 => {
+					if invert {
+						glob.append(Matcher::AnyChar);
+					} else {
+						return Err(crate::ParseError::EmptyCharClass);
+					}
 				}
+				1 => glob.append_char(*charclass.iter().next().unwrap()),
+				_ => glob.append(Matcher::CharClass(charclass, !invert))
 			}
-			1 => glob.append_char(*charclass.iter().next().unwrap()),
-			_ => glob.append(Matcher::CharClass(charclass, !invert))
 		}
 	} else {
 		chars = restore;
+		glob.append_char('[');
 	}
 	Ok((glob, chars))
 }
