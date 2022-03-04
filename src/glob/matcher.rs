@@ -91,6 +91,7 @@ pub fn matches<'a, 'b>(
 	let mut idx = 0usize;
 	loop {
 		if let Some(splitter_new) = try_match(glob, splitter, idx, &mut stack) {
+			idx = 0;
 			splitter = splitter_new;
 			if let Some((_, next)) = glob.split_last() {
 				glob = next

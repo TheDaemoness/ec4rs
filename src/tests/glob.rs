@@ -154,19 +154,24 @@ fn numrange() {
 #[test]
 fn alt() {
 	test(
+		"{}",
+		["/{}"],
+		["/"]
+	);
+	test(
 		"{foo}",
-		["/foo"],
-		["/{foo}"]
+		["/{foo}"],
+		["/foo"]
 	);
 	test(
 		"{foo}.bar",
-		["/foo.bar"],
-		["/foo", "/{foo}.bar"]
+		["/{foo}.bar"],
+		["/foo", "/foo.bar"]
 	);
 	test(
 		"{foo,bar}",
 		["/foo", "/bar"],
-		["/foo,bar", "/foobar"]
+		["/foo,bar", "/foobar", "/{foo,bar}"]
 	);
 }
 #[test]

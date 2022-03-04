@@ -119,15 +119,17 @@ fn parse_charclass(
 						}
 						if let Some(nc) = nc {
 							// TODO: Cleanup.
-							if pc != '/' && nc != '/' {
-								for c in pc..=nc {
-									if c != '/' {
-										charclass.insert(c);
-									}
+							if pc == '/' || nc == '/' {
+								chars = restore;
+								glob.append_char('/');
+								return Ok((glob, chars));
+							}
+							for c in pc..=nc {
+								if c != '/' {
+									charclass.insert(c);
 								}
 							}
 							prev_char = Some(nc);
-							}
 							continue;
 						}
 					}

@@ -56,15 +56,23 @@ impl AltBuilder {
 		}
 	}
 	pub fn add(&mut self, glob: Glob) {
-		self.options.push(glob);
+		if !glob.0.is_empty() {
+			self.options.push(glob);
+		}
 	}
 	pub fn build(mut self) -> Glob {
 		match self.options.len() {
-			0 => self.glob,
+			0 => {
+				self.glob.append_char('{');
+				self.glob.append_char('}');
+				self.glob
+			}
 			1 => {
+				self.glob.append_char('{');
 				for matcher in self.options.pop().unwrap().0 {
 					self.glob.append(matcher);
 				}
+				self.glob.append_char('}');
 				self.glob
 			}
 			_ => {
