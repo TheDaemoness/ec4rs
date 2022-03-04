@@ -161,7 +161,7 @@ fn numrange() {
 }
 
 #[test]
-fn alt() {
+fn alt_basic() {
 	test(
 		"{}",
 		["/{}"],
@@ -183,6 +183,26 @@ fn alt() {
 		["/foo,bar", "/foobar", "/{foo,bar}"]
 	);
 }
+
+#[test]
+fn alt_unmatched() {
+	test(
+		"{.foo",
+		["/{.foo"],
+		["/.foo", "/{.foo}"]
+	);
+	test(
+		"{},foo}",
+		["/{},foo}"],
+		["/.foo", "/.foo}"]
+	);
+	test(
+		"{,a,{b}",
+		["/{,a,{b}"],
+		[]
+	);
+}
+
 #[test]
 fn alt_nested() {
 	test(

@@ -7,8 +7,6 @@ impl Glob {
 	pub fn append_char(&mut self, c: char) {
 		if c == '/' {
 			self.append(Matcher::Sep)
-		} else if let Some(Matcher::Suffix(suffix)) = &mut self.0.last_mut() {
-			suffix.push(c);
 		} else {
 			self.append(Matcher::Suffix(c.to_string()))
 		}
@@ -21,6 +19,12 @@ impl Glob {
 					return
 				}
 			},
+			Matcher::Suffix(suffix) => {
+				if let Some(Matcher::Suffix(ref mut prefix)) = self.0.last_mut() {
+					prefix.push_str(suffix);
+					return
+				}
+			}
 			Matcher::AnySeq(true) => {
 				if let Some(Matcher::AnySeq(true)) = &self.0.last() {
 					return
@@ -29,5 +33,11 @@ impl Glob {
 			_ => ()
 		}
 		self.0.push(matcher);
+	}
+
+	pub fn append_glob(&mut self, glob: Glob) {
+		for matcher in glob.0 {
+			self.append(matcher)
+		}
 	}
 }

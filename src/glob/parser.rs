@@ -29,7 +29,9 @@ fn parse_range(mut chars: Chars<'_>) -> Option<(isize, isize, Chars<'_>)> {
 }
 
 fn parse_charclass(
-	mut glob: Glob, mut chars: std::iter::Peekable<std::str::Chars<'_>>
+	mut glob: Glob,
+	mut chars: std::iter::Peekable<std::str::Chars<'_>>,
+	ban_slash: bool
 ) -> (Glob, std::iter::Peekable<std::str::Chars<'_>>) {
 	let restore = chars.clone();
 	let invert = matches!(chars.peek(), Some('!'));
@@ -71,16 +73,8 @@ fn parse_charclass(
 							}
 						}
 						if let Some(nc) = nc {
-							// TODO: Cleanup.
-							if pc == '/' || nc == '/' {
-								chars = restore;
-								glob.append_char('/');
-								return (glob, chars);
-							}
 							for c in pc..=nc {
-								if c != '/' {
-									charclass.insert(c);
-								}
+								charclass.insert(c);
 							}
 							prev_char = Some(nc);
 							continue;
@@ -97,22 +91,20 @@ fn parse_charclass(
 		}
 	}
 	if found_end {
-		if charclass.contains(&'/') {
-			chars = restore;
-			glob.append_char('[');
-		} else {
-			match charclass.len() {
-				0 => {
-					if invert {
-						glob.append(Matcher::AnyChar);
-					} else {
-						glob.append_char('[');
-						glob.append_char(']');
-					}
+		if ban_slash {
+			charclass.remove(&'/');
+		}
+		match charclass.len() {
+			0 => {
+				if invert {
+					glob.append(Matcher::AnyChar);
+				} else {
+					glob.append_char('[');
+					glob.append_char(']');
 				}
-				1 => glob.append_char(*charclass.iter().next().unwrap()),
-				_ => glob.append(Matcher::CharClass(charclass, !invert))
 			}
+			1 => glob.append_char(*charclass.iter().next().unwrap()),
+			_ => glob.append(Matcher::CharClass(charclass, !invert))
 		}
 	} else {
 		chars = restore;
