@@ -14,7 +14,7 @@ edition = "2021"
 authors = ["TheDaemoness"]
 exclude = [".editorconfig"]
 rust-version = "1.59" # std::iter::zip
-version = "0.2.0"
+version = "0.3.0"
 
 [workspace]
 members = ["tools"]
