@@ -76,6 +76,19 @@ impl<'a> Splitter<'a> {
 		}
 	}
 
+	pub fn next_char(mut self) -> Option<(Splitter<'a>, char)> {
+		// TODO: Don't recheck the part for valid unicode each time.
+		if let Ok(s) = std::str::from_utf8(self.part) {
+			if let Some((idx, c)) = s.char_indices().next_back() {
+				self.part = s.split_at(idx).0.as_bytes();
+				return Some((self, c))
+			} else {
+				return Some((self.next()?, '/'))
+			}
+		}
+		None
+	}
+
 	pub fn match_sep(self) -> Option<Splitter<'a>> {
 		if self.part.is_empty() {
 			self.next()

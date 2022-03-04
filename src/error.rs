@@ -7,8 +7,8 @@ pub enum ParseError {
 	Io(std::io::Error),
 	/// An invalid line was read.
 	InvalidLine,
-	/// The glob pattern in a section header is invalid.
-	InvalidPattern
+	/// An empty character class was found in a section header.
+	EmptyCharClass
 }
 
 impl std::fmt::Display for ParseError {
@@ -18,7 +18,7 @@ impl std::fmt::Display for ParseError {
 			Eof   => write!(f, "end of data"),
 			Io(e) => write!(f, "io failure: {}", e),
 			InvalidLine => write!(f, "invalid line"),
-			InvalidPattern => write!(f, "invalid pattern")
+			EmptyCharClass => write!(f, "empty char class")
 		}
 	}
 }
