@@ -4,10 +4,16 @@ pub fn test<'a,'b>(
 	invalid: impl IntoIterator<Item = &'b str>) {
 	let glob = crate::glob::Glob::parse(pattern).unwrap();
 	for path in valid {
-		assert!(glob.matches(path.as_ref()), "`{path}` didn't match pattern `{pattern}`")
+		assert!(
+			glob.matches(path.as_ref()),
+			"`{path}` didn't match pattern `{pattern}`; chain: {:?}", glob
+		)
 	}
 	for path in invalid {
-		assert!(!glob.matches(path.as_ref()), "`{path}` wrongly matched pattern `{pattern}`")
+		assert!(
+			!glob.matches(path.as_ref()),
+			"`{path}` wrongly matched pattern `{pattern}`; chain {:?}", glob
+		)
 	}
 }
 
@@ -107,5 +113,24 @@ fn charclass_escape() {
 		"[[-\\]^]",
 		["/[", "/]", "/^"],
 		[]
+	);
+}
+
+#[test]
+fn numrange() {
+	test(
+		"{8..11}",
+		["/8", "/9", "/10", "/11"],
+		["/12", "/1", "/01"]
+	);
+	test(
+		"{-3..-1}",
+		["/-3", "/-2", "/-1"],
+		["/0", "/1"]
+	);
+	test(
+		"{2..-1}",
+		["/2", "/1", "/0", "/-1"],
+		["/-2"]
 	);
 }

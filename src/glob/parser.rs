@@ -1,5 +1,7 @@
 use super::{Glob, Matcher};
 
+type Chars<'a> = std::iter::Peekable<std::str::Chars<'a>>;
+
 pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 	let mut retval = Glob(Matcher::Sep, None);
 	let mut chars = glob.chars().peekable();
@@ -19,13 +21,53 @@ pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
 			'[' => {
 				(retval, chars) = parse_charclass(retval, chars)?;
 			}
-			// TODO: {
+			'{' => {
+				if let Some((a, b, chars_new)) = parse_range(chars.clone()) {
+					chars = chars_new;
+					retval = append(retval, Matcher::Range(
+						// Reading the spec strictly,
+						// a compliant implementation must handle cases where
+						// the left integer is greater than the right integer.
+						std::cmp::min(a, b),
+						std::cmp::max(a, b)
+					));
+				} else {
+					// TODO: Alternation.
+					retval = append_char(retval, '{');
+				}
+			}
+			',' => {
+				// Going to need this in the future.
+				retval = append_char(retval, ',');
+			}
 			_ => {
 				retval = append_char(retval, c);
 			}
 		}
 	}
 	Ok(retval)
+}
+
+fn parse_range(mut chars: Chars<'_>) -> Option<(isize, isize, Chars<'_>)> {
+	let parse_int = |chars: &mut Chars<'_>, breaker: char| {
+		let mut num: String = chars.next().filter(|c| c.is_numeric() || *c == '-')?.to_string();
+		loop {
+			let c = chars.next()?;
+			if c.is_numeric() {
+				num.push(c)
+			} else if c == breaker {
+				break Some(num);
+			} else {
+				return None;
+			}
+		}
+	};
+	let num_a = parse_int(&mut chars, '.')?;
+	if !matches!(chars.next(), Some('.')) {
+		return None;
+	}
+	let num_b: String = parse_int(&mut chars, '}')?;
+	Some((num_a.parse().ok()?, num_b.parse().ok()?, chars))
 }
 
 fn parse_charclass(
@@ -81,7 +123,7 @@ fn parse_charclass(
 				}
 				charclass.insert('-');
 				prev_char = Some('-');
-			}
+			},
 			_ => {
 				charclass.insert(c);
 				prev_char = Some(c);

@@ -16,7 +16,7 @@ pub enum Matcher {
 
 fn try_match<'a, 'b>(
 	glob: &'a Glob,
-	splitter: Splitter<'b>,
+	mut splitter: Splitter<'b>,
 	stack: &mut Vec<RestorePoint<'a, 'b>>
 ) -> Option<Splitter<'b>> {
 	use Matcher::*;
@@ -37,8 +37,30 @@ fn try_match<'a, 'b>(
 				return None;
 			}
 			splitter
+		},
+		Range(lower, upper) => {
+			let mut q = std::collections::VecDeque::<char>::new();
+			loop {
+				let c;
+				let prev = splitter.clone();
+				(splitter, c) = splitter.next_char()?;
+				if c.is_numeric() {
+					q.push_front(c);
+				} else if c == '-' {
+					q.push_front('-');
+					break;
+				} else {
+					splitter = prev;
+					break;
+				}
+			}
+			let i = q.iter().collect::<String>().parse::<isize>().ok()?;
+			if i < *lower || i > *upper {
+				return None
+			}
+			splitter
 		}
-		_ => return None //TODO: Other patterns.
+		_ => return None //TODO: Alternation.
 	})
 }
 
