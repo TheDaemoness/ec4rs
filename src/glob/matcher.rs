@@ -15,12 +15,16 @@ pub enum Matcher {
 }
 
 fn try_match<'a, 'b>(
-	glob: &'a Glob,
+	glob: &'a[Matcher],
 	mut splitter: Splitter<'b>,
 	stack: &mut Vec<RestorePoint<'a, 'b>>
 ) -> Option<Splitter<'b>> {
 	use Matcher::*;
-	let Glob(matcher, _) = glob;
+	let matcher = if let Some(m) = glob.last() {
+		m
+	} else {
+		return Some(splitter);
+	};
 	Some(match matcher {
 		Sep => splitter.match_sep()?,
 		AnyChar => splitter.match_any(false)?,
@@ -65,15 +69,16 @@ fn try_match<'a, 'b>(
 }
 
 pub fn matches<'a, 'b>(
-	mut glob: &'a Glob,
+	glob: &'a Glob,
 	mut splitter: Splitter<'b>
 ) -> Option<Splitter<'b>> {
+	let mut glob = glob.0.as_slice();
 	let mut stack = Vec::<RestorePoint<'a, 'b>>::new();
 	/*let mut idx = 0usize;*/
 	loop {
 		if let Some(splitter_new) = try_match(glob, splitter, &mut stack) {
 			splitter = splitter_new;
-			if let Some(ref next) = glob.1 {
+			if let Some((_, next)) = glob.split_last() {
 				glob = next
 			} else {
 				break Some(splitter)
@@ -87,7 +92,7 @@ pub fn matches<'a, 'b>(
 }
 
 struct RestorePoint<'a, 'b> {
-	glob: &'a Glob,
+	glob: &'a[Matcher],
 	splitter: Splitter<'b>,
 	/*idx: usize*/
 }

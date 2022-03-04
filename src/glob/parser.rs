@@ -3,7 +3,7 @@ use super::{Glob, Matcher};
 type Chars<'a> = std::iter::Peekable<std::str::Chars<'a>>;
 
 pub fn parse(glob: &str) -> Result<Glob, crate::ParseError> {
-	let mut retval = Glob(Matcher::Sep, None);
+	let mut retval = Glob(vec![Matcher::Sep]);
 	let mut chars = glob.chars().peekable();
 	while let Some(c) = chars.next() {
 		match c {
@@ -155,7 +155,7 @@ fn parse_charclass(
 fn append_char(mut glob: Glob, c: char) -> Glob {
 	if c == '/' {
 		append(glob, Matcher::Sep)
-	} else if let Matcher::Suffix(suffix) = &mut glob.0 {
+	} else if let Some(Matcher::Suffix(suffix)) = &mut glob.0.last_mut() {
 		suffix.push(c);
 		glob
 	} else {
@@ -163,19 +163,20 @@ fn append_char(mut glob: Glob, c: char) -> Glob {
 	}
 }
 
-fn append(glob: Glob, matcher: Matcher) -> Glob {
+fn append(mut glob: Glob, matcher: Matcher) -> Glob {
 	match &matcher {
 		Matcher::Sep => {
-			if let Matcher::Sep = &glob.0 {
+			if let Some(Matcher::Sep) = &glob.0.last() {
 				return glob
 			}
 		},
 		Matcher::AnySeq(true) => {
-			if let Matcher::AnySeq(true) = &glob.0 {
+			if let Some(Matcher::AnySeq(true)) = &glob.0.last() {
 				return glob
 			}
 		}
 		_ => ()
 	}
-	Glob(matcher, Some(Box::new(glob)))
+	glob.0.push(matcher);
+	glob
 }
