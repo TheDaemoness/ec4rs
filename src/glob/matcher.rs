@@ -1,7 +1,3 @@
-// TODO: Alternation currently uses a recursive algorithm.
-// This should be replaced with something that saves state in a Vec.
-// A rewrite to allow more-unified backtracking is probably in order.
-
 use super::{Glob, Splitter};
 
 use std::collections::BTreeSet;
@@ -19,23 +15,17 @@ pub enum Matcher {
 }
 
 fn try_match<'a, 'b>(
-	glob: &'a[Matcher],
-	mut splitter: Splitter<'b>,
-	idx: usize,
-	stack: &mut Vec<RestorePoint<'a, 'b>>,
-) -> Option<Splitter<'b>> {
+	mut splitter: Splitter<'a>,
+	matcher: &'b Matcher,
+	state: &mut super::stack::SaveStack<'a,'b>
+) -> Option<Splitter<'a>> {
 	use Matcher::*;
-	let matcher = if let Some(m) = glob.last() {
-		m
-	} else {
-		return Some(splitter);
-	};
 	Some(match matcher {
 		Sep => splitter.match_sep()?,
 		AnyChar => splitter.match_any(false)?,
 		AnySeq(sep) => {
 			if let Some(splitter) = splitter.clone().match_any(*sep) {
-				stack.push(RestorePoint{glob, splitter, idx: 0});
+				state.add_rewind(splitter, matcher);
 			}
 			splitter
 		},
@@ -48,6 +38,7 @@ fn try_match<'a, 'b>(
 			splitter
 		},
 		Range(lower, upper) => {
+			// TODO: Leading zeroes must be ignored.
 			let mut q = std::collections::VecDeque::<char>::new();
 			loop {
 				let c;
@@ -70,44 +61,30 @@ fn try_match<'a, 'b>(
 			splitter
 		}
 		Any(options) => {
-			for (mut idx, option) in options.iter().skip(idx).enumerate() {
-				if let Some(splitter_new) = matches(option, splitter.clone()) {
-					idx += 1;
-					stack.push(RestorePoint{glob, splitter, idx});
-					return Some(splitter_new)
-				}
-			}
-			return None
+			state.add_alts(splitter.clone(), options.as_slice());
+			splitter
 		}
 	})
 }
 
+#[must_use]
 pub fn matches<'a, 'b>(
-	glob: &'a Glob,
-	mut splitter: Splitter<'b>
-) -> Option<Splitter<'b>> {
-	let mut glob = glob.0.as_slice();
-	let mut stack = Vec::<RestorePoint<'a, 'b>>::new();
-	let mut idx = 0usize;
+	path: &'a std::path::Path,
+	glob: &'b Glob,
+) -> Option<Splitter<'a>> {
+	let mut splitter = super::Splitter::new(path)?;
+	let mut state = super::stack::SaveStack::new(&splitter, glob);
 	loop {
-		if let Some(splitter_new) = try_match(glob, splitter, idx, &mut stack) {
-			idx = 0;
-			splitter = splitter_new;
-			if let Some((_, next)) = glob.split_last() {
-				glob = next
+		if let Some(matcher) = state.globs().next() {
+			if let Some(splitter_new) = try_match(splitter, matcher, &mut state) {
+				splitter = splitter_new;
+			} else if let Some(splitter_new) = state.restore() {
+				splitter = splitter_new;
 			} else {
-				break Some(splitter)
+				return None
 			}
-		} else if let Some(restore) = stack.pop() {
-			RestorePoint{glob, splitter, idx} = restore;
 		} else {
-			break None;
+			return Some(splitter);
 		}
 	}
-}
-
-struct RestorePoint<'a, 'b> {
-	glob: &'a[Matcher],
-	splitter: Splitter<'b>,
-	idx: usize
 }

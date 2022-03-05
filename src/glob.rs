@@ -2,6 +2,7 @@ mod globtype;
 mod matcher;
 mod parser;
 mod splitter;
+mod stack;
 
 pub use globtype::Glob;
 pub use matcher::Matcher;
@@ -20,9 +21,5 @@ pub fn parse(glob: &str, style: GlobStyle) -> Glob {
 
 #[must_use]
 pub fn matches(glob: &Glob, path: &std::path::Path) -> bool {
-	if let Some(splitter) = Splitter::new(path) {
-		matcher::matches(glob, splitter).is_some()
-	} else {
-		false
-	}
+	matcher::matches(path, glob).is_some()
 }

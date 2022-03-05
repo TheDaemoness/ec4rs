@@ -44,9 +44,14 @@ fn path() {
 #[test]
 fn star() {
 	test(
+		"*",
+		["/*","/a"],
+		[]
+	);
+	test(
 		"*.foo",
 		["/a.foo", "/b.foo", "/ab.foo", "/bar/abc.foo", "/.foo"],
-		[]
+		["/foo"]
 	);
 	test(
 		"bar*.foo",
@@ -185,6 +190,20 @@ fn alt_basic() {
 }
 
 #[test]
+fn alt_star() {
+	test(
+		"{*}",
+		["/{}", "/{a}", "/{ab}"],
+		[]
+	);
+	test(
+		"{a,*}",
+		["/a", "/b"],
+		[]
+	);
+}
+
+#[test]
 fn alt_unmatched() {
 	test(
 		"{.foo",
@@ -209,5 +228,14 @@ fn alt_nested() {
 		"{a{bc,cd},e}",
 		["/abc","/acd", "/e"],
 		["/cd"]
+	);
+}
+
+#[test]
+fn alt_empty() {
+	test(
+		"a{b,,c}",
+		["/a", "/ab", "/ac"],
+		[]
 	);
 }
