@@ -133,3 +133,16 @@ pub trait PropertiesSource {
 		path: impl AsRef<std::path::Path>
 	) -> Result<(), crate::Error>;
 }
+
+impl<'a> PropertiesSource for &'a Properties {
+	fn apply_to(
+		self,
+		props: &mut Properties,
+		_: impl AsRef<std::path::Path>
+	) -> Result<(), crate::Error> {
+		for (k, v) in self.iter() {
+			props.insert(k, v);
+		}
+		Ok(())
+	}
+}

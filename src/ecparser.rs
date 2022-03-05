@@ -104,7 +104,6 @@ impl<R: io::BufRead> Iterator for EcParser<R> {
 
 impl<R: io::BufRead> std::iter::FusedIterator for EcParser<R> {}
 
-
 impl<R: io::BufRead> crate::PropertiesSource for &mut EcParser<R> {
 	fn apply_to(
 		self,

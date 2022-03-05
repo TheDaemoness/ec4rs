@@ -45,10 +45,9 @@ impl crate::PropertiesSource for &Section {
 		props: &mut Properties,
 		path: impl AsRef<std::path::Path>
 	) -> Result<(), crate::Error> {
-		if self.applies_to(path) {
-			for (k, v) in self.props.iter() {
-				props.insert(k, v);
-			}
+		let path_ref = path.as_ref();
+		if self.applies_to(path_ref) {
+			let _ = self.props.apply_to(props, path_ref);
 		}
 		Ok(())
 	}
