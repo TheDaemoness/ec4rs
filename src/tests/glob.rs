@@ -67,6 +67,11 @@ fn doublestar() {
 		["/a.foo", "/a/a.foo", "/a/b.foo", "/.foo"],
 		[]
 	);
+	test(
+		"a**d",
+		["/a/d", "/a/bd", "/a/bcd", "/a/b/c/d"],
+		["/bd", "/b/d", "/bcd"]
+	);
 }
 
 #[test]

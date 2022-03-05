@@ -46,13 +46,20 @@ impl std::iter::FusedIterator for EcFile {}
 impl PropertiesSource for &mut EcFile {
 	/// Adds properties from the file's sections to the specified [Properties] map.
 	///
-	/// Ignores [EcFile::path] when determining applicability.
+	/// Uses [EcFile::path] when determining applicability to stop `**` from going too far.
 	/// Returns parse errors wrapped in an [Error::InFile].
 	fn apply_to(
 		self,
 		props: &mut Properties,
-		path: impl AsRef<std::path::Path>
+		path: impl AsRef<Path>
 	) -> Result<(), crate::Error> {
+		let get_parent = || self.path.parent()?.parent();
+		let path = if let Some(parent) = get_parent() {
+			let path = path.as_ref();
+			path.strip_prefix(parent).unwrap_or(path)
+		} else {
+			path.as_ref()
+		};
 		match self.reader.apply_to(props, path) {
 			Ok(()) => Ok(()),
 			Err(crate::Error::Parse(e)) => Err(self.add_error_context(e)),
@@ -84,7 +91,7 @@ impl EcFiles {
 		use std::borrow::Cow;
 		let filename = if let Some(ref fno) = filename_override {
 			let oss = fno.as_ref();
-			let path: &std::path::Path = oss.as_ref();
+			let path: &Path = oss.as_ref();
 			path.file_name()
 		} else {
 			None
@@ -135,7 +142,7 @@ impl PropertiesSource for EcFiles {
 	fn apply_to(
 		self,
 		props: &mut Properties,
-		path: impl AsRef<std::path::Path>
+		path: impl AsRef<Path>
 	) -> Result<(), crate::Error> {
 		let path = path.as_ref();
 		for mut file in self {
