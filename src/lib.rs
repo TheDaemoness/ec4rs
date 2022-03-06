@@ -18,7 +18,7 @@ mod tests;
 pub use ecfile::{EcFile, EcFiles};
 pub use ecparser::EcParser;
 pub use error::{Error, ParseError};
-pub use properties::{Properties, PropertiesSource};
+pub use properties::{Properties, PropertiesSource, RawValue};
 pub use section::Section;
 
 /// Retrieve the [Properties] for a file at the given path.

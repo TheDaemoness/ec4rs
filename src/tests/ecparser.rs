@@ -8,7 +8,7 @@ fn validate<'a>(
 	assert_eq!(parser.is_root, should_be_root);
 	for section_expected in expected {
 		let section = parser.next().unwrap().unwrap();
-		let mut iter = section.props().iter();
+		let mut iter = section.props().iter_raw();
 		for (key, value) in section_expected {
 			assert_eq!(iter.next(), Some((*key, *value)))
 		}

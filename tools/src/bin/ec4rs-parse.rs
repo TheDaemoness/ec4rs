@@ -20,7 +20,7 @@ struct Args {
 fn print_config(path: &std::path::Path, filename: Option<&OsString>) {
 	match ec4rs::get_config_for(path, filename) {
 		Ok(props) => {
-			for (key, value) in props.iter() {
+			for (key, value) in props.iter_raw() {
 				println!("{}={}", key, value);
 			}
 		}

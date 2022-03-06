@@ -3,17 +3,30 @@
 //! Includes the [Property] trait
 //! as well as enums for common properties.
 
+use std::fmt::Display;
+use std::str::FromStr;
+
+/// Error for property parse failures;
+#[derive(Clone, Copy, Debug)]
+pub struct UnknownValueError;
+
+impl Display for UnknownValueError {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "unknown value")
+	}
+}
+
+impl std::error::Error for UnknownValueError {}
+
 /// A trait for types that represent properties.
 ///
 /// Used for enums or newtypes that are associated with string keys,
 /// that also know how to parse themselves from string values.
-pub trait Property: Sized {
+pub trait Property: Sized + FromStr + ToString {
 	/// The string key for this property.
 	///
 	/// Used to look up the value in a [crate::Properties] map.
 	fn key() -> &'static str;
-	/// Parses a string value into itself.
-	fn parse_value(raw: &str) -> Option<Self>;
 }
 
 //TODO: Deduplicate these macros a bit?
@@ -25,14 +38,24 @@ macro_rules! property_choice {
 		#[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
 		#[allow(missing_docs)]
 		pub enum $prop_id {$($variant),+}
-		impl Property for $prop_id {
-			fn key() -> &'static str {$name}
-			fn parse_value(raw: &str) -> Option<Self> {
+		impl FromStr for $prop_id {
+			type Err = UnknownValueError;
+			fn from_str(raw: &str) -> Result<Self, Self::Err> {
 				match raw.to_lowercase().as_str() {
-					$($string => Some($prop_id::$variant),)+
-					_ => None
+					$($string => Ok($prop_id::$variant),)+
+					_ => Err(UnknownValueError)
 				}
 			}
+		}
+		impl Display for $prop_id {
+			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+				match self {
+					$($prop_id::$variant => write!(f, "{}", $string)),*
+				}
+			}
+		}
+		impl Property for $prop_id {
+			fn key() -> &'static str {$name}
 		}
 	}
 }
@@ -49,14 +72,25 @@ macro_rules! property_valued {
 			Value($value_type)
 			$(,$variant)*
 		}
-		impl Property for $prop_id {
-			fn key() -> &'static str {$name}
-			fn parse_value(raw: &str) -> Option<Self> {
+		impl FromStr for $prop_id {
+			type Err = UnknownValueError;
+			fn from_str(raw: &str) -> Result<Self, Self::Err> {
 				match raw.to_lowercase().as_str() {
-					$($string => Some($prop_id::$variant),)*
-					_ => raw.parse::<$value_type>().ok().map(Self::Value)
+					$($string => Ok($prop_id::$variant),)*
+					_ => raw.parse::<$value_type>().map(Self::Value).or(Err(UnknownValueError))
 				}
 			}
+		}
+		impl Display for $prop_id {
+			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+				match self {
+					$prop_id::Value(v) => write!(f, "{}", v),
+					$($prop_id::$variant => write!(f, "{}", $string)),*
+				}
+			}
+		}
+		impl Property for $prop_id {
+			fn key() -> &'static str {$name}
 		}
 	}
 }

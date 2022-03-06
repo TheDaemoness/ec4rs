@@ -14,10 +14,10 @@ fn zip_alts() -> impl Iterator<Item = (&'static str, &'static str)> {
 fn test_basic_keys(props: &Properties) {
 	for s in BASIC_KEYS {
 		// Test mapping correctness using get.
-		assert_eq!(props.get(s), Some(s))
+		assert_eq!(props.get_raw_for_key(s).value(), Some(s))
 	}
 	// Ensure that they keys are returned in order.
-	assert!(props.iter().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
+	assert!(props.iter_raw().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn from_iter() {
 fn insert() {
 	let mut props = Properties::new();
 	for s in BASIC_KEYS {
-		props.insert(s, s);
+		props.insert_raw_for_key(s, s);
 	}
 	test_basic_keys(&props);
 }
@@ -39,7 +39,9 @@ fn insert() {
 fn insert_replacing() {
 	let mut props: Properties = zip_alts().collect();
 	for (k, v) in zip_alts() {
-		assert_eq!(props.insert(k, k).expect("missing pair"), v);
+		let old = props.get_raw_for_key(k).value().expect("missing pair").to_owned();
+		assert_eq!(old, v);
+		props.insert_raw_for_key(k, k);
 	}
 	test_basic_keys(&props);
 }
@@ -48,7 +50,7 @@ fn insert_replacing() {
 fn try_insert() {
 	let mut props = Properties::new();
 	for s in BASIC_KEYS {
-		assert!(props.try_insert(s, s).is_ok());
+		assert!(props.try_insert_raw_for_key(s, s).is_ok());
 	}
 	test_basic_keys(&props);
 }
@@ -57,7 +59,7 @@ fn try_insert() {
 fn try_insert_replacing() {
 	let mut props: Properties = zip_self().collect();
 	for (k, v) in zip_alts() {
-		assert_eq!(props.try_insert(k, k).expect_err("try_insert wrongly returns Ok for same value"), k);
-		assert_eq!(props.try_insert(k, v).expect_err("try_insert wrongly returns Ok for update"), k);
+		assert_eq!(props.try_insert_raw_for_key(k, k).expect_err("try_insert wrongly returns Ok for same value"), k);
+		assert_eq!(props.try_insert_raw_for_key(k, v).expect_err("try_insert wrongly returns Ok for update"), k);
 	}
 }

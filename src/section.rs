@@ -25,7 +25,7 @@ impl Section {
 	///
 	/// Lowercases both the key and the value.
 	pub fn insert(&mut self, key: impl AsRef<str>, val: impl AsRef<str>) {
-		self.props.insert(
+		self.props.insert_raw_for_key(
 			key.as_ref().to_lowercase(),
 			val.as_ref()
 		);

@@ -28,36 +28,40 @@ impl Properties {
 		})
 	}
 
-	/// Returns the string value for the specified key.
-	pub fn get(&self, key: impl AsRef<str>) -> Option<&str> {
-		self.get_idxes(key.as_ref()).ok().and_then(|idx| self.map.get(idx).map(|v| v.1.as_ref()))
+	/// Returns the unparsed "raw" value for the specified key.
+	///
+	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
+	pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> RawValue<'_> {
+		let value = self
+			.get_idxes(key.as_ref())
+			.ok()
+			.map(|idx| self.map.get(idx).unwrap().1.as_str())
+			.filter(|v| !v.is_empty());
+		if let Some(value)  = value {
+			RawValue::Unknown(value)
+		} else {
+			RawValue::Unset
+		}
+	}
+
+	/// Returns the unpared "raw" value for the specified [Property].
+	///
+	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
+	pub fn get_raw<T: Property>(&self) -> RawValue<'_> {
+		self.get_raw_for_key(T::key())
 	}
 
 	/// Returns the parsed value for the specified [Property].
 	///
-	/// If parsing fails, returns a reference to the string value unless
-	/// the key is not associated with any value, the value is empty,
-	/// or the value is equal to "unset".
-	pub fn property<T: Property>(&self) -> Result<T, Option<&str>> {
-		if let Some(value) = self.get(T::key()) {
-			if value.is_empty() {
-				Err(None)
-			} else if let Some(parsed) = T::parse_value(value) {
-				Ok(parsed)
-			} else if value == "unset" {
-				Err(None)
-			} else {
-				Err(Some(value))
-			}
-		} else {
-			Err(None)
-		}
+	/// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
+	pub fn get<T: Property>(&self) -> Result<T, RawValue<'_>> {
+		self.get_raw::<T>().parse::<T>()
 	}
 
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
-	pub fn iter(&self) -> impl Iterator<Item = (&str, &str)> {
+	pub fn iter_raw(&self) -> impl Iterator<Item = (&str, &str)> {
 		self.keys.iter().map(|key| {
-			(key.as_ref(), self.get(key).unwrap())
+			(key.as_ref(), self.get_raw_for_key(key).value().unwrap())
 		})
 	}
 
@@ -71,33 +75,54 @@ impl Properties {
 	}
 
 	/// Sets the value for a specified key.
-	///
-	/// If the key was already associated with a value, returns the old value.
-	pub fn insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Option<String> {
+	pub fn insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) {
 		let key_str = key.as_ref();
 		match self.get_idxes(key_str) {
 			Ok(idx) => {
-				let mut retval = value.into();
-				std::mem::swap(self.get_at(idx), &mut retval);
-				Some(retval)
+				*self.get_at(idx) = value.into();
 			}
 			Err(idx) => {
 				self.insert_at(idx, key_str.to_owned(), value.into());
-				None
 			}
 		}
+	}
+
+	/// Sets the value for a specified [Property]'s key.
+	pub fn insert_raw<T: Property, S: Into<String>>(&mut self, value: S) {
+		self.insert_raw_for_key(T::key(), value)
+	}
+
+	/// Inserts a specified [Property] into the map.
+	///
+	/// If the key was already associated with a value, returns the old value.
+	pub fn insert<T: Property>(&mut self, prop: T) {
+		self.insert_raw_for_key(T::key(), prop.to_string())
 	}
 
 	/// Attempts to add a new key-value pair to the map.
 	///
 	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
+	pub fn try_insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
 		match self.get_idxes(key_str) {
 			Ok(idx)  => Err(self.get_at(idx)),
 			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into()))
 		}
+	}
+
+	/// Attempts to add a new [Property] to the map with a specified value.
+	///
+	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+	pub fn try_insert_raw<T: Property>(&mut self, value: impl Into<String>) -> Result<(), &mut String> {
+		self.try_insert_raw_for_key(T::key(), value)
+	}
+
+	/// Attempts to add a new [Property] to the map.
+	///
+	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+	pub fn try_insert<T: Property>(&mut self, prop: T) -> Result<(), &mut String> {
+		self.try_insert_raw_for_key(T::key(), prop.to_string())
 	}
 
 	/// Add fallback values for certain common key-value pairs.
@@ -117,7 +142,7 @@ impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 	fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
 		let mut result = Properties::new();
 		for (k, v) in iter {
-			result.insert(k, v);
+			result.insert_raw_for_key(k, v);
 		}
 		result
 	}
@@ -140,9 +165,67 @@ impl<'a> PropertiesSource for &'a Properties {
 		props: &mut Properties,
 		_: impl AsRef<std::path::Path>
 	) -> Result<(), crate::Error> {
-		for (k, v) in self.iter() {
-			props.insert(k, v);
+		for (k, v) in self.iter_raw() {
+			props.insert_raw_for_key(k, v);
 		}
 		Ok(())
+	}
+}
+
+/// Wrapper around unparsed values in [Properties].
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum RawValue<'a> {
+	/// Absence of a value.
+	Unset,
+	/// The value "unset", which has special behavior for all common properties.
+	UnsetExplicit,
+	/// An unparsed value.
+	Unknown(&'a str)
+}
+
+impl<'a> RawValue<'a> {
+	/// Returns `UnsetExplicit` if self matches `Unknown("unset")`.
+	/// Otherwise, returns `self`.
+	///
+	/// Comparison is done case-insensitively.
+	#[must_use]
+	pub fn filter_unset(self) -> Self {
+	use RawValue::*;
+		match self {
+			Unknown(v) => {
+				if "unset".eq_ignore_ascii_case(v) {
+					UnsetExplicit
+				} else {
+					self
+				}
+			}
+			v => v
+		}
+	}
+	/// Returns true if the value is unset, including by a value of "unset".
+	#[must_use]
+	pub fn is_unset(&self) -> bool {
+		use RawValue::*;
+		matches!(self, Unset | UnsetExplicit)
+	}
+	/// Returns the unparsed value as a `&str`.
+	///
+	/// If the key-value pair was unset explicitly,
+	/// returns `Some("unset")`.
+	pub fn value(&self) -> Option<&'a str> {
+		use RawValue::*;
+		match self {
+			Unset => None,
+			UnsetExplicit => Some("unset"),
+			Unknown(s) => Some(s)
+		}
+	}
+	/// Attempts to parse the contained value.
+	pub fn parse<T: Property>(self) -> Result<T, RawValue<'a>> {
+		use RawValue::*;
+		match self {
+			Unknown(v) => T::from_str(v).map_err(|_| self),
+			unset => Err(unset)
+		}
 	}
 }
