@@ -130,3 +130,15 @@ property_choice!{
 property_valued!{TrimTrailingWs, "trim_trailing_whitespace", bool;}
 property_valued!{FinalNewline, "insert_final_newline", bool;}
 property_valued!{MaxLineLen, "max_line_length", usize; (Off, "off")}
+
+/// A list of keys of the standard properties.
+pub static STANDARD_KEYS: &[&str] = &[
+	"indent_size",
+	"indent_style",
+	"tab_width",
+	"end_of_line",
+	"charset",
+	"trim_trailing_whitespace",
+	"insert_final_newline"
+	// NOT "max_line_length".
+];
