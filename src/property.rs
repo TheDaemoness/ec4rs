@@ -28,7 +28,7 @@ macro_rules! property_choice {
 		impl Property for $prop_id {
 			fn key() -> &'static str {$name}
 			fn parse_value(raw: &str) -> Option<Self> {
-				match raw {
+				match raw.to_lowercase().as_str() {
 					$($string => Some($prop_id::$variant),)+
 					_ => None
 				}
@@ -52,7 +52,7 @@ macro_rules! property_valued {
 		impl Property for $prop_id {
 			fn key() -> &'static str {$name}
 			fn parse_value(raw: &str) -> Option<Self> {
-				match raw {
+				match raw.to_lowercase().as_str() {
 					$($string => Some($prop_id::$variant),)*
 					_ => raw.parse::<$value_type>().ok().map(Self::Value)
 				}

@@ -26,7 +26,7 @@ impl Section {
 	pub fn insert(&mut self, key: impl AsRef<str>, val: impl AsRef<str>) {
 		self.props.insert(
 			key.as_ref().to_lowercase(),
-			val.as_ref().to_lowercase()
+			val.as_ref()
 		);
 	}
 	/// Returns true if and only if this section applies to a file at the specified path.
