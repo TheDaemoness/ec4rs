@@ -8,7 +8,6 @@ mod error;
 mod fallback;
 mod glob;
 mod linereader;
-pub mod options;
 mod properties;
 pub mod property;
 mod section;

@@ -1,18 +1,19 @@
+use crate::glob::Glob;
 use crate::Properties;
 
 use std::path::Path;
 
 /// A section of an EditorConfig file.
 pub struct Section {
-	pattern: crate::glob::Glob,
+	pattern: Glob,
 	props: crate::Properties,
 }
 
 impl Section {
 	/// Constrcts a new Section that applies to files matching the specified pattern.
-	pub fn new(pattern: &str, style: crate::options::GlobStyle) -> Section {
+	pub fn new(pattern: &str) -> Section {
 		Section {
-			pattern: crate::glob::parse(pattern, style),
+			pattern: Glob::new(pattern),
 			props: crate::Properties::new()
 		}
 	}
@@ -32,7 +33,7 @@ impl Section {
 	/// Returns true if and only if this section applies to a file at the specified path.
 	#[must_use]
 	pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {
-		crate::glob::matches(&self.pattern, path.as_ref())
+		self.pattern.matches(path.as_ref())
 	}
 }
 

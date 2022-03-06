@@ -1,71 +1,4 @@
-use crate::glob::{Glob, Matcher};
-
-pub fn parse(glob: &str) -> Glob {
-	let mut retval = Glob(vec![]);
-	let mut stack = AltStack::new();
-	let mut found_sep: bool = false;
-	for segment in glob.split('/') {
-		retval.append_char('/');
-		found_sep = retval.0.len() > 1;
-		let mut chars = segment.chars().peekable();
-		while let Some(c) = chars.next() {
-			match c {
-				'\\' => {
-					if let Some(escaped) = chars.next() {
-						retval.append_char(escaped);
-					}
-				}
-				'?' => retval.append(Matcher::AnyChar),
-				'*' => retval.append(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
-				'[' => {
-					(retval, chars) = super::parse_charclass(retval, chars, true);
-				}
-				'{' => {
-					if let Some((a, b, chars_new)) = super::parse_range(chars.clone()) {
-						chars = chars_new;
-						retval.append(Matcher::Range(
-							// Reading the spec strictly,
-							// a compliant implementation must handle cases where
-							// the left integer is greater than the right integer.
-							std::cmp::min(a, b),
-							std::cmp::max(a, b)
-						));
-					} else {
-						stack.push(retval);
-						retval = Glob(vec![]);
-					}
-				}
-				',' => {
-					if let Some(rejected) = stack.add_alt(retval) {
-						retval = rejected;
-						retval.append_char(',');
-					} else {
-						retval = Glob(vec![]);
-					}
-				}
-				'}' => {
-					let add_brace: bool;
-					(retval, add_brace) = stack.add_alt_and_pop(retval);
-					if add_brace {
-						retval.append_char('}');
-					}
-				}
-				_ => retval.append_char(c)
-			}
-		}
-	}
-	loop {
-		let is_empty: bool;
-		(retval, is_empty) = stack.join_and_pop(retval);
-		if is_empty {
-			break;
-		}
-	}
-	if found_sep {
-		*retval.0.first_mut().unwrap() = Matcher::End;
-	}
-	retval
-}
+use crate::glob::Glob;
 
 pub struct AltStack(Vec<AltBuilder>);
 
@@ -153,7 +86,7 @@ impl AltBuilder {
 					(!a.0.is_empty()).cmp(&!b.0.is_empty())
 				});
 				self.options.dedup();
-				self.glob.append(super::Matcher::Any(self.options));
+				self.glob.append(crate::glob::Matcher::Any(self.options));
 				self.glob
 			}
 		}

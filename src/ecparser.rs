@@ -64,7 +64,7 @@ impl<R: io::BufRead> EcParser<R> {
 		if !self.eof {
 			use crate::linereader::Line;
 			if let Ok(Line::Section(header)) = self.reader.reparse() {
-				let mut section = Section::new(header, Default::default());
+				let mut section = Section::new(header);
 				loop {
 					match self.reader.next_line() {
 						Err(e) => {
