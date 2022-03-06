@@ -4,6 +4,7 @@ use std::collections::BTreeSet;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Matcher {
+	End,
 	Sep,
 	AnyChar,
 	AnySeq(bool),
@@ -21,6 +22,7 @@ fn try_match<'a, 'b>(
 ) -> Option<Splitter<'a>> {
 	use Matcher::*;
 	Some(match matcher {
+		End => splitter.match_end()?,
 		Sep => splitter.match_sep()?,
 		AnyChar => splitter.match_any(false)?,
 		AnySeq(sep) => {

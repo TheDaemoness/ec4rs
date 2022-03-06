@@ -36,8 +36,8 @@ fn basic() {
 fn path() {
 	test(
 		"bar/foo",
-		["/bar/foo", "/baz/bar/foo", "/bar//foo"],
-		["/bar/foo/baz"]
+		["/bar/foo", "bar/foo", "/bar//foo"],
+		["/bar/foo/baz", "/baz/bar/foo"]
 	);
 }
 

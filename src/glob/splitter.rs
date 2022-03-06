@@ -58,6 +58,18 @@ impl<'a> Splitter<'a> {
 		}.next()
 	}
 
+	pub fn match_end(mut self) -> Option<Splitter<'a>> {
+		if !self.part.is_empty() {
+			return None;
+		}
+		use std::path::Component as C;
+		match self.iter.next_back() {
+			None => Some(self),
+			Some(C::CurDir | C::RootDir | C::Prefix(_)) => Some(self),
+			_ => None
+		}
+	}
+
 	pub fn next(mut self) -> Option<Splitter<'a>> {
 		use std::path::Component::*;
 		self.part = match self.iter.next_back()? {

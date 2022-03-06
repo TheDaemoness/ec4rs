@@ -53,7 +53,7 @@ impl PropertiesSource for &mut EcFile {
 		props: &mut Properties,
 		path: impl AsRef<Path>
 	) -> Result<(), crate::Error> {
-		let get_parent = || self.path.parent()?.parent();
+		let get_parent = || self.path.parent();
 		let path = if let Some(parent) = get_parent() {
 			let path = path.as_ref();
 			path.strip_prefix(parent).unwrap_or(path)
