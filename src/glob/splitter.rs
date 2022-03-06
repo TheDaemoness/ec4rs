@@ -45,7 +45,8 @@ mod cnv {
 #[derive(Clone)]
 pub struct Splitter<'a> {
 	iter: std::path::Components<'a>,
-	part: &'a [u8]
+	part: &'a [u8],
+	matched_sep: bool,
 }
 
 impl<'a> Splitter<'a> {
@@ -53,9 +54,9 @@ impl<'a> Splitter<'a> {
 		Splitter {
 			iter: path.components(),
 			part: "".as_bytes(),
+			matched_sep: false,
 		}.next()
 	}
-
 
 	pub fn next(mut self) -> Option<Splitter<'a>> {
 		use std::path::Component::*;
@@ -71,8 +72,10 @@ impl<'a> Splitter<'a> {
 		if !self.part.is_empty() {
 			self.part = self.part.split_last().unwrap().1;
 			Some(self)
+		} else if path_sep {
+			self.match_sep()?.next()
 		} else {
-			path_sep.then(|| self.match_sep()).flatten()
+			None
 		}
 	}
 
@@ -89,15 +92,20 @@ impl<'a> Splitter<'a> {
 		None
 	}
 
-	pub fn match_sep(self) -> Option<Splitter<'a>> {
+	pub fn match_sep(mut self) -> Option<Splitter<'a>> {
 		if self.part.is_empty() {
-			self.next()
+			self.matched_sep = true;
+			Some(self)
 		} else {
 			None
 		}
 	}
 
 	pub fn match_suffix(mut self, suffix: &str) -> Option<Splitter<'a>> {
+		if self.part.is_empty() && self.matched_sep {
+			self.matched_sep = false;
+			self = self.next()?;
+		}
 		if let Some(rest) = self.part.strip_suffix(suffix.as_bytes()) {
 			self.part = rest;
 			Some(self)

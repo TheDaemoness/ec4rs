@@ -22,8 +22,8 @@ pub fn test<'a,'b>(
 fn basic() {
 	test(
 		"foo",
-		["/foo", "./foo", "/bar/foo"],
-		["foo", "/foobar", "/barfoo"]
+		["foo", "/foo", "./foo", "/bar/foo"],
+		["/foobar", "/barfoo"]
 	);
 	test(
 		"foo,bar",
