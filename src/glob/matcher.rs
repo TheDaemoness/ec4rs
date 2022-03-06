@@ -40,29 +40,28 @@ fn try_match<'a, 'b>(
 			splitter
 		},
 		Range(lower, upper) => {
-			// TODO: Leading zeroes must be ignored.
 			let mut q = std::collections::VecDeque::<char>::new();
 			let mut allow_zero: bool = true;
-			loop {
-				let c;
-				let prev = splitter.clone();
-				(splitter, c) = splitter.next_char()?;
+			let mut last_ok = splitter.clone();
+			while let Some((next_ok, c)) = splitter.next_char() {
 				if c.is_numeric() && (c != '0' || allow_zero) {
+					last_ok = next_ok.clone();
 					allow_zero = c == '0';
 					q.push_front(c);
 				} else if c == '-' {
+					last_ok = next_ok.clone();
 					q.push_front('-');
 					break;
 				} else {
-					splitter = prev;
 					break;
 				}
+				splitter = next_ok;
 			}
 			let i = q.iter().collect::<String>().parse::<isize>().ok()?;
 			if i < *lower || i > *upper {
 				return None
 			}
-			splitter
+			last_ok
 		}
 		Any(options) => {
 			state.add_alts(splitter.clone(), options.as_slice());
