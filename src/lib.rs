@@ -29,14 +29,15 @@ pub use section::Section;
 /// but will join relative paths onto the current working directory.
 ///
 /// EditorConfig files are assumed to be named `.editorconfig`.
-/// If not, use [get_config_at_path_for]
+/// If not, use [config_at_path_for]
 pub fn config_for(
 	path: impl AsRef<std::path::Path>
 ) -> Result<Properties, Error> {
 	config_at_path_for(path, None as Option<&std::path::Path>)
 }
 
-/// Retrieve the [Properties] for a file at the given path.
+/// Retrieve the [Properties] for a file at the given path,
+/// optionally using the specified configuration path.
 ///
 /// This function does not canonicalize the path,
 /// but will join relative paths onto the current working directory.
