@@ -205,7 +205,7 @@ impl<'a> RawValue<'a> {
 	}
 	/// Returns true if the value is unset, including by a value of "unset".
 	#[must_use]
-	pub fn is_unset(&self) -> bool {
+	pub const fn is_unset(&self) -> bool {
 		use RawValue::*;
 		matches!(self, Unset | UnsetExplicit)
 	}
@@ -214,7 +214,7 @@ impl<'a> RawValue<'a> {
 	///
 	/// The `bool` in the `Err` variant is true if
 	/// the key-value pair was unset by a value of "unset".
-	pub fn into_result(&self) -> Result<&'a str, bool> {
+	pub const fn into_result(&self) -> Result<&'a str, bool> {
 		use RawValue::*;
 		match self {
 			Unknown(s) => Ok(s),
@@ -227,7 +227,7 @@ impl<'a> RawValue<'a> {
 	///
 	/// If the key-value pair was unset explicitly,
 	/// returns `Some("unset")`.
-	pub fn value(&self) -> Option<&'a str> {
+	pub const fn value(&self) -> Option<&'a str> {
 		use RawValue::*;
 		match self {
 			Unset => None,

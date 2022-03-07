@@ -3,7 +3,7 @@ use crate::glob::Glob;
 pub struct AltStack(Vec<AltBuilder>);
 
 impl AltStack {
-	pub fn new() -> AltStack {
+	pub const fn new() -> AltStack {
 		AltStack(vec![])
 	}
 	#[must_use]
@@ -55,7 +55,7 @@ pub struct AltBuilder {
 }
 
 impl AltBuilder {
-	pub fn new(glob: Glob) -> AltBuilder {
+	pub const fn new(glob: Glob) -> AltBuilder {
 		AltBuilder {
 			glob,
 			options: vec![]
