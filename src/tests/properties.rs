@@ -59,7 +59,17 @@ fn try_insert() {
 fn try_insert_replacing() {
 	let mut props: Properties = zip_self().collect();
 	for (k, v) in zip_alts() {
-		assert_eq!(props.try_insert_raw_for_key(k, k).expect_err("try_insert wrongly returns Ok for same value"), k);
-		assert_eq!(props.try_insert_raw_for_key(k, v).expect_err("try_insert wrongly returns Ok for update"), k);
+		assert_eq!(
+			props
+				.try_insert_raw_for_key(k, k)
+				.expect_err("try_insert wrongly returns Ok for same value"),
+			k
+		);
+		assert_eq!(
+			props
+				.try_insert_raw_for_key(k, v)
+				.expect_err("try_insert wrongly returns Ok for update"),
+			k
+		);
 	}
 }

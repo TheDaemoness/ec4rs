@@ -33,21 +33,21 @@ impl Glob {
 		match &matcher {
 			Matcher::Sep => {
 				if let Some(Matcher::Sep) = &self.0.last() {
-					return
+					return;
 				}
-			},
+			}
 			Matcher::Suffix(suffix) => {
 				if let Some(Matcher::Suffix(ref mut prefix)) = self.0.last_mut() {
 					prefix.push_str(suffix);
-					return
+					return;
 				}
 			}
 			Matcher::AnySeq(true) => {
 				if let Some(Matcher::AnySeq(true)) = &self.0.last() {
-					return
+					return;
 				}
 			}
-			_ => ()
+			_ => (),
 		}
 		self.0.push(matcher);
 	}

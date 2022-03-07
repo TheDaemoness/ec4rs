@@ -11,9 +11,9 @@ mod linereader;
 mod properties;
 pub mod property;
 mod section;
-pub mod version;
 #[cfg(test)]
 mod tests;
+pub mod version;
 
 pub use ecfile::{EcFile, EcFiles};
 pub use ecparser::EcParser;
@@ -30,9 +30,7 @@ pub use section::Section;
 ///
 /// EditorConfig files are assumed to be named `.editorconfig`.
 /// If not, use [config_at_path_for]
-pub fn config_for(
-	path: impl AsRef<std::path::Path>
-) -> Result<Properties, Error> {
+pub fn config_for(path: impl AsRef<std::path::Path>) -> Result<Properties, Error> {
 	config_at_path_for(path, None as Option<&std::path::Path>)
 }
 
@@ -46,7 +44,7 @@ pub fn config_for(
 /// If it's `None`, EditorConfig files are assumed to be named `.editorconfig`.
 pub fn config_at_path_for(
 	target_path: impl AsRef<std::path::Path>,
-	config_path_override: Option<impl AsRef<std::path::Path>>
+	config_path_override: Option<impl AsRef<std::path::Path>>,
 ) -> Result<Properties, Error> {
 	let mut retval = Properties::new();
 	EcFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;

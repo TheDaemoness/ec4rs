@@ -95,7 +95,7 @@ macro_rules! property_valued {
 	}
 }
 
-property_choice!{
+property_choice! {
 	IndentStyle, "indent_style";
 	(Tabs, "tab"),
 	(Spaces, "space")
@@ -108,17 +108,17 @@ property_choice!{
 //This implementation follows the spec strictly here.
 //Notably, it will happily consider sizes of 0 valid.
 
-property_valued!{IndentSize, "indent_size", usize; (UseTabWidth, "tab")}
-property_valued!{TabWidth, "tab_width", usize;}
+property_valued! {IndentSize, "indent_size", usize; (UseTabWidth, "tab")}
+property_valued! {TabWidth, "tab_width", usize;}
 
-property_choice!{
+property_choice! {
 	EndOfLine, "end_of_line";
 	(Lf,   "lf"),
 	(CrLf, "crlf"),
 	(Cr,   "cr")
 }
 
-property_choice!{
+property_choice! {
 	Charset, "charset";
 	(Utf8,    "utf-8"),
 	(Latin1,  "latin1"),
@@ -127,9 +127,9 @@ property_choice!{
 	(Utf8Bom, "utf-8-bom")
 }
 
-property_valued!{TrimTrailingWs, "trim_trailing_whitespace", bool;}
-property_valued!{FinalNewline, "insert_final_newline", bool;}
-property_valued!{MaxLineLen, "max_line_length", usize; (Off, "off")}
+property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
+property_valued! {FinalNewline, "insert_final_newline", bool;}
+property_valued! {MaxLineLen, "max_line_length", usize; (Off, "off")}
 
 /// A list of keys of the standard properties.
 pub static STANDARD_KEYS: &[&str] = &[
@@ -139,6 +139,5 @@ pub static STANDARD_KEYS: &[&str] = &[
 	"end_of_line",
 	"charset",
 	"trim_trailing_whitespace",
-	"insert_final_newline"
-	// NOT "max_line_length".
+	"insert_final_newline", // NOT "max_line_length".
 ];

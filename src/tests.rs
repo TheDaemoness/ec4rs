@@ -1,6 +1,6 @@
 mod ecparser;
 mod glob;
-mod property;
-mod properties;
 mod linereader;
+mod properties;
+mod property;
 mod version;

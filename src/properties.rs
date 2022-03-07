@@ -10,7 +10,7 @@ use crate::property::Property;
 #[derive(Clone)]
 pub struct Properties {
 	keys: Vec<String>,
-	map: Vec<(usize, String)>
+	map: Vec<(usize, String)>,
 }
 
 impl Properties {
@@ -18,14 +18,15 @@ impl Properties {
 	pub fn new() -> Properties {
 		Properties {
 			keys: Vec::new(),
-			map: Vec::new()
+			map: Vec::new(),
 		}
 	}
 
 	fn get_idxes(&self, key: &str) -> Result<usize, usize> {
-		self.map.as_slice().binary_search_by_key(&key, |(ki, _)| {
-				self.keys.get(*ki).unwrap().as_str()
-		})
+		self
+			.map
+			.as_slice()
+			.binary_search_by_key(&key, |(ki, _)| self.keys.get(*ki).unwrap().as_str())
 	}
 
 	/// Returns the unparsed "raw" value for the specified key.
@@ -37,7 +38,7 @@ impl Properties {
 			.ok()
 			.map(|idx| self.map.get(idx).unwrap().1.as_str())
 			.filter(|v| !v.is_empty());
-		if let Some(value)  = value {
+		if let Some(value) = value {
 			RawValue::Unknown(value)
 		} else {
 			RawValue::Unset
@@ -61,9 +62,11 @@ impl Properties {
 
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
 	pub fn iter_raw(&self) -> impl Iterator<Item = (&str, &str)> {
-		self.keys.iter().map(|key| {
-			(key.as_ref(), self.get_raw_for_key(key).value())
-		}).filter_map(|(k, v)| v.map(|v| (k, v)))
+		self
+			.keys
+			.iter()
+			.map(|key| (key.as_ref(), self.get_raw_for_key(key).value()))
+			.filter_map(|(k, v)| v.map(|v| (k, v)))
 	}
 
 	fn get_at(&mut self, idx: usize) -> &mut String {
@@ -107,7 +110,7 @@ impl Properties {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
 		match self.get_idxes(key_str) {
-			Ok(idx)  => {
+			Ok(idx) => {
 				let valref = self.get_at(idx);
 				if valref.is_empty() {
 					*valref = value.into();
@@ -116,7 +119,7 @@ impl Properties {
 					Err(valref)
 				}
 			}
-			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into()))
+			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into())),
 		}
 	}
 
@@ -149,7 +152,9 @@ impl Properties {
 }
 
 impl Default for Properties {
-	fn default() -> Properties {Properties::new()}
+	fn default() -> Properties {
+		Properties::new()
+	}
 }
 
 impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
@@ -166,19 +171,11 @@ impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
 pub trait PropertiesSource {
 	/// Adds key-value pairs to a [Properties]
 	/// if and only if they apply to a file at the specified path.
-	fn apply_to(
-		self,
-		props: &mut Properties,
-		path: impl AsRef<std::path::Path>
-	) -> Result<(), crate::Error>;
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error>;
 }
 
 impl<'a> PropertiesSource for &'a Properties {
-	fn apply_to(
-		self,
-		props: &mut Properties,
-		_: impl AsRef<std::path::Path>
-	) -> Result<(), crate::Error> {
+	fn apply_to(self, props: &mut Properties, _: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
 		for (k, v) in self.iter_raw() {
 			props.insert_raw_for_key(k, v);
 		}
@@ -194,7 +191,7 @@ pub enum RawValue<'a> {
 	/// The value "unset", which has special behavior for all common properties.
 	UnsetExplicit,
 	/// An unparsed value.
-	Unknown(&'a str)
+	Unknown(&'a str),
 }
 
 impl<'a> RawValue<'a> {
@@ -204,7 +201,7 @@ impl<'a> RawValue<'a> {
 	/// Comparison is done case-insensitively.
 	#[must_use]
 	pub fn filter_unset(self) -> Self {
-	use RawValue::*;
+		use RawValue::*;
 		match self {
 			Unknown(v) => {
 				if "unset".eq_ignore_ascii_case(v) {
@@ -213,7 +210,7 @@ impl<'a> RawValue<'a> {
 					self
 				}
 			}
-			v => v
+			v => v,
 		}
 	}
 	/// Returns true if the value is unset, including by a value of "unset".
@@ -230,9 +227,9 @@ impl<'a> RawValue<'a> {
 	pub const fn into_result(&self) -> Result<&'a str, bool> {
 		use RawValue::*;
 		match self {
-			Unknown(s) => Ok(s),
+			Unknown(s)    => Ok(s),
 			UnsetExplicit => Err(true),
-			Unset => Err(false)
+			Unset         => Err(false),
 		}
 	}
 
@@ -243,9 +240,9 @@ impl<'a> RawValue<'a> {
 	pub const fn value(&self) -> Option<&'a str> {
 		use RawValue::*;
 		match self {
-			Unset => None,
+			Unset         => None,
 			UnsetExplicit => Some("unset"),
-			Unknown(s) => Some(s)
+			Unknown(s)    => Some(s),
 		}
 	}
 	/// Attempts to parse the contained value.
@@ -257,14 +254,13 @@ impl<'a> RawValue<'a> {
 	pub fn parse<T: std::str::FromStr, const LOWERCASE: bool>(&self) -> Result<T, Option<T::Err>> {
 		use RawValue::*;
 		match self {
-			Unknown(v) => {
-				if LOWERCASE {
-					T::from_str(v.to_lowercase().as_str())
-				} else {
-					T::from_str(v)
-				}.map_err(Some)
+			Unknown(v) => if LOWERCASE {
+				T::from_str(v.to_lowercase().as_str())
+			} else {
+				T::from_str(v)
 			}
-			_ => Err(None)
+			.map_err(Some),
+			_ => Err(None),
 		}
 	}
 }

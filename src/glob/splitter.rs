@@ -15,7 +15,6 @@ mod cnv {
 	}
 }
 
-
 #[cfg(target_os = "wasi")]
 mod cnv {
 	use std::ffi::OsStr;
@@ -28,10 +27,7 @@ mod cnv {
 	}
 }
 
-#[cfg(all(
-	not(target_family = "unix"),
-	not(target_os = "wasi")
-))]
+#[cfg(all(not(target_family = "unix"), not(target_os = "wasi")))]
 mod cnv {
 	use std::ffi::OsStr;
 	pub fn to_bytes(s: &OsStr) -> Option<&[u8]> {
@@ -55,7 +51,8 @@ impl<'a> Splitter<'a> {
 			iter: path.components(),
 			part: "".as_bytes(),
 			matched_sep: false,
-		}.next()
+		}
+		.next()
 	}
 
 	pub fn match_end(mut self) -> Option<Splitter<'a>> {
@@ -66,7 +63,7 @@ impl<'a> Splitter<'a> {
 		match self.iter.next_back() {
 			None => Some(self),
 			Some(C::CurDir | C::RootDir | C::Prefix(_)) => Some(self),
-			_ => None
+			_ => None,
 		}
 	}
 
@@ -96,9 +93,9 @@ impl<'a> Splitter<'a> {
 		if let Ok(s) = std::str::from_utf8(self.part) {
 			if let Some((idx, c)) = s.char_indices().next_back() {
 				self.part = s.split_at(idx).0.as_bytes();
-				return Some((self, c))
+				return Some((self, c));
 			} else {
-				return Some((self.next()?, '/'))
+				return Some((self.next()?, '/'));
 			}
 		}
 		None

@@ -29,7 +29,7 @@ pub fn parse(glob: &str) -> Glob {
 							// a compliant implementation must handle cases where
 							// the left integer is greater than the right integer.
 							std::cmp::min(a, b),
-							std::cmp::max(a, b)
+							std::cmp::max(a, b),
 						));
 					} else {
 						stack.push(retval);
@@ -51,7 +51,7 @@ pub fn parse(glob: &str) -> Glob {
 						retval.append_char('}');
 					}
 				}
-				_ => retval.append_char(c)
+				_ => retval.append_char(c),
 			}
 		}
 	}

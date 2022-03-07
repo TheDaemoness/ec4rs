@@ -1,6 +1,6 @@
 use crate::ParseError;
 
-use std::io as io;
+use std::io;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Line<'a> {
@@ -15,9 +15,8 @@ pub enum Line<'a> {
 #[derive(Clone, Copy)]
 pub enum MaybeLast<V> {
 	Last(V),
-	More(V)
+	More(V),
 }
-
 
 type LineReadResult<'a> = Result<Line<'a>, ParseError>;
 
@@ -59,7 +58,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 pub struct LineReader<R: io::BufRead> {
 	ticker: usize,
 	line: String,
-	reader: R
+	reader: R,
 }
 
 impl<R: io::BufRead> LineReader<R> {
@@ -68,7 +67,7 @@ impl<R: io::BufRead> LineReader<R> {
 		LineReader {
 			ticker: 0,
 			line: String::with_capacity(256),
-			reader: r
+			reader: r,
 		}
 	}
 
@@ -95,8 +94,8 @@ impl<R: io::BufRead> LineReader<R> {
 		self.line.clear();
 		match self.reader.read_line(&mut self.line) {
 			Err(e) => Err(ParseError::Io(e)),
-			Ok(0) => Err(ParseError::Eof),
-			Ok(_) => {
+			Ok(0)  => Err(ParseError::Eof),
+			Ok(_)  => {
 				self.ticker += 1;
 				if self.ticker == 1 {
 					parse_line(self.line.strip_prefix('\u{FEFF}').unwrap_or(&self.line))
@@ -106,5 +105,4 @@ impl<R: io::BufRead> LineReader<R> {
 			}
 		}
 	}
-
 }

@@ -1,13 +1,13 @@
 use std::path::{Path, PathBuf};
 
-use crate::{EcParser, Properties, PropertiesSource, ParseError, Section, Error};
+use crate::{EcParser, Error, ParseError, Properties, PropertiesSource, Section};
 
 /// Convenience wrapper for an [EcParser] that reads files.
 pub struct EcFile {
 	/// The path to the open file.
 	pub path: PathBuf,
 	/// An [EcParser] that reads from the file.
-	pub reader: EcParser<std::io::BufReader<std::fs::File>>
+	pub reader: EcParser<std::io::BufReader<std::fs::File>>,
 }
 
 impl EcFile {
@@ -18,19 +18,12 @@ impl EcFile {
 		let path = path.into();
 		let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
 		let reader = EcParser::new_buffered(file)?;
-		Ok(EcFile {
-			path,
-			reader
-		})
+		Ok(EcFile { path, reader })
 	}
 
 	/// Wrap a [ParseError] in an [Error::InFile].
 	pub fn add_error_context(&self, error: ParseError) -> Error {
-		Error::InFile(
-			self.path.clone(),
-			self.reader.line_no(),
-			error
-		)
+		Error::InFile(self.path.clone(), self.reader.line_no(), error)
 	}
 }
 
@@ -48,11 +41,7 @@ impl PropertiesSource for &mut EcFile {
 	///
 	/// Uses [EcFile::path] when determining applicability to stop `**` from going too far.
 	/// Returns parse errors wrapped in an [Error::InFile].
-	fn apply_to(
-		self,
-		props: &mut Properties,
-		path: impl AsRef<Path>
-	) -> Result<(), crate::Error> {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {
 		let get_parent = || self.path.parent();
 		let path = if let Some(parent) = get_parent() {
 			let path = path.as_ref();
@@ -61,9 +50,9 @@ impl PropertiesSource for &mut EcFile {
 			path.as_ref()
 		};
 		match self.reader.apply_to(props, path) {
-			Ok(()) => Ok(()),
+			Ok(())                      => Ok(()),
 			Err(crate::Error::Parse(e)) => Err(self.add_error_context(e)),
-			Err(e) => panic!("unexpected error variant {:?}", e)
+			Err(e)                      => panic!("unexpected error variant {:?}", e),
 		}
 	}
 }
@@ -86,7 +75,7 @@ impl EcFiles {
 	/// unless an override is supplied as the second argument.
 	pub fn open(
 		path: impl AsRef<Path>,
-		config_path_override: Option<impl AsRef<std::path::Path>>
+		config_path_override: Option<impl AsRef<std::path::Path>>,
 	) -> Result<EcFiles, Error> {
 		use std::borrow::Cow;
 		let filename = config_path_override
@@ -136,14 +125,10 @@ impl Iterator for EcFiles {
 impl std::iter::FusedIterator for EcFiles {}
 
 impl PropertiesSource for EcFiles {
-		/// Adds properties from the files' sections to the specified [Properties] map.
+	/// Adds properties from the files' sections to the specified [Properties] map.
 	///
 	/// Ignores the files' paths when determining applicability.
-	fn apply_to(
-		self,
-		props: &mut Properties,
-		path: impl AsRef<Path>
-	) -> Result<(), crate::Error> {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {
 		let path = path.as_ref();
 		for mut file in self {
 			file.apply_to(props, path)?;

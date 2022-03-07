@@ -1,5 +1,5 @@
-use crate::ParseError;
 use crate::linereader::*;
+use crate::ParseError;
 
 fn test_lines(lines: &[(&'static str, Line<'static>)]) {
 	for (line, expected) in lines {
@@ -11,14 +11,14 @@ fn test_lines(lines: &[(&'static str, Line<'static>)]) {
 fn valid_props() {
 	use Line::Pair;
 	test_lines(&[
-		("foo=bar",              Pair("foo", "bar")),
-		("Foo=Bar",              Pair("Foo", "Bar")),
-		("foo = bar",            Pair("foo", "bar")),
-		("  foo   =   bar  ",    Pair("foo", "bar")),
-		("foo=bar=baz",          Pair("foo", "bar=baz")),
+		("foo=bar", Pair("foo", "bar")),
+		("Foo=Bar", Pair("Foo", "Bar")),
+		("foo = bar", Pair("foo", "bar")),
+		("  foo   =   bar  ", Pair("foo", "bar")),
+		("foo=bar=baz", Pair("foo", "bar=baz")),
 		("  foo =  bar = baz  ", Pair("foo", "bar = baz")),
-		("foo = bar #baz",       Pair("foo", "bar #baz")),
-		("foo = [bar]",          Pair("foo", "[bar]"))
+		("foo = bar #baz", Pair("foo", "bar #baz")),
+		("foo = [bar]", Pair("foo", "[bar]")),
 	])
 }
 
@@ -26,14 +26,14 @@ fn valid_props() {
 fn valid_sections() {
 	use Line::Section;
 	test_lines(&[
-		("[foo]",   Section("foo")),
+		("[foo]", Section("foo")),
 		("[[foo]]", Section("[foo]")),
 		("[ foo ]", Section(" foo ")),
-		("[][]]",   Section("][]")),
-		("[Foo]",   Section("Foo")),
+		("[][]]", Section("][]")),
+		("[Foo]", Section("Foo")),
 		(" [foo] ", Section("foo")),
-		("[a=b]",   Section("a=b")),
-		("[#foo]",  Section("#foo"))
+		("[a=b]", Section("a=b")),
+		("[#foo]", Section("#foo")),
 	])
 }
 
@@ -41,15 +41,15 @@ fn valid_sections() {
 fn valid_nothing() {
 	use Line::Nothing;
 	test_lines(&[
-		("\t",          Nothing),
-		("\r",          Nothing),
-		("",            Nothing),
-		("   ",         Nothing),
-		(";comment",    Nothing),
-		("#comment",    Nothing),
+		("\t", Nothing),
+		("\r", Nothing),
+		("", Nothing),
+		("   ", Nothing),
+		(";comment", Nothing),
+		("#comment", Nothing),
 		("  # comment", Nothing),
 		("# [section]", Nothing),
-		("# foo=bar",   Nothing)
+		("# foo=bar", Nothing),
 	])
 }
 

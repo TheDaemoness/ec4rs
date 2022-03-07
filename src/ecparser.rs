@@ -1,7 +1,7 @@
-use std::io;
+use crate::linereader::LineReader;
 use crate::ParseError;
 use crate::Section;
-use crate::linereader::LineReader;
+use std::io;
 
 /// A parser for the text of an EditorConfig file.
 ///
@@ -11,7 +11,7 @@ pub struct EcParser<R: io::BufRead> {
 	/// Incidates if a `root = true` line was found in the prelude.
 	pub is_root: bool,
 	eof: bool,
-	reader: LineReader<R>
+	reader: LineReader<R>,
 }
 
 impl<R: io::Read> EcParser<io::BufReader<R>> {
@@ -32,7 +32,7 @@ impl<R: io::BufRead> EcParser<R> {
 		let eof = loop {
 			use crate::linereader::Line;
 			match reader.next_line() {
-				Err(ParseError::Eof)  => break true,
+				Err(ParseError::Eof) => break true,
 				Err(e)               => return Err(e),
 				Ok(Line::Nothing)    => (),
 				Ok(Line::Section(_)) => break false,
@@ -46,7 +46,7 @@ impl<R: io::BufRead> EcParser<R> {
 				}
 			}
 		};
-		Ok(EcParser {is_root, reader, eof})
+		Ok(EcParser { is_root, reader, eof })
 	}
 
 	/// Returns `true` if there may be another section to read.
@@ -70,15 +70,15 @@ impl<R: io::BufRead> EcParser<R> {
 						Err(e) => {
 							self.eof = true;
 							if let ParseError::Eof = e {
-								break Ok(section)
+								break Ok(section);
 							} else {
-								break Err(e)
+								break Err(e);
 							}
 						}
 						Ok(Line::Section(_)) => break Ok(section),
 						Ok(Line::Nothing)    => (),
-						Ok(Line::Pair(k,v))  => {
-							section.insert(k,v);
+						Ok(Line::Pair(k, v)) => {
+							section.insert(k, v);
 						}
 					}
 				}
@@ -97,7 +97,7 @@ impl<R: io::BufRead> Iterator for EcParser<R> {
 		match self.read_section() {
 			Ok(r)                => Some(Ok(r)),
 			Err(ParseError::Eof) => None,
-			Err(e)               => Some(Err(e))
+			Err(e)               => Some(Err(e)),
 		}
 	}
 }
@@ -105,16 +105,14 @@ impl<R: io::BufRead> Iterator for EcParser<R> {
 impl<R: io::BufRead> std::iter::FusedIterator for EcParser<R> {}
 
 impl<R: io::BufRead> crate::PropertiesSource for &mut EcParser<R> {
-	fn apply_to(
-		self,
-		props: &mut crate::Properties,
-		path: impl AsRef<std::path::Path>
-	) -> Result<(), crate::Error> {
+	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
 		let path = path.as_ref();
 		for section_result in self {
 			match section_result {
-				Ok(section) => {let _ = section.apply_to(props, path);}
-				Err(error)  => return Err(crate::Error::Parse(error))
+				Ok(section) => {
+					let _ = section.apply_to(props, path);
+				}
+				Err(error)  => return Err(crate::Error::Parse(error)),
 			}
 		}
 		Ok(())

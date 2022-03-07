@@ -34,7 +34,7 @@ impl AltStack {
 				builder.add(glob);
 				(builder.join(), self.is_empty())
 			}
-			None => (glob, true)
+			None => (glob, true),
 		}
 	}
 
@@ -44,22 +44,19 @@ impl AltStack {
 				builder.add(glob);
 				(builder.build(), false)
 			}
-			None => (glob, true)
+			None => (glob, true),
 		}
 	}
 }
 
 pub struct AltBuilder {
 	glob: Glob,
-	options: Vec<Glob>
+	options: Vec<Glob>,
 }
 
 impl AltBuilder {
 	pub const fn new(glob: Glob) -> AltBuilder {
-		AltBuilder {
-			glob,
-			options: vec![]
-		}
+		AltBuilder { glob, options: vec![] }
 	}
 	pub fn add(&mut self, glob: Glob) {
 		self.options.push(glob);
@@ -82,9 +79,7 @@ impl AltBuilder {
 			_ => {
 				// TODO: Maybe make Matcher sortable,
 				// even if it's a bad Ord implementation.
-				self.options.sort_by(|a, b| {
-					(!a.0.is_empty()).cmp(&!b.0.is_empty())
-				});
+				self.options.sort_by(|a, b| (!a.0.is_empty()).cmp(&!b.0.is_empty()));
 				self.options.dedup();
 				self.glob.append(crate::glob::Matcher::Any(self.options));
 				self.glob

@@ -5,10 +5,10 @@ fn standard_keys_matches() {
 		($prop:ident) => {
 			assert!(
 				STANDARD_KEYS.contains(&$prop::key()),
-					"STANDARD_KEYS is missing {}",
-					$prop::key()
-				)
-		}
+				"STANDARD_KEYS is missing {}",
+				$prop::key()
+			)
+		};
 	}
 	contained!(IndentStyle);
 	contained!(IndentSize);

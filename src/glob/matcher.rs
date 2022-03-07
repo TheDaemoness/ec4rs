@@ -12,13 +12,13 @@ pub enum Matcher {
 	// TODO: Grapheme clusters?
 	CharClass(BTreeSet<char>, bool),
 	Range(isize, isize),
-	Any(Vec<super::Glob>)
+	Any(Vec<super::Glob>),
 }
 
 fn try_match<'a, 'b>(
 	mut splitter: Splitter<'a>,
 	matcher: &'b Matcher,
-	state: &mut super::stack::SaveStack<'a,'b>
+	state: &mut super::stack::SaveStack<'a, 'b>,
 ) -> Option<Splitter<'a>> {
 	use Matcher::*;
 	Some(match matcher {
@@ -30,7 +30,7 @@ fn try_match<'a, 'b>(
 				state.add_rewind(splitter, matcher);
 			}
 			splitter
-		},
+		}
 		Suffix(s) => splitter.match_suffix(s.as_str())?,
 		CharClass(cs, should_have) => {
 			let (splitter, c) = splitter.next_char()?;
@@ -38,7 +38,7 @@ fn try_match<'a, 'b>(
 				return None;
 			}
 			splitter
-		},
+		}
 		Range(lower, upper) => {
 			let mut q = std::collections::VecDeque::<char>::new();
 			let mut allow_zero: bool = true;
@@ -59,7 +59,7 @@ fn try_match<'a, 'b>(
 			}
 			let i = q.iter().collect::<String>().parse::<isize>().ok()?;
 			if i < *lower || i > *upper {
-				return None
+				return None;
 			}
 			last_ok
 		}
@@ -71,10 +71,7 @@ fn try_match<'a, 'b>(
 }
 
 #[must_use]
-pub fn matches<'a, 'b>(
-	path: &'a std::path::Path,
-	glob: &'b Glob,
-) -> Option<Splitter<'a>> {
+pub fn matches<'a, 'b>(path: &'a std::path::Path, glob: &'b Glob) -> Option<Splitter<'a>> {
 	let mut splitter = super::Splitter::new(path)?;
 	let mut state = super::stack::SaveStack::new(&splitter, glob);
 	loop {
@@ -84,7 +81,7 @@ pub fn matches<'a, 'b>(
 			} else if let Some(splitter_new) = state.restore() {
 				splitter = splitter_new;
 			} else {
-				return None
+				return None;
 			}
 		} else {
 			return Some(splitter);

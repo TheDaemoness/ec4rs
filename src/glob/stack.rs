@@ -3,7 +3,7 @@ use super::{Glob, Matcher, Splitter};
 /// A stack for unwrapping globs to match them,
 /// as might happen with alternation.
 #[derive(Clone, Debug)]
-pub struct GlobStack<'a>(Vec<&'a[Matcher]>);
+pub struct GlobStack<'a>(Vec<&'a [Matcher]>);
 
 impl<'a> GlobStack<'a> {
 	pub fn new(starter: &Glob) -> GlobStack<'_> {
@@ -31,37 +31,35 @@ impl<'a> GlobStack<'a> {
 	}
 }
 
-enum SavePoint<'a,'b> {
+enum SavePoint<'a, 'b> {
 	Rewind(Splitter<'a>, GlobStack<'b>, &'b Matcher),
-	Alts(  Splitter<'a>, GlobStack<'b>, &'b [Glob])
+	Alts(Splitter<'a>, GlobStack<'b>, &'b [Glob]),
 }
 
 /// A stack for saving and restoring state.
-pub struct SaveStack<'a,'b> {
+pub struct SaveStack<'a, 'b> {
 	globs: GlobStack<'b>,
-	stack: Vec<SavePoint<'a,'b>>
+	stack: Vec<SavePoint<'a, 'b>>,
 }
 
-impl<'a,'b> SaveStack<'a,'b> {
+impl<'a, 'b> SaveStack<'a, 'b> {
 	pub fn new(_: &Splitter<'a>, glob: &'b Glob) -> SaveStack<'a, 'b> {
 		SaveStack {
 			globs: GlobStack::new(glob),
-			stack: Vec::<SavePoint<'a,'b>>::new()
+			stack: Vec::<SavePoint<'a, 'b>>::new(),
 		}
 	}
 	pub fn globs(&mut self) -> &mut GlobStack<'b> {
 		&mut self.globs
 	}
 	pub fn add_rewind(&mut self, splitter: Splitter<'a>, matcher: &'b Matcher) {
-		self.stack.push(SavePoint::Rewind(
-			splitter, self.globs.clone(), matcher
-		))
+		self
+			.stack
+			.push(SavePoint::Rewind(splitter, self.globs.clone(), matcher))
 	}
 	pub fn add_alts(&mut self, splitter: Splitter<'a>, matcher: &'b [Glob]) {
 		if let Some((first, rest)) = matcher.split_first() {
-			self.stack.push(SavePoint::Alts(
-				splitter, self.globs.clone(), rest
-			));
+			self.stack.push(SavePoint::Alts(splitter, self.globs.clone(), rest));
 			self.globs().add_glob(first);
 		}
 	}
@@ -80,9 +78,9 @@ impl<'a,'b> SaveStack<'a,'b> {
 					self.globs = globs;
 					if let Some((glob, rest)) = alts.split_first() {
 						if !rest.is_empty() {
-							self.stack.push(SavePoint::Alts(
-								splitter.clone(), self.globs.clone(), rest
-							));
+							self
+								.stack
+								.push(SavePoint::Alts(splitter.clone(), self.globs.clone(), rest));
 						}
 						self.globs.add_glob(glob);
 						return Some(splitter);

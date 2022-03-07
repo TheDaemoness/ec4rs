@@ -17,7 +17,7 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
 					charclass.insert(c);
 					prev_char = Some(c);
 				}
-			},
+			}
 			']' => {
 				found_end = true;
 				break;
@@ -52,7 +52,7 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
 				}
 				charclass.insert('-');
 				prev_char = Some('-');
-			},
+			}
 			_ => {
 				charclass.insert(c);
 				prev_char = Some(c);
@@ -72,7 +72,7 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
 				}
 			}
 			1 => glob.append_char(*charclass.iter().next().unwrap()),
-			_ => glob.append(Matcher::CharClass(charclass, !invert))
+			_ => glob.append(Matcher::CharClass(charclass, !invert)),
 		}
 	} else {
 		chars = restore;

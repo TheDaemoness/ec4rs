@@ -14,7 +14,7 @@ impl Section {
 	pub fn new(pattern: &str) -> Section {
 		Section {
 			pattern: Glob::new(pattern),
-			props: crate::Properties::new()
+			props: crate::Properties::new(),
 		}
 	}
 	/// Returns an immutable reference to the internal [Properties] map.
@@ -25,10 +25,7 @@ impl Section {
 	///
 	/// Lowercases both the key and the value.
 	pub fn insert(&mut self, key: impl AsRef<str>, val: impl AsRef<str>) {
-		self.props.insert_raw_for_key(
-			key.as_ref().to_lowercase(),
-			val.as_ref()
-		);
+		self.props.insert_raw_for_key(key.as_ref().to_lowercase(), val.as_ref());
 	}
 	/// Returns true if and only if this section applies to a file at the specified path.
 	#[must_use]
@@ -41,11 +38,7 @@ impl crate::PropertiesSource for &Section {
 	/// Adds this section's properties to a [Properties].
 	///
 	/// This implementation is infallible.
-	fn apply_to(
-		self,
-		props: &mut Properties,
-		path: impl AsRef<std::path::Path>
-	) -> Result<(), crate::Error> {
+	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
 		let path_ref = path.as_ref();
 		if self.applies_to(path_ref) {
 			let _ = self.props.apply_to(props, path_ref);

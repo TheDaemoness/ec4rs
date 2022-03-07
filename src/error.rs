@@ -8,17 +8,17 @@ pub enum ParseError {
 	/// An invalid line was read.
 	InvalidLine,
 	/// An empty character class was found in a section header.
-	EmptyCharClass
+	EmptyCharClass,
 }
 
 impl std::fmt::Display for ParseError {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		use ParseError::*;
 		match self {
-			Eof   => write!(f, "end of data"),
-			Io(e) => write!(f, "io failure: {}", e),
-			InvalidLine => write!(f, "invalid line"),
-			EmptyCharClass => write!(f, "empty char class")
+			Eof            => write!(f, "end of data"),
+			Io(e)          => write!(f, "io failure: {}", e),
+			InvalidLine    => write!(f, "invalid line"),
+			EmptyCharClass => write!(f, "empty char class"),
 		}
 	}
 }
@@ -41,7 +41,7 @@ pub enum Error {
 	/// An error occured during parsing of a file.
 	InFile(std::path::PathBuf, usize, ParseError),
 	/// The current working directory is invalid (e.g. does not exist).
-	InvalidCwd(std::io::Error)
+	InvalidCwd(std::io::Error),
 }
 
 impl std::fmt::Display for Error {
@@ -50,7 +50,7 @@ impl std::fmt::Display for Error {
 		match self {
 			Parse(error)              => write!(f, "{error}"),
 			InFile(path, line, error) => write!(f, "{}:{line}: {error}", path.to_string_lossy()),
-			InvalidCwd(ioe)           => write!(f, "invalid cwd: {}", ioe)
+			InvalidCwd(ioe)           => write!(f, "invalid cwd: {}", ioe),
 		}
 	}
 }
@@ -61,7 +61,7 @@ impl std::error::Error for Error {
 		match self {
 			Parse(pe)        => pe.source(),
 			InFile(_, _, pe) => pe.source(),
-			InvalidCwd(ioe)  => Some(ioe)
+			InvalidCwd(ioe)  => Some(ioe),
 		}
 	}
 }

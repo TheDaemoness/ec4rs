@@ -1,9 +1,4 @@
-
-fn validate<'a>(
-	text: &str,
-	should_be_root: bool,
-	expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>
-) {
+fn validate<'a>(text: &str, should_be_root: bool, expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>) {
 	let mut parser = crate::EcParser::new(text.as_bytes()).unwrap();
 	assert_eq!(parser.is_root, should_be_root);
 	for section_expected in expected {
@@ -45,30 +40,22 @@ fn prelude_unknown() {
 #[test]
 fn sections_empty() {
 	validate("[foo]", false, expect![[]]);
-	validate("[foo]\n[bar]", false, expect![[],[]]);
+	validate("[foo]\n[bar]", false, expect![[], []]);
 }
 
 #[test]
 fn sections() {
-	validate("[foo]\nbk=bv\nak=av", false, expect![
-		[("bk", "bv"), ("ak", "av")]
-	]);
-	validate("[foo]\nbk=bv\n[bar]\nak=av", false, expect![
-		[("bk", "bv")],
-		[("ak", "av")]
-	]);
-	validate("[foo]\nk=a\n[bar]\nk=b", false, expect![
-		[("k", "a")],
-		[("k", "b")]
-	]);
+	validate("[foo]\nbk=bv\nak=av", false, expect![[("bk", "bv"), ("ak", "av")]]);
+	validate(
+		"[foo]\nbk=bv\n[bar]\nak=av",
+		false,
+		expect![[("bk", "bv")], [("ak", "av")]],
+	);
+	validate("[foo]\nk=a\n[bar]\nk=b", false, expect![[("k", "a")], [("k", "b")]]);
 }
 
 #[test]
 fn trailing_newline() {
-	validate("[foo]\nbar=baz\n", false, expect![
-		[("bar", "baz")]
-	]);
-	validate("[foo]\nbar=baz\n\n", false, expect![
-		[("bar", "baz")]
-	]);
+	validate("[foo]\nbar=baz\n", false, expect![[("bar", "baz")]]);
+	validate("[foo]\nbar=baz\n\n", false, expect![[("bar", "baz")]]);
 }
