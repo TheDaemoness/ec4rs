@@ -12,7 +12,7 @@ categories = ["config", "parser-implementations"]
 edition = "2021"
 
 authors = ["TheDaemoness"]
-exclude = [".editorconfig"]
+include = ["/src", "/README.md"]
 rust-version = "1.59" # destructuring assignment
 version = "1.0.0-rc.1"
 
