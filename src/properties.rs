@@ -139,7 +139,12 @@ impl Properties {
 	/// Used to obtain spec-compliant values for [crate::property::IndentSize]
 	/// and [crate::property::TabWidth].
 	pub fn use_fallbacks(&mut self) {
-		crate::fallback::add_fallbacks(self)
+		crate::fallback::add_fallbacks(self, false)
+	}
+
+	/// Add pre-0.9.0 fallback values for certain common key-value pairs.
+	pub fn use_fallbacks_legacy(&mut self) {
+		crate::fallback::add_fallbacks(self, true)
 	}
 }
 

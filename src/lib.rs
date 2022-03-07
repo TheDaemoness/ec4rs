@@ -50,6 +50,5 @@ pub fn config_at_path_for(
 ) -> Result<Properties, Error> {
 	let mut retval = Properties::new();
 	EcFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
-	retval.use_fallbacks();
 	Ok(retval)
 }
