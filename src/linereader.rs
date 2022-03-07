@@ -98,7 +98,11 @@ impl<R: io::BufRead> LineReader<R> {
 			Ok(0) => Err(ParseError::Eof),
 			Ok(_) => {
 				self.ticker += 1;
-				self.reparse()
+				if self.ticker == 1 {
+					parse_line(self.line.strip_prefix('\u{FEFF}').unwrap_or(&self.line))
+				} else {
+					self.reparse()
+				}
 			}
 		}
 	}
