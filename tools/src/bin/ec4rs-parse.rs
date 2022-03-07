@@ -1,4 +1,4 @@
-use std::ffi::OsString;
+use std::path::PathBuf;
 
 use clap::Parser;
 
@@ -7,18 +7,18 @@ use clap::Parser;
 struct Args {
 	/// Override config filename
 	#[clap(short)]
-	filename: Option<OsString>,
+	filename: Option<PathBuf>,
 	/// Ignored by this implementation
 	#[clap(default_value = ec4rs::version::STRING, short = 'b')]
 	ec_version: String,
 	/// Print test-friendly version information
 	#[clap(short, long)]
 	version: bool,
-	files: Vec<std::path::PathBuf>
+	files: Vec<PathBuf>
 }
 
-fn print_config(path: &std::path::Path, filename: Option<&OsString>) {
-	match ec4rs::get_config_for(path, filename) {
+fn print_config(path: &std::path::Path, filename: Option<&PathBuf>) {
+	match ec4rs::config_at_path_for(path, filename) {
 		Ok(props) => {
 			for (key, value) in props.iter_raw() {
 				if ec4rs::property::STANDARD_KEYS.contains(&key) {

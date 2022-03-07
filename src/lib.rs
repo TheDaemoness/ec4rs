@@ -28,14 +28,27 @@ pub use section::Section;
 /// This function does not canonicalize the path,
 /// but will join relative paths onto the current working directory.
 ///
-/// EditorConfig files are assumed to be named `.editorconfig`
-/// unless an override is supplied as the second argument.
-pub fn get_config_for(
-	path: impl AsRef<std::path::Path>,
-	filename_override: Option<impl AsRef<std::ffi::OsStr>>
+/// EditorConfig files are assumed to be named `.editorconfig`.
+/// If not, use [get_config_at_path_for]
+pub fn config_for(
+	path: impl AsRef<std::path::Path>
+) -> Result<Properties, Error> {
+	config_at_path_for(path, None as Option<&std::path::Path>)
+}
+
+/// Retrieve the [Properties] for a file at the given path.
+///
+/// This function does not canonicalize the path,
+/// but will join relative paths onto the current working directory.
+///
+/// If the provided config path is absolute, uses the EditorConfig file at that path. If it's relative, joins it onto every ancestor of the target file, and looks for config files at those paths.
+/// If it's `None`, EditorConfig files are assumed to be named `.editorconfig`.
+pub fn config_at_path_for(
+	target_path: impl AsRef<std::path::Path>,
+	config_path_override: Option<impl AsRef<std::path::Path>>
 ) -> Result<Properties, Error> {
 	let mut retval = Properties::new();
-	EcFiles::open(&path, filename_override)?.apply_to(&mut retval, &path)?;
+	EcFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
 	retval.use_fallbacks();
 	Ok(retval)
 }

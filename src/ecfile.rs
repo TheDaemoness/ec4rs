@@ -86,35 +86,35 @@ impl EcFiles {
 	/// unless an override is supplied as the second argument.
 	pub fn open(
 		path: impl AsRef<Path>,
-		filename_override: Option<impl AsRef<std::ffi::OsStr>>
+		config_path_override: Option<impl AsRef<std::path::Path>>
 	) -> Result<EcFiles, Error> {
 		use std::borrow::Cow;
-		let filename = if let Some(ref fno) = filename_override {
-			let oss = fno.as_ref();
-			let path: &Path = oss.as_ref();
-			path.file_name()
-		} else {
-			None
-		}.unwrap_or_else(|| ".editorconfig".as_ref());
-		let mut abs_path = Cow::from(path.as_ref());
-		if abs_path.is_relative() {
-			abs_path = std::env::current_dir().map_err(Error::InvalidCwd)?.join(&path).into()
-		}
-		let mut path = abs_path.as_ref();
-		let mut vec = Vec::new();
-		while let Some(dir) = path.parent() {
-			if let Ok(file) = EcFile::open(dir.join(filename)) {
-				let should_break = file.reader.is_root;
-				vec.push(file);
-				if should_break {
-					break;
-				}
+		let filename = config_path_override
+			.as_ref()
+			.map(|f| f.as_ref())
+			.unwrap_or_else(|| ".editorconfig".as_ref());
+		Ok(EcFiles(if filename.is_relative() {
+			let mut abs_path = Cow::from(path.as_ref());
+			if abs_path.is_relative() {
+				abs_path = std::env::current_dir().map_err(Error::InvalidCwd)?.join(&path).into()
 			}
-			// TODO: EcFile errors are suppressed here.
-			// Maybe store them in a field or something.
-			path = dir;
-		}
-		Ok(EcFiles(vec))
+			let mut path = abs_path.as_ref();
+			let mut vec = Vec::new();
+			while let Some(dir) = path.parent() {
+				if let Ok(file) = EcFile::open(dir.join(filename)) {
+					let should_break = file.reader.is_root;
+					vec.push(file);
+					if should_break {
+						break;
+					}
+				}
+				path = dir;
+			}
+			vec
+		} else {
+			// TODO: Better errors.
+			vec![EcFile::open(filename).map_err(Error::Parse)?]
+		}))
 	}
 
 	/// Returns an iterator over the contained [EcFiles].
