@@ -13,8 +13,8 @@ edition = "2021"
 
 authors = ["TheDaemoness"]
 exclude = [".editorconfig"]
-rust-version = "1.59" # std::iter::zip
-version = "0.3.0"
+rust-version = "1.59" # destructuring assignment
+version = "1.0.0-rc.1"
 
 [workspace]
 members = ["tools"]
