@@ -55,7 +55,8 @@ impl Properties {
 	///
 	/// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
 	pub fn get<T: Property>(&self) -> Result<T, RawValue<'_>> {
-		self.get_raw::<T>().parse::<T>()
+		let retval = self.get_raw::<T>();
+		retval.parse::<T, false>().or(Err(retval))
 	}
 
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
@@ -208,6 +209,20 @@ impl<'a> RawValue<'a> {
 		use RawValue::*;
 		matches!(self, Unset | UnsetExplicit)
 	}
+
+	/// Converts this `RawValue` into a [Result].
+	///
+	/// The `bool` in the `Err` variant is true if
+	/// the key-value pair was unset by a value of "unset".
+	pub fn into_result(&self) -> Result<&'a str, bool> {
+		use RawValue::*;
+		match self {
+			Unknown(s) => Ok(s),
+			UnsetExplicit => Err(true),
+			Unset => Err(false)
+		}
+	}
+
 	/// Returns the unparsed value as a `&str`.
 	///
 	/// If the key-value pair was unset explicitly,
@@ -221,11 +236,22 @@ impl<'a> RawValue<'a> {
 		}
 	}
 	/// Attempts to parse the contained value.
-	pub fn parse<T: Property>(self) -> Result<T, RawValue<'a>> {
+	///
+	/// For convenience, this function may lowercase a contained value before parsing.
+	/// Specify whether it should be lowercased as the second generic argument.
+	///
+	/// If the value is unset, returns `Err(None)`.
+	pub fn parse<T: std::str::FromStr, const LOWERCASE: bool>(&self) -> Result<T, Option<T::Err>> {
 		use RawValue::*;
 		match self {
-			Unknown(v) => T::from_str(v).map_err(|_| self),
-			unset => Err(unset)
+			Unknown(v) => {
+				if LOWERCASE {
+					T::from_str(v.to_lowercase().as_str())
+				} else {
+					T::from_str(v)
+				}.map_err(Some)
+			}
+			_ => Err(None)
 		}
 	}
 }
