@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../DOC.md")]
 #![allow(dead_code)]
 #![deny(missing_docs)]
 

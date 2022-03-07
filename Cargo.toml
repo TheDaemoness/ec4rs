@@ -3,7 +3,7 @@
 [package]
 name = "ec4rs"
 description = "EditorConfig For Rust"
-license = "apache-2.0"
+license = "Apache-2.0"
 homepage = "https://github.com/TheDaemoness/ec4rs"
 repository = "https://github.com/TheDaemoness/ec4rs"
 readme = "README.md"
@@ -12,7 +12,7 @@ categories = ["config", "parser-implementations"]
 edition = "2021"
 
 authors = ["TheDaemoness"]
-include = ["/src", "/README.md"]
+include = ["/src", "/README.md", "/DOC.md"]
 rust-version = "1.59" # destructuring assignment
 version = "1.0.0-rc.1"
 

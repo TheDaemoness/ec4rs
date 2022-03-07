@@ -1,5 +1,7 @@
 # ec4rs: EditorConfig For Rust
 [![CI](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/ec4rs.svg)](https://crates.io/crates/ec4rs)
+[![API docs](https://docs.rs/ec4rs/badge.svg)](https://docs.rs/ec4rs)
 
 An EditorConfig core in Rust.
 
@@ -11,20 +13,4 @@ tools that work with EditorConfig files.
 It also includes mechanisms for type-safe parsing of properties,
 so that your tool doesn't have to do it itself.
 
-## Example Usage
-
-```
-// Read the EditorConfig files that would apply to a file at the given path.
-let mut cfg = ec4rs::config_for("src/main.rs").unwrap_or_default();
-// Convenient access to ec4rs's property parsers.
-use ec4rs::property::*;
-// Use fallback values for tab width and/or indent size.
-cfg.use_fallbacks();
-// Let ec4rs do the parsing for you.
-let indent_style: IndentStyle = cfg.get::<IndentStyle>().unwrap_or(IndentStyle::Tabs);
-// Get a string value, with a default.
-// filter_unset handles the special value "unset" for you.
-let charset: &str = cfg.get_raw::<Charset>().filter_unset().into_result().unwrap_or("utf-8");
-// Parse a non-standard property, lowercasing the value before doing so.
-let hard_wrap: Option<usize> = cfg.get_raw_for_key("max_line_length").parse::<usize, true>().ok();
-```
+For more information, see [the docs](https://docs.rs/ec4rs).
