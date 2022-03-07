@@ -62,8 +62,8 @@ impl Properties {
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
 	pub fn iter_raw(&self) -> impl Iterator<Item = (&str, &str)> {
 		self.keys.iter().map(|key| {
-			(key.as_ref(), self.get_raw_for_key(key).value().unwrap())
-		})
+			(key.as_ref(), self.get_raw_for_key(key).value())
+		}).filter_map(|(k, v)| v.map(|v| (k, v)))
 	}
 
 	fn get_at(&mut self, idx: usize) -> &mut String {
@@ -107,7 +107,15 @@ impl Properties {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
 		match self.get_idxes(key_str) {
-			Ok(idx)  => Err(self.get_at(idx)),
+			Ok(idx)  => {
+				let valref = self.get_at(idx);
+				if valref.is_empty() {
+					*valref = value.into();
+					Ok(())
+				} else {
+					Err(valref)
+				}
+			}
 			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into()))
 		}
 	}
@@ -115,7 +123,7 @@ impl Properties {
 	/// Attempts to add a new [Property] to the map with a specified value.
 	///
 	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert_raw<T: Property>(&mut self, value: impl Into<String>) -> Result<(), &mut String> {
+	pub fn try_insert_raw<T: Property, S: Into<String>>(&mut self, value: S) -> Result<(), &mut String> {
 		self.try_insert_raw_for_key(T::key(), value)
 	}
 
