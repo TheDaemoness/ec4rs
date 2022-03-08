@@ -65,5 +65,8 @@ pub fn parse(glob: &str) -> Glob {
 	if found_sep {
 		*retval.0.first_mut().unwrap() = Matcher::End;
 	}
+	if let Some(Matcher::Sep) = retval.0.last() {
+		retval.append(Matcher::AnySeq(false));
+	}
 	retval
 }
