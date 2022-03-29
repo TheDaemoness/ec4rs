@@ -17,7 +17,7 @@ fn test_basic_keys(props: &Properties) {
 		assert_eq!(props.get_raw_for_key(s).value(), Some(s))
 	}
 	// Ensure that they keys are returned in order.
-	assert!(props.iter_raw().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
+	assert!(props.iter().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
 }
 
 #[test]

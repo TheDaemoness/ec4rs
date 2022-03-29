@@ -3,7 +3,7 @@ fn validate<'a>(text: &str, should_be_root: bool, expected: impl IntoIterator<It
 	assert_eq!(parser.is_root, should_be_root);
 	for section_expected in expected {
 		let section = parser.next().unwrap().unwrap();
-		let mut iter = section.props().iter_raw();
+		let mut iter = section.props().iter();
 		for (key, value) in section_expected {
 			assert_eq!(iter.next(), Some((*key, *value)))
 		}

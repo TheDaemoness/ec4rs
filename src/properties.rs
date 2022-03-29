@@ -22,7 +22,7 @@ impl Properties {
 		}
 	}
 
-	fn get_idxes(&self, key: &str) -> Result<usize, usize> {
+	fn find_idx(&self, key: &str) -> Result<usize, usize> {
 		self
 			.map
 			.as_slice()
@@ -34,7 +34,7 @@ impl Properties {
 	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
 	pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> RawValue<'_> {
 		let value = self
-			.get_idxes(key.as_ref())
+			.find_idx(key.as_ref())
 			.ok()
 			.map(|idx| self.map.get(idx).unwrap().1.as_str())
 			.filter(|v| !v.is_empty());
@@ -61,15 +61,14 @@ impl Properties {
 	}
 
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
-	pub fn iter_raw(&self) -> impl Iterator<Item = (&str, &str)> {
+	pub fn iter(&self) -> impl Iterator<Item = (&str, RawValue<'_>)> {
 		self
 			.keys
 			.iter()
-			.map(|key| (key.as_ref(), self.get_raw_for_key(key).value()))
-			.filter_map(|(k, v)| v.map(|v| (k, v)))
+			.map(|key| (key.as_ref(), self.get_raw_for_key(key)))
 	}
 
-	fn get_at(&mut self, idx: usize) -> &mut String {
+	fn get_at_mut(&mut self, idx: usize) -> &mut String {
 		&mut self.map.get_mut(idx).unwrap().1
 	}
 
@@ -81,9 +80,9 @@ impl Properties {
 	/// Sets the value for a specified key.
 	pub fn insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) {
 		let key_str = key.as_ref();
-		match self.get_idxes(key_str) {
+		match self.find_idx(key_str) {
 			Ok(idx) => {
-				*self.get_at(idx) = value.into();
+				*self.get_at_mut(idx) = value.into();
 			}
 			Err(idx) => {
 				self.insert_at(idx, key_str.to_owned(), value.into());
@@ -109,9 +108,9 @@ impl Properties {
 	pub fn try_insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
-		match self.get_idxes(key_str) {
+		match self.find_idx(key_str) {
 			Ok(idx) => {
-				let valref = self.get_at(idx);
+				let valref = self.get_at_mut(idx);
 				if valref.is_empty() {
 					*valref = value.into();
 					Ok(())
@@ -176,8 +175,8 @@ pub trait PropertiesSource {
 
 impl<'a> PropertiesSource for &'a Properties {
 	fn apply_to(self, props: &mut Properties, _: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
-		for (k, v) in self.iter_raw() {
-			props.insert_raw_for_key(k, v);
+		for (k, v) in self.iter() {
+			props.insert_raw_for_key(k, v.value().unwrap_or_default());
 		}
 		Ok(())
 	}
