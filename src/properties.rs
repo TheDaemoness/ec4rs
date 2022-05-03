@@ -1,3 +1,7 @@
+mod rawvalue;
+
+pub use rawvalue::RawValue;
+
 use crate::property::Property;
 
 /// A map of property names to property values.
@@ -9,24 +13,28 @@ use crate::property::Property;
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone)]
 pub struct Properties {
-	keys: Vec<String>,
-	map: Vec<(usize, String)>,
+	pairs: Vec<(String, String)>,
+	/// A list of indices of `pairs`, sorted by the key of the pair each index refers to.
+	idxes: Vec<usize>,
 }
 
 impl Properties {
 	/// Returns an empty [Properties] object.
 	pub fn new() -> Properties {
 		Properties {
-			keys: Vec::new(),
-			map: Vec::new(),
+			pairs: Vec::new(),
+			idxes: Vec::new(),
 		}
 	}
 
+	/// Returns either the index of the pair with the desired key in `pairs`,
+	/// or the index to insert a new index into `index`.
 	fn find_idx(&self, key: &str) -> Result<usize, usize> {
 		self
-			.map
+			.idxes
 			.as_slice()
-			.binary_search_by_key(&key, |(ki, _)| self.keys.get(*ki).unwrap().as_str())
+			.binary_search_by_key(&key, |ki| self.pairs[*ki].0.as_str())
+			.map(|idx| self.idxes[idx])
 	}
 
 	/// Returns the unparsed "raw" value for the specified key.
@@ -36,7 +44,7 @@ impl Properties {
 		let value = self
 			.find_idx(key.as_ref())
 			.ok()
-			.map(|idx| self.map.get(idx).unwrap().1.as_str())
+			.map(|idx| self.pairs[idx].1.as_str())
 			.filter(|v| !v.is_empty());
 		if let Some(value) = value {
 			RawValue::Unknown(value)
@@ -63,18 +71,18 @@ impl Properties {
 	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
 	pub fn iter(&self) -> impl Iterator<Item = (&str, RawValue<'_>)> {
 		self
-			.keys
+			.pairs
 			.iter()
-			.map(|key| (key.as_ref(), self.get_raw_for_key(key)))
+			.map(|(k, v)| (k.as_str(), RawValue::Unknown(v.as_str())))
 	}
 
 	fn get_at_mut(&mut self, idx: usize) -> &mut String {
-		&mut self.map.get_mut(idx).unwrap().1
+		&mut self.pairs.get_mut(idx).unwrap().1
 	}
 
 	fn insert_at(&mut self, idx: usize, key: String, value: String) {
-		self.map.insert(idx, (self.keys.len(), value));
-		self.keys.push(key);
+		self.idxes.insert(idx, self.pairs.len());
+		self.pairs.push((key, value));
 	}
 
 	/// Sets the value for a specified key.
@@ -179,87 +187,5 @@ impl<'a> PropertiesSource for &'a Properties {
 			props.insert_raw_for_key(k, v.value().unwrap_or_default());
 		}
 		Ok(())
-	}
-}
-
-/// Wrapper around unparsed values in [Properties].
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum RawValue<'a> {
-	/// Absence of a value.
-	Unset,
-	/// The value "unset", which has special behavior for all common properties.
-	UnsetExplicit,
-	/// An unparsed value.
-	Unknown(&'a str),
-}
-
-impl<'a> RawValue<'a> {
-	/// Returns `UnsetExplicit` if self matches `Unknown("unset")`.
-	/// Otherwise, returns `self`.
-	///
-	/// Comparison is done case-insensitively.
-	#[must_use]
-	pub fn filter_unset(self) -> Self {
-		use RawValue::*;
-		match self {
-			Unknown(v) => {
-				if "unset".eq_ignore_ascii_case(v) {
-					UnsetExplicit
-				} else {
-					self
-				}
-			}
-			v => v,
-		}
-	}
-	/// Returns true if the value is unset, including by a value of "unset".
-	#[must_use]
-	pub const fn is_unset(&self) -> bool {
-		use RawValue::*;
-		matches!(self, Unset | UnsetExplicit)
-	}
-
-	/// Converts this `RawValue` into a [Result].
-	///
-	/// The `bool` in the `Err` variant is true if
-	/// the key-value pair was unset by a value of "unset".
-	pub const fn into_result(&self) -> Result<&'a str, bool> {
-		use RawValue::*;
-		match self {
-			Unknown(s)    => Ok(s),
-			UnsetExplicit => Err(true),
-			Unset         => Err(false),
-		}
-	}
-
-	/// Returns the unparsed value as a `&str`.
-	///
-	/// If the key-value pair was unset explicitly,
-	/// returns `Some("unset")`.
-	pub const fn value(&self) -> Option<&'a str> {
-		use RawValue::*;
-		match self {
-			Unset         => None,
-			UnsetExplicit => Some("unset"),
-			Unknown(s)    => Some(s),
-		}
-	}
-	/// Attempts to parse the contained value.
-	///
-	/// For convenience, this function may lowercase a contained value before parsing.
-	/// Specify whether it should be lowercased as the second generic argument.
-	///
-	/// If the value is unset, returns `Err(None)`.
-	pub fn parse<T: std::str::FromStr, const LOWERCASE: bool>(&self) -> Result<T, Option<T::Err>> {
-		use RawValue::*;
-		match self {
-			Unknown(v) => if LOWERCASE {
-				T::from_str(v.to_lowercase().as_str())
-			} else {
-				T::from_str(v)
-			}
-			.map_err(Some),
-			_ => Err(None),
-		}
 	}
 }
