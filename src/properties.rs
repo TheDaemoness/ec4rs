@@ -1,5 +1,7 @@
+mod iter;
 mod rawvalue;
 
+pub use iter::{Iter, IterMut};
 pub use rawvalue::RawValue;
 
 use crate::property::Property;
@@ -68,12 +70,18 @@ impl Properties {
 		retval.parse::<T, false>().or(Err(retval))
 	}
 
-	/// Returns an iterator over the key-value pairs, ordered from oldest key to newest key.
-	pub fn iter(&self) -> impl Iterator<Item = (&str, RawValue<'_>)> {
-		self
-			.pairs
-			.iter()
-			.map(|(k, v)| (k.as_str(), RawValue::Unknown(v.as_str())))
+	/// Returns an iterator over the key-value pairs.
+	///
+	/// Pairs are returned from oldest to newest.
+	pub fn iter(&self) -> Iter<'_> {
+		Iter(self.pairs.iter())
+	}
+
+	/// Returns an iterator over the key-value pairs that allows mutation of the values.
+	///
+	/// Pairs are returned from oldest to newest.
+	pub fn iter_mut(&mut self) -> IterMut<'_> {
+		IterMut(self.pairs.iter_mut())
 	}
 
 	fn get_at_mut(&mut self, idx: usize) -> &mut String {

@@ -31,6 +31,7 @@ fn print_config(
 				props.use_fallbacks();
 			}
 			for (key, value) in props.iter() {
+				let value = value.value().unwrap();
 				if ec4rs::property::STANDARD_KEYS.contains(&key) {
 					println!("{}={}", key, value.to_lowercase())
 				} else {
