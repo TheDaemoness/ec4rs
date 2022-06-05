@@ -78,7 +78,7 @@ impl<R: io::BufRead> EcParser<R> {
 						Ok(Line::Section(_)) => break Ok(section),
 						Ok(Line::Nothing)    => (),
 						Ok(Line::Pair(k, v)) => {
-							section.insert(k, v);
+							section.insert(k, v.to_owned());
 						}
 					}
 				}

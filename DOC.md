@@ -22,7 +22,7 @@ let charset: &str = cfg.get_raw::<Charset>()
     .into_result()
     .unwrap_or("utf-8");
 // Parse a non-standard property.
-let hard_wrap: Option<usize> = cfg.get_raw_for_key("max_line_length")
-    .parse::<usize, true>() // `true` lowercases the value before parsing.
-    .ok();
+let hard_wrap = cfg.get_raw_for_key("max_line_length")
+    .into_str()
+    .parse::<usize>();
 ```

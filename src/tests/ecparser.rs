@@ -1,12 +1,18 @@
-fn validate<'a>(text: &str, should_be_root: bool, expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>) {
+fn validate<'a>(
+	text: &str,
+	should_be_root: bool,
+	expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>
+) {
 	let mut parser = crate::EcParser::new(text.as_bytes()).unwrap();
 	assert_eq!(parser.is_root, should_be_root);
 	for section_expected in expected {
 		let section = parser.next().unwrap().unwrap();
-		let mut iter = section.props().iter();
+		let mut iter = section
+			.props()
+			.iter()
+			.map(|(k,v)| (k, v.into_str()));
 		for (key, value) in section_expected {
-			use crate::properties::RawValue;
-			assert_eq!(iter.next(), Some((*key, RawValue::Unknown(value))))
+			assert_eq!(iter.next(), Some((*key, *value)))
 		}
 		assert!(matches!(iter.next(), None));
 	}

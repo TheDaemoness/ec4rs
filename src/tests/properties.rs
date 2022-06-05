@@ -14,7 +14,7 @@ fn zip_alts() -> impl Iterator<Item = (&'static str, &'static str)> {
 fn test_basic_keys(props: &Properties) {
 	for s in BASIC_KEYS {
 		// Test mapping correctness using get.
-		assert_eq!(props.get_raw_for_key(s).value(), Some(s))
+		assert_eq!(props.get_raw_for_key(s).into_option(), Some(s))
 	}
 	// Ensure that they keys are returned in order.
 	assert!(props.iter().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
@@ -39,7 +39,7 @@ fn insert() {
 fn insert_replacing() {
 	let mut props: Properties = zip_alts().collect();
 	for (k, v) in zip_alts() {
-		let old = props.get_raw_for_key(k).value().expect("missing pair").to_owned();
+		let old = props.get_raw_for_key(k).into_option().expect("missing pair").to_owned();
 		assert_eq!(old, v);
 		props.insert_raw_for_key(k, k);
 	}
@@ -62,13 +62,15 @@ fn try_insert_replacing() {
 		assert_eq!(
 			props
 				.try_insert_raw_for_key(k, k)
-				.expect_err("try_insert wrongly returns Ok for same value"),
+				.expect_err("try_insert wrongly returns Ok for same value")
+				.into_str(),
 			k
 		);
 		assert_eq!(
 			props
 				.try_insert_raw_for_key(k, v)
-				.expect_err("try_insert wrongly returns Ok for update"),
+				.expect_err("try_insert wrongly returns Ok for update")
+				.into_str(),
 			k
 		);
 	}

@@ -10,16 +10,19 @@ mod glob;
 mod linereader;
 mod properties;
 pub mod property;
+pub mod rawvalue;
 mod section;
 #[cfg(test)]
 mod tests;
+mod traits;
 pub mod version;
 
 pub use ecfile::{EcFile, EcFiles};
 pub use ecparser::EcParser;
 pub use error::{Error, ParseError};
-pub use properties::{Properties, PropertiesSource, RawValue};
+pub use properties::{Properties, PropertiesSource};
 pub use section::Section;
+pub use traits::*;
 
 /// Retrieve the [Properties] for a file at the given path.
 ///

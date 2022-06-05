@@ -1,10 +1,9 @@
 mod iter;
-mod rawvalue;
 
 pub use iter::{Iter, IterMut};
-pub use rawvalue::RawValue;
 
-use crate::property::Property;
+use crate::{PropertyKey, PropertyValue};
+use crate::rawvalue::RawValue;
 
 /// A map of property names to property values.
 ///
@@ -15,7 +14,7 @@ use crate::property::Property;
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone)]
 pub struct Properties {
-	pairs: Vec<(String, String)>,
+	pairs: Vec<(String, RawValue)>,
 	/// A list of indices of `pairs`, sorted by the key of the pair each index refers to.
 	idxes: Vec<usize>,
 }
@@ -42,32 +41,27 @@ impl Properties {
 	/// Returns the unparsed "raw" value for the specified key.
 	///
 	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
-	pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> RawValue<'_> {
-		let value = self
+	pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
+		self
 			.find_idx(key.as_ref())
 			.ok()
-			.map(|idx| self.pairs[idx].1.as_str())
-			.filter(|v| !v.is_empty());
-		if let Some(value) = value {
-			RawValue::Unknown(value)
-		} else {
-			RawValue::Unset
-		}
+			.map(|idx| &self.pairs[idx].1)
+			.unwrap_or(&crate::rawvalue::UNSET)
 	}
 
-	/// Returns the unpared "raw" value for the specified [Property].
+	/// Returns the unpared "raw" value for the specified property.
 	///
 	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
-	pub fn get_raw<T: Property>(&self) -> RawValue<'_> {
+	pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
 		self.get_raw_for_key(T::key())
 	}
 
-	/// Returns the parsed value for the specified [Property].
+	/// Returns the parsed value for the specified property.
 	///
 	/// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
-	pub fn get<T: Property>(&self) -> Result<T, RawValue<'_>> {
+	pub fn get<T: PropertyKey + PropertyValue>(&self) -> Result<T, &RawValue> {
 		let retval = self.get_raw::<T>();
-		retval.parse::<T, false>().or(Err(retval))
+		retval.parse::<T>().or(Err(retval))
 	}
 
 	/// Returns an iterator over the key-value pairs.
@@ -84,50 +78,59 @@ impl Properties {
 		IterMut(self.pairs.iter_mut())
 	}
 
-	fn get_at_mut(&mut self, idx: usize) -> &mut String {
+	fn get_at_mut(&mut self, idx: usize) -> &mut RawValue {
 		&mut self.pairs.get_mut(idx).unwrap().1
 	}
 
-	fn insert_at(&mut self, idx: usize, key: String, value: String) {
+	fn insert_at(&mut self, idx: usize, key: String, val: RawValue) {
 		self.idxes.insert(idx, self.pairs.len());
-		self.pairs.push((key, value));
+		self.pairs.push((key, val));
 	}
 
 	/// Sets the value for a specified key.
-	pub fn insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) {
+	pub fn insert_raw_for_key(
+		&mut self,
+		key: impl AsRef<str>,
+		val: impl Into<RawValue>
+	) {
 		let key_str = key.as_ref();
 		match self.find_idx(key_str) {
 			Ok(idx) => {
-				*self.get_at_mut(idx) = value.into();
+				*self.get_at_mut(idx) = val.into();
 			}
 			Err(idx) => {
-				self.insert_at(idx, key_str.to_owned(), value.into());
+				self.insert_at(idx, key_str.to_owned(), val.into());
 			}
 		}
 	}
 
-	/// Sets the value for a specified [Property]'s key.
-	pub fn insert_raw<T: Property, S: Into<String>>(&mut self, value: S) {
-		self.insert_raw_for_key(T::key(), value)
+	/// Sets the value for a specified property's key.
+	pub fn insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) {
+		self.insert_raw_for_key(K::key(), val)
 	}
 
-	/// Inserts a specified [Property] into the map.
+	/// Inserts a specified property into the map.
 	///
 	/// If the key was already associated with a value, returns the old value.
-	pub fn insert<T: Property>(&mut self, prop: T) {
-		self.insert_raw_for_key(T::key(), prop.to_string())
+	pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
+		//TODO: Store Cow strings internally.
+		self.insert_raw_for_key(T::key(), prop.into())
 	}
 
 	/// Attempts to add a new key-value pair to the map.
 	///
 	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert_raw_for_key(&mut self, key: impl AsRef<str>, value: impl Into<String>) -> Result<(), &mut String> {
+	pub fn try_insert_raw_for_key(
+		&mut self,
+		key: impl AsRef<str>,
+		value: impl Into<RawValue>
+	) -> Result<(), &mut RawValue> {
 		let key_str = key.as_ref();
 		#[allow(clippy::unit_arg)]
 		match self.find_idx(key_str) {
 			Ok(idx) => {
 				let valref = self.get_at_mut(idx);
-				if valref.is_empty() {
+				if valref.is_unset() {
 					*valref = value.into();
 					Ok(())
 				} else {
@@ -138,18 +141,18 @@ impl Properties {
 		}
 	}
 
-	/// Attempts to add a new [Property] to the map with a specified value.
+	/// Attempts to add a new property to the map with a specified value.
 	///
 	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert_raw<T: Property, S: Into<String>>(&mut self, value: S) -> Result<(), &mut String> {
-		self.try_insert_raw_for_key(T::key(), value)
+	pub fn try_insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) -> Result<(), &mut RawValue> {
+		self.try_insert_raw_for_key(K::key(), val)
 	}
 
-	/// Attempts to add a new [Property] to the map.
+	/// Attempts to add a new property to the map.
 	///
 	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert<T: Property>(&mut self, prop: T) -> Result<(), &mut String> {
-		self.try_insert_raw_for_key(T::key(), prop.to_string())
+	pub fn try_insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) -> Result<(), &mut RawValue> {
+		self.try_insert_raw_for_key(T::key(), prop.into())
 	}
 
 	/// Add fallback values for certain common key-value pairs.
@@ -172,7 +175,7 @@ impl Default for Properties {
 	}
 }
 
-impl<K: AsRef<str>, V: Into<String>> FromIterator<(K, V)> for Properties {
+impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
 	fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
 		let mut result = Properties::new();
 		for (k, v) in iter {
@@ -192,7 +195,7 @@ pub trait PropertiesSource {
 impl<'a> PropertiesSource for &'a Properties {
 	fn apply_to(self, props: &mut Properties, _: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
 		for (k, v) in self.iter() {
-			props.insert_raw_for_key(k, v.value().unwrap_or_default());
+			props.insert_raw_for_key(k, v.clone());
 		}
 		Ok(())
 	}

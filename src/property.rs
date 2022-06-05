@@ -1,12 +1,11 @@
-//! Type-safe key-value pair parsers.
-//!
-//! Includes the [Property] trait
-//! as well as enums for common properties.
+//! Enums for common EditorConfig properties.
+
+use super::{PropertyKey, PropertyValue};
+use crate::rawvalue::RawValue;
 
 use std::fmt::Display;
-use std::str::FromStr;
 
-/// Error for property parse failures;
+/// Error for common property parse failures.
 #[derive(Clone, Copy, Debug)]
 pub struct UnknownValueError;
 
@@ -18,17 +17,6 @@ impl Display for UnknownValueError {
 
 impl std::error::Error for UnknownValueError {}
 
-/// A trait for types that represent properties.
-///
-/// Used for enums or newtypes that are associated with string keys,
-/// that also know how to parse themselves from string values.
-pub trait Property: Sized + FromStr + ToString {
-	/// The string key for this property.
-	///
-	/// Used to look up the value in a [crate::Properties] map.
-	fn key() -> &'static str;
-}
-
 //TODO: Deduplicate these macros a bit?
 
 macro_rules! property_choice {
@@ -38,24 +26,36 @@ macro_rules! property_choice {
 		#[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
 		#[allow(missing_docs)]
 		pub enum $prop_id {$($variant),+}
-		impl FromStr for $prop_id {
+
+		impl PropertyValue for $prop_id {
+			const MAYBE_UNSET: bool = false;
 			type Err = UnknownValueError;
-			fn from_str(raw: &str) -> Result<Self, Self::Err> {
-				match raw.to_lowercase().as_str() {
+			fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
+				match raw.into_str().to_lowercase().as_str() {
 					$($string => Ok($prop_id::$variant),)+
 					_ => Err(UnknownValueError)
 				}
 			}
 		}
-		impl Display for $prop_id {
-			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-				match self {
-					$($prop_id::$variant => write!(f, "{}", $string)),*
+
+		impl From<$prop_id> for RawValue {
+			fn from(val: $prop_id) -> RawValue {
+				match val {
+					$($prop_id::$variant => RawValue::from($string)),*
 				}
 			}
 		}
-		impl Property for $prop_id {
+
+		impl PropertyKey for $prop_id {
 			fn key() -> &'static str {$name}
+		}
+
+		impl Display for $prop_id {
+			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+				write!(f, "{}", match self {
+					$($prop_id::$variant => $string),*
+				})
+			}
 		}
 	}
 }
@@ -72,15 +72,31 @@ macro_rules! property_valued {
 			Value($value_type)
 			$(,$variant)*
 		}
-		impl FromStr for $prop_id {
+
+		impl PropertyValue for $prop_id {
+			const MAYBE_UNSET: bool = false;
 			type Err = UnknownValueError;
-			fn from_str(raw: &str) -> Result<Self, Self::Err> {
-				match raw.to_lowercase().as_str() {
+			fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
+				match raw.into_str().to_lowercase().as_str() {
 					$($string => Ok($prop_id::$variant),)*
-					_ => raw.parse::<$value_type>().map(Self::Value).or(Err(UnknownValueError))
+					v => v.parse::<$value_type>().map(Self::Value).or(Err(UnknownValueError))
 				}
 			}
 		}
+
+		impl From<$prop_id> for RawValue {
+			fn from(val: $prop_id) -> RawValue {
+				match val {
+					$prop_id::Value(v) => RawValue::from(v.to_string()),
+					$($prop_id::$variant => RawValue::from($string)),*
+				}
+			}
+		}
+
+		impl PropertyKey for $prop_id {
+			fn key() -> &'static str {$name}
+		}
+
 		impl Display for $prop_id {
 			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
 				match self {
@@ -88,9 +104,6 @@ macro_rules! property_valued {
 					$($prop_id::$variant => write!(f, "{}", $string)),*
 				}
 			}
-		}
-		impl Property for $prop_id {
-			fn key() -> &'static str {$name}
 		}
 	}
 }

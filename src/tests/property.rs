@@ -1,3 +1,5 @@
+use crate::PropertyKey;
+
 #[test]
 fn standard_keys_matches() {
 	use crate::property::*;

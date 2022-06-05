@@ -2,9 +2,13 @@ use crate::property as prop;
 
 pub fn add_fallbacks(props: &mut crate::Properties, legacy: bool) {
 	let val = props.get_raw::<prop::IndentSize>();
-	if let Some(value) = val.value() {
-		if let Ok(prop::IndentSize::UseTabWidth) = val.parse::<prop::IndentSize, false>() {
-			let value = props.get_raw::<prop::TabWidth>().value().unwrap_or("tab").to_owned();
+	if let Some(value) = val.into_option() {
+		if let Ok(prop::IndentSize::UseTabWidth) = val.parse::<prop::IndentSize>() {
+			let value = props
+				.get_raw::<prop::TabWidth>()
+				.into_option()
+				.unwrap_or("tab")
+				.to_owned();
 			props.insert_raw::<prop::IndentSize, _>(value);
 		} else {
 			let value = value.to_owned();
