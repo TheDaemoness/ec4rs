@@ -3,7 +3,7 @@ fn validate<'a>(
 	should_be_root: bool,
 	expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>
 ) {
-	let mut parser = crate::EcParser::new(text.as_bytes()).unwrap();
+	let mut parser = crate::ConfigParser::new(text.as_bytes()).unwrap();
 	assert_eq!(parser.is_root, should_be_root);
 	for section_expected in expected {
 		let section = parser.next().unwrap().unwrap();

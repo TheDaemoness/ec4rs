@@ -7,26 +7,26 @@ use std::io;
 ///
 /// This struct wraps any [std::io::BufRead]
 /// and parses the prelude and zero or more sections from it.
-pub struct EcParser<R: io::BufRead> {
+pub struct ConfigParser<R: io::BufRead> {
 	/// Incidates if a `root = true` line was found in the prelude.
 	pub is_root: bool,
 	eof: bool,
 	reader: LineReader<R>,
 }
 
-impl<R: io::Read> EcParser<io::BufReader<R>> {
-	/// See [EcParser::new].
-	pub fn new_buffered(source: R) -> Result<EcParser<io::BufReader<R>>, ParseError> {
+impl<R: io::Read> ConfigParser<io::BufReader<R>> {
+	/// See [ConfigParser::new].
+	pub fn new_buffered(source: R) -> Result<ConfigParser<io::BufReader<R>>, ParseError> {
 		Self::new(io::BufReader::new(source))
 	}
 }
 
-impl<R: io::BufRead> EcParser<R> {
-	/// Constructs a new [EcParser] and reads the prelude from the provided source.
+impl<R: io::BufRead> ConfigParser<R> {
+	/// Constructs a new [ConfigParser] and reads the prelude from the provided source.
 	///
 	/// Returns `Ok` if the prelude was read successfully,
 	/// otherwise returns `Err` with the error that occurred during reading.
-	pub fn new(buf_source: R) -> Result<EcParser<R>, ParseError> {
+	pub fn new(buf_source: R) -> Result<ConfigParser<R>, ParseError> {
 		let mut reader = LineReader::new(buf_source);
 		let mut is_root = false;
 		let eof = loop {
@@ -46,7 +46,7 @@ impl<R: io::BufRead> EcParser<R> {
 				}
 			}
 		};
-		Ok(EcParser { is_root, reader, eof })
+		Ok(ConfigParser { is_root, reader, eof })
 	}
 
 	/// Returns `true` if there may be another section to read.
@@ -91,7 +91,7 @@ impl<R: io::BufRead> EcParser<R> {
 	}
 }
 
-impl<R: io::BufRead> Iterator for EcParser<R> {
+impl<R: io::BufRead> Iterator for ConfigParser<R> {
 	type Item = Result<Section, ParseError>;
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.read_section() {
@@ -102,9 +102,9 @@ impl<R: io::BufRead> Iterator for EcParser<R> {
 	}
 }
 
-impl<R: io::BufRead> std::iter::FusedIterator for EcParser<R> {}
+impl<R: io::BufRead> std::iter::FusedIterator for ConfigParser<R> {}
 
-impl<R: io::BufRead> crate::PropertiesSource for &mut EcParser<R> {
+impl<R: io::BufRead> crate::PropertiesSource for &mut ConfigParser<R> {
 	fn apply_to(self, props: &mut crate::Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
 		let path = path.as_ref();
 		for section_result in self {

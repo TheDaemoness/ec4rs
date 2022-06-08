@@ -2,12 +2,12 @@
 #![allow(dead_code)]
 #![deny(missing_docs)]
 
-mod ecfile;
-mod ecparser;
 mod error;
 mod fallback;
+mod file;
 mod glob;
 mod linereader;
+mod parser;
 mod properties;
 pub mod property;
 pub mod rawvalue;
@@ -17,9 +17,9 @@ mod tests;
 mod traits;
 pub mod version;
 
-pub use ecfile::{EcFile, EcFiles};
-pub use ecparser::EcParser;
 pub use error::{Error, ParseError};
+pub use file::{ConfigFile, ConfigFiles};
+pub use parser::ConfigParser;
 pub use properties::{Properties, PropertiesSource};
 pub use section::Section;
 pub use traits::*;
@@ -50,6 +50,6 @@ pub fn config_at_path_for(
 	config_path_override: Option<impl AsRef<std::path::Path>>,
 ) -> Result<Properties, Error> {
 	let mut retval = Properties::new();
-	EcFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
+	ConfigFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
 	Ok(retval)
 }
