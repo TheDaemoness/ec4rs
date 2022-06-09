@@ -23,7 +23,7 @@ fn print_config(
 	filename: Option<&PathBuf>,
 	legacy_fallbacks: bool,
 ) {
-	match ec4rs::config_at_path_for(path, filename) {
+	match ec4rs::properties_from_config_of(path, filename) {
 		Ok(mut props) => {
 			if legacy_fallbacks {
 				props.use_fallbacks_legacy();
