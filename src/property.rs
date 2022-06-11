@@ -114,12 +114,12 @@ property_choice! {
 	(Spaces, "space")
 }
 
-//NOTE:
-//The spec and the wiki disagree on the valid range of indent/tab sizes.
-//The spec says "whole numbers" for both,
-//whereas the wiki says "an integer"/"a positive integer" respectively.
-//This implementation follows the spec strictly here.
-//Notably, it will happily consider sizes of 0 valid.
+// NOTE:
+// The spec and the wiki disagree on the valid range of indent/tab sizes.
+// The spec says "whole numbers" for both,
+// whereas the wiki says "an integer"/"a positive integer" respectively.
+// This implementation follows the spec strictly here.
+// Notably, it will happily consider sizes of 0 valid.
 
 property_valued! {IndentSize, "indent_size", usize; (UseTabWidth, "tab")}
 property_valued! {TabWidth, "tab_width", usize;}
@@ -144,7 +144,9 @@ property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
 property_valued! {FinalNewline, "insert_final_newline", bool;}
 property_valued! {MaxLineLen, "max_line_length", usize; (Off, "off")}
 
-/// A list of keys of the standard properties.
+/// All the keys of the standard properties.
+///
+/// Can be used to determine if a property is defined in the specification or not.
 pub static STANDARD_KEYS: &[&str] = &[
 	"indent_size",
 	"indent_style",

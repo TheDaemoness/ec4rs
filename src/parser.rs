@@ -3,10 +3,11 @@ use crate::ParseError;
 use crate::Section;
 use std::io;
 
-/// A parser for the text of an EditorConfig file.
+/// Parser for the text of an EditorConfig file.
 ///
-/// This struct wraps any [std::io::BufRead]
-/// and parses the prelude and zero or more sections from it.
+/// This struct wraps any [std::io::BufRead].
+/// It eagerly parses the prelude on construction.
+/// [Section]s may be parsed by calling [ConfigParser::read_section].
 pub struct ConfigParser<R: io::BufRead> {
 	/// Incidates if a `root = true` line was found in the prelude.
 	pub is_root: bool,
@@ -15,6 +16,8 @@ pub struct ConfigParser<R: io::BufRead> {
 }
 
 impl<R: io::Read> ConfigParser<io::BufReader<R>> {
+	/// Convenience function for construction using an unbuffered [io::Read].
+	///
 	/// See [ConfigParser::new].
 	pub fn new_buffered(source: R) -> Result<ConfigParser<io::BufReader<R>>, ParseError> {
 		Self::new(io::BufReader::new(source))
@@ -24,7 +27,7 @@ impl<R: io::Read> ConfigParser<io::BufReader<R>> {
 impl<R: io::BufRead> ConfigParser<R> {
 	/// Constructs a new [ConfigParser] and reads the prelude from the provided source.
 	///
-	/// Returns `Ok` if the prelude was read successfully,
+	/// Returns `Ok` if the prelude was parsed successfully,
 	/// otherwise returns `Err` with the error that occurred during reading.
 	pub fn new(buf_source: R) -> Result<ConfigParser<R>, ParseError> {
 		let mut reader = LineReader::new(buf_source);
@@ -59,7 +62,7 @@ impl<R: io::BufRead> ConfigParser<R> {
 		self.reader.line_no()
 	}
 
-	/// Reads a [Section] from the internal source.
+	/// Reads and parses a [Section].
 	pub fn read_section(&mut self) -> Result<Section, ParseError> {
 		if !self.eof {
 			use crate::linereader::Line;

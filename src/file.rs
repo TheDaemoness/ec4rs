@@ -6,7 +6,7 @@ use crate::{ConfigParser, Error, ParseError, Properties, PropertiesSource, Secti
 pub struct ConfigFile {
 	/// The path to the open file.
 	pub path: PathBuf,
-	/// An [ConfigParser] that reads from the file.
+	/// A [ConfigParser] that reads from the file.
 	pub reader: ConfigParser<std::io::BufReader<std::fs::File>>,
 }
 
@@ -21,7 +21,9 @@ impl ConfigFile {
 		Ok(ConfigFile { path, reader })
 	}
 
-	/// Wrap a [ParseError] in an [Error::InFile].
+	/// Wraps a [ParseError] in an [Error::InFile].
+	///
+	/// Uses the path and current line number from this instance.
 	pub fn add_error_context(&self, error: ParseError) -> Error {
 		Error::InFile(self.path.clone(), self.reader.line_no(), error)
 	}
@@ -57,7 +59,7 @@ impl PropertiesSource for &mut ConfigFile {
 	}
 }
 
-/// A directory traverser for finding and opening EditorConfig files.
+/// Directory traverser for finding and opening EditorConfig files.
 ///
 /// All the contained files are open for reading and have not had any sections read.
 /// When iterated over, either by using it as an [Iterator]

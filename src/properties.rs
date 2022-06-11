@@ -5,7 +5,7 @@ pub use iter::{Iter, IterMut};
 use crate::{PropertyKey, PropertyValue};
 use crate::rawvalue::RawValue;
 
-/// A map of property names to property values.
+/// Map of property names to property values.
 ///
 /// It features O(log n) lookup and preserves insertion order,
 /// as well as convenience methods for type-safe access and parsing of values.
@@ -15,7 +15,7 @@ use crate::rawvalue::RawValue;
 #[derive(Clone)]
 pub struct Properties {
 	pairs: Vec<(String, RawValue)>,
-	/// A list of indices of `pairs`, sorted by the key of the pair each index refers to.
+	/// Indices of `pairs`, sorted by the key of the pair each index refers to.
 	idxes: Vec<usize>,
 }
 
@@ -155,7 +155,7 @@ impl Properties {
 		self.try_insert_raw_for_key(T::key(), prop.into())
 	}
 
-	/// Add fallback values for certain common key-value pairs.
+	/// Adds fallback values for certain common key-value pairs.
 	///
 	/// Used to obtain spec-compliant values for [crate::property::IndentSize]
 	/// and [crate::property::TabWidth].
@@ -163,7 +163,10 @@ impl Properties {
 		crate::fallback::add_fallbacks(self, false)
 	}
 
-	/// Add pre-0.9.0 fallback values for certain common key-value pairs.
+	/// Adds pre-0.9.0 fallback values for certain common key-value pairs.
+	///
+	/// This shouldn't be used outside of narrow cases where compatibility with those older standards is required.
+	/// Prefer [Properties::use_fallbacks] instead.
 	pub fn use_fallbacks_legacy(&mut self) {
 		crate::fallback::add_fallbacks(self, true)
 	}
@@ -185,10 +188,10 @@ impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
 	}
 }
 
-/// A trait for types that can add properties to a map.
+/// Trait for types that can add properties to a [Properties] map.
 pub trait PropertiesSource {
-	/// Adds key-value pairs to a [Properties]
-	/// if and only if they apply to a file at the specified path.
+	/// Adds properties that apply to a file at the specified path
+	/// to the provided [Properties].
 	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error>;
 }
 

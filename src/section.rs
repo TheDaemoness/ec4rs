@@ -3,7 +3,7 @@ use crate::{Properties, rawvalue::RawValue};
 
 use std::path::Path;
 
-/// A section of an EditorConfig file.
+/// One section of an EditorConfig file.
 pub struct Section {
 	pattern: Glob,
 	props: crate::Properties,
@@ -21,11 +21,14 @@ impl Section {
 	pub fn props(&self) -> &Properties {
 		&self.props
 	}
-	/// Adds a key-value pair to this section.
+	/// Adds a property to this section.
 	///
-	/// Lowercases both the key and the value.
+	/// ASCII-lowercases the key, but not the value.
 	pub fn insert(
-		&mut self, key: impl AsRef<str>, val: impl Into<RawValue>) {
+		&mut self,
+		key: impl AsRef<str>,
+		val: impl Into<RawValue>
+	) {
 		self.props.insert_raw_for_key(key.as_ref().to_lowercase(), val);
 	}
 	/// Returns true if and only if this section applies to a file at the specified path.

@@ -20,7 +20,7 @@ pub trait PropertyValue: Sized {
 	fn parse(value: &RawValue) -> Result<Self, Self::Err>;
 }
 
-/// Trait for types that are properties.
+/// Trait for types that are associated with property names.
 ///
 /// Types that implement this trait will usually also implement [PropertyValue].
 pub trait PropertyKey {
@@ -30,7 +30,7 @@ pub trait PropertyKey {
 	fn key() -> &'static str;
 }
 
-/// Tests if the result of parsing the output of [PropertyWrite::write]
+/// Tests if the result of parsing the result of an `Into<RawValue>` conversion
 /// is *not unequal* to the original value.
 #[cfg(test)]
 pub fn test_reparse<T, E: std::fmt::Debug>(initial: T)

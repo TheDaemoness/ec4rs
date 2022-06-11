@@ -52,7 +52,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
 	}
 }
 
-/// A struct for extracting valid INI-like lines from text,
+/// Struct for extracting valid INI-like lines from text,
 /// suitable for initial parsing of individual .editorconfig files.
 /// Does minimal validation and does not modify the input text in any way.
 pub struct LineReader<R: io::BufRead> {
@@ -89,7 +89,7 @@ impl<R: io::BufRead> LineReader<R> {
 		parse_line(self.line())
 	}
 
-	/// Reads and parse the next line from the stream.
+	/// Reads and parses the next line from the stream.
 	pub fn next_line(&mut self) -> LineReadResult<'_> {
 		self.line.clear();
 		match self.reader.read_line(&mut self.line) {
