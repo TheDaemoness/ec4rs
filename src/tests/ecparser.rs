@@ -21,7 +21,7 @@ fn validate<'a>(
 
 macro_rules! expect {
 	[$([$(($key:literal, $value:literal)),*]),*] => {
-		[$([$(($key, $value)),*].as_slice()),*]
+		[$(&[$(($key, $value)),*][..]),*]
 	}
 }
 

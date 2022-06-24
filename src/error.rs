@@ -48,8 +48,8 @@ impl std::fmt::Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		use Error::*;
 		match self {
-			Parse(error)              => write!(f, "{error}"),
-			InFile(path, line, error) => write!(f, "{}:{line}: {error}", path.to_string_lossy()),
+			Parse(error)              => write!(f, "{}", error),
+			InFile(path, line, error) => write!(f, "{}:{}: {}", path.to_string_lossy(), line, error),
 			InvalidCwd(ioe)           => write!(f, "invalid cwd: {}", ioe),
 		}
 	}

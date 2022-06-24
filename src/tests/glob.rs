@@ -8,15 +8,15 @@ pub fn test<'a, 'b>(
 	for path in valid {
 		assert!(
 			glob.matches(path.as_ref()),
-			"`{path}` didn't match pattern `{pattern}`; chain: {:?}",
-			glob
+			"`{}` didn't match pattern `{}`; chain: {:?}",
+			path, pattern, glob
 		)
 	}
 	for path in invalid {
 		assert!(
 			!glob.matches(path.as_ref()),
-			"`{path}` wrongly matched pattern `{pattern}`; chain {:?}",
-			glob
+			"`{}` wrongly matched pattern `{}`; chain {:?}",
+			path, pattern, glob
 		)
 	}
 }

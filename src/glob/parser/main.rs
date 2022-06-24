@@ -19,7 +19,9 @@ pub fn parse(glob: &str) -> Glob {
 				'?' => retval.append(Matcher::AnyChar),
 				'*' => retval.append(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
 				'[' => {
-					(retval, chars) = super::charclass::parse(retval, chars);
+					let (retval_n, chars_n) = super::charclass::parse(retval, chars);
+					retval = retval_n;
+					chars  = chars_n;
 				}
 				'{' => {
 					if let Some((a, b, chars_new)) = super::numrange::parse(chars.clone()) {
@@ -45,8 +47,8 @@ pub fn parse(glob: &str) -> Glob {
 					}
 				}
 				'}' => {
-					let add_brace: bool;
-					(retval, add_brace) = stack.add_alt_and_pop(retval);
+					let (retval_n, add_brace) = stack.add_alt_and_pop(retval);
+					retval = retval_n;
 					if add_brace {
 						retval.append_char('}');
 					}
@@ -56,8 +58,8 @@ pub fn parse(glob: &str) -> Glob {
 		}
 	}
 	loop {
-		let is_empty: bool;
-		(retval, is_empty) = stack.join_and_pop(retval);
+		let (retval_n, is_empty) = stack.join_and_pop(retval);
+		retval = retval_n;
 		if is_empty {
 			break;
 		}
