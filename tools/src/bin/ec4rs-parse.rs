@@ -39,7 +39,7 @@ fn print_config(
 				}
 			}
 		}
-		Err(e) => eprintln!("{e}")
+		Err(e) => eprintln!("{}", e)
 	}
 }
 
