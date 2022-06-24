@@ -35,7 +35,7 @@ jobs:
         with:
           command: test
   clippy:
-    name: Clippy
+    name: MSRV Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,7 +44,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.59.0
           components: clippy
       - name: Clippy
         uses: actions-rs/cargo@v1
