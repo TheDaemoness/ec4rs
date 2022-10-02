@@ -50,6 +50,16 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt --check
   tests:
     name: Binary Tests
     runs-on: ubuntu-latest
