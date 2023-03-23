@@ -79,16 +79,27 @@ impl<'a> Splitter<'a> {
 	}
 
 	pub fn next_char(mut self) -> Option<(Splitter<'a>, char)> {
-		// TODO: Don't recheck the part for valid unicode each time.
-		if let Ok(s) = std::str::from_utf8(self.part) {
-			if let Some((idx, c)) = s.char_indices().next_back() {
-				self.part = s.split_at(idx).0.as_bytes();
-				return Some((self, c));
-			} else {
-				return Some((self.next()?, '/'));
-			}
+		if let Some((idx, c)) = self.find_next_char() {
+			self.part = self.part.split_at(idx).0;
+			Some((self, c))
+		} else {
+			Some((self.next()?, '/'))
 		}
-		None
+	}
+
+	fn find_next_char(&self) -> Option<(usize, char)> {
+		let mut idx = self.part.len().checked_sub(1)?;
+		let mut byte = self.part[idx];
+		while byte.leading_ones() == 1 {
+			idx = idx.checked_sub(1)?;
+			byte = self.part[idx];
+		}
+		// TODO: Do the UTF-8 character decode here ourselves.
+		let c = std::str::from_utf8(&self.part[idx..])
+			.ok()?
+			.chars()
+			.next_back()?;
+		Some((idx, c))
 	}
 
 	pub fn match_sep(mut self) -> Option<Splitter<'a>> {
