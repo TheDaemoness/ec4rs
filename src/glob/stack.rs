@@ -65,16 +65,16 @@ impl<'a, 'b> SaveStack<'a, 'b> {
 	}
 
 	pub fn restore(&mut self) -> Option<Splitter<'a>> {
-		while let Some(point) = self.stack.pop() {
-			use SavePoint::*;
-			match point {
-				Rewind(splitter, globs, matcher) => {
+		loop {
+			// There's a continue in here, don't panic.
+			break match self.stack.pop()? {
+				SavePoint::Rewind(splitter, globs, matcher) => {
 					self.stack.pop();
 					self.globs = globs;
 					self.globs.add_matcher(matcher);
-					return Some(splitter);
+					Some(splitter)
 				}
-				Alts(splitter, globs, alts) => {
+				SavePoint::Alts(splitter, globs, alts) => {
 					self.globs = globs;
 					if let Some((glob, rest)) = alts.split_first() {
 						if !rest.is_empty() {
@@ -83,11 +83,12 @@ impl<'a, 'b> SaveStack<'a, 'b> {
 								.push(SavePoint::Alts(splitter.clone(), self.globs.clone(), rest));
 						}
 						self.globs.add_glob(glob);
-						return Some(splitter);
+						Some(splitter)
+					} else {
+						continue;
 					}
 				}
 			}
 		}
-		None
 	}
 }

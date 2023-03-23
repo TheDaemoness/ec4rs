@@ -1,65 +1,57 @@
+use std::collections::BTreeSet;
+
 use super::Chars;
 use crate::glob::{Glob, Matcher};
 
-pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
-	let restore = chars.clone();
-	let invert = matches!(chars.peek(), Some('!'));
-	if invert {
-		chars.next();
-	}
-	let mut found_end: bool = false;
-	let mut charclass = std::collections::BTreeSet::<char>::new();
-	let mut prev_char: Option<char> = None;
-	while let Some(c) = chars.next() {
-		match c {
+#[inline]
+fn grow_char_class(chars: &mut Chars<'_>, charclass: &mut BTreeSet<char>) -> Option<()> {
+	// Previous character.
+	let mut pc = '[';
+	let mut not_at_start = false;
+	loop {
+		match chars.next()? {
+			']' => return Some(()),
 			'\\' => {
-				if let Some(c) = chars.next() {
-					charclass.insert(c);
-					prev_char = Some(c);
-				}
-			}
-			']' => {
-				found_end = true;
-				break;
+				pc = chars.next()?;
+				charclass.insert(pc);
 			}
 			// The spec says nothing about char ranges,
 			// but the test suite tests for them.
 			// Therefore, EC has them in practice.
-			'-' => {
-				if let Some(pc) = prev_char {
-					// Peek here to handle `-` at the end of a range.
-					if let Some(nc_ref) = chars.peek() {
-						let mut nc: Option<char> = None;
-						match *nc_ref {
-							']' => (),
-							'\\' => {
-								chars.next();
-								nc = chars.next().or(Some('\\'));
-							}
-							other => {
-								nc = Some(other);
-								chars.next();
-							}
-						}
-						if let Some(nc) = nc {
-							for c in pc..=nc {
-								charclass.insert(c);
-							}
-							prev_char = Some(nc);
-							continue;
-						}
+			'-' if not_at_start => {
+				let nc = match chars.next()? {
+					']' => {
+						charclass.insert('-');
+						return Some(());
 					}
-				}
-				charclass.insert('-');
-				prev_char = Some('-');
+					'\\' => chars.next()?,
+					other => other
+				};
+				charclass.extend(pc..=nc);
+				pc = nc;
 			}
-			_ => {
+			c => {
 				charclass.insert(c);
-				prev_char = Some(c);
+				pc = c;
 			}
 		}
+		not_at_start = true;
 	}
-	if found_end {
+}
+
+pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
+	let invert = if let Some(c) = chars.peek() {
+		*c == '!'
+	} else {
+		glob.append_char('[');
+		return (glob, chars);
+	};
+	let restore = chars.clone();
+	if invert {
+		chars.next();
+	}
+	let mut charclass = BTreeSet::<char>::new();
+	if grow_char_class(&mut chars, &mut charclass).is_some() {
 		// Remove slashes for the sake of consistent behavior.
 		charclass.remove(&'/');
 		match charclass.len() {
@@ -71,12 +63,13 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
 					glob.append_char(']');
 				}
 			}
+			// Don't use BTreeSet::first here (stable: 1.66).
 			1 => glob.append_char(*charclass.iter().next().unwrap()),
 			_ => glob.append(Matcher::CharClass(charclass, !invert)),
 		}
+		(glob, chars)
 	} else {
-		chars = restore;
 		glob.append_char('[');
+		(glob, restore)
 	}
-	(glob, chars)
 }

@@ -23,33 +23,39 @@ impl Glob {
 
 	pub(super) fn append_char(&mut self, c: char) {
 		if c == '/' {
-			self.append(Matcher::Sep)
+			self.append(Matcher::Sep);
+		} else if let Some(Matcher::Suffix(string)) = self.0.last_mut() {
+			string.push(c);
 		} else {
-			self.append(Matcher::Suffix(c.to_string()))
+			// Since we know the Matcher::Suffix case in append() will always be false,
+			// we can just save the optimizer the trouble.
+			self.0.push(Matcher::Suffix(c.to_string()));
 		}
 	}
 
+	#[inline]
 	pub(super) fn append(&mut self, matcher: Matcher) {
-		match &matcher {
+		// Optimizations, fusing certain kinds of matchers together.
+		let push = !match &matcher {
 			Matcher::Sep => {
-				if let Some(Matcher::Sep) = &self.0.last() {
-					return;
-				}
+				matches!(&self.0.last(), Some(Matcher::Sep))
 			}
 			Matcher::Suffix(suffix) => {
-				if let Some(Matcher::Suffix(ref mut prefix)) = self.0.last_mut() {
+				if let Some(Matcher::Suffix(prefix)) = self.0.last_mut() {
 					prefix.push_str(suffix);
-					return;
+					true
+				} else {
+					false
 				}
 			}
 			Matcher::AnySeq(true) => {
-				if let Some(Matcher::AnySeq(true)) = &self.0.last() {
-					return;
-				}
+				matches!(&self.0.last(), Some(Matcher::AnySeq(false)))
 			}
-			_ => (),
+			_ => false,
+		};
+		if push {
+			self.0.push(matcher);
 		}
-		self.0.push(matcher);
 	}
 
 	pub fn append_glob(&mut self, glob: Glob) {

@@ -16,58 +16,34 @@ pub enum Matcher {
 }
 
 fn try_match<'a, 'b>(
-	mut splitter: Splitter<'a>,
+	splitter: Splitter<'a>,
 	matcher: &'b Matcher,
 	state: &mut super::stack::SaveStack<'a, 'b>,
 ) -> Option<Splitter<'a>> {
-	use Matcher::*;
-	Some(match matcher {
-		End => splitter.match_end()?,
-		Sep => splitter.match_sep()?,
-		AnyChar => splitter.match_any(false)?,
-		AnySeq(sep) => {
+	match matcher {
+		Matcher::End => splitter.match_end(),
+		Matcher::Sep => splitter.match_sep(),
+		Matcher::AnyChar => splitter.match_any(false),
+		Matcher::AnySeq(sep) => {
 			if let Some(splitter) = splitter.clone().match_any(*sep) {
 				state.add_rewind(splitter, matcher);
 			}
-			splitter
+			Some(splitter)
 		}
-		Suffix(s) => splitter.match_suffix(s.as_str())?,
-		CharClass(cs, should_have) => {
+		Matcher::Suffix(s) => splitter.match_suffix(s.as_str()),
+		Matcher::CharClass(cs, should_have) => {
 			let (splitter, c) = splitter.next_char()?;
 			if cs.contains(&c) != *should_have {
 				return None;
 			}
-			splitter
+			Some(splitter)
 		}
-		Range(lower, upper) => {
-			let mut q = std::collections::VecDeque::<char>::new();
-			let mut allow_zero: bool = true;
-			let mut last_ok = splitter.clone();
-			while let Some((next_ok, c)) = splitter.next_char() {
-				if c.is_numeric() && (c != '0' || allow_zero) {
-					last_ok = next_ok.clone();
-					allow_zero = c == '0';
-					q.push_front(c);
-				} else if c == '-' {
-					last_ok = next_ok.clone();
-					q.push_front('-');
-					break;
-				} else {
-					break;
-				}
-				splitter = next_ok;
-			}
-			let i = q.iter().collect::<String>().parse::<isize>().ok()?;
-			if i < *lower || i > *upper {
-				return None;
-			}
-			last_ok
-		}
-		Any(options) => {
+		Matcher::Range(lower, upper) => splitter.match_number(*lower, *upper),
+		Matcher::Any(options) => {
 			state.add_alts(splitter.clone(), options.as_slice());
-			splitter
+			Some(splitter)
 		}
-	})
+	}
 }
 
 #[must_use]

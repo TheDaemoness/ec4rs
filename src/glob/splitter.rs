@@ -36,7 +36,7 @@ pub struct Splitter<'a> {
 }
 
 impl<'a> Splitter<'a> {
-	pub fn new(path: &std::path::Path) -> Option<Splitter<'_>> {
+	pub fn new(path: &'a std::path::Path) -> Option<Self> {
 		Splitter {
 			iter: path.components(),
 			part: "".as_bytes(),
@@ -45,7 +45,7 @@ impl<'a> Splitter<'a> {
 		.next()
 	}
 
-	pub fn match_end(mut self) -> Option<Splitter<'a>> {
+	pub fn match_end(mut self) -> Option<Self> {
 		if !self.part.is_empty() {
 			return None;
 		}
@@ -57,7 +57,7 @@ impl<'a> Splitter<'a> {
 		}
 	}
 
-	pub fn next(mut self) -> Option<Splitter<'a>> {
+	pub fn next(mut self) -> Option<Self> {
 		use std::path::Component::*;
 		self.part = match self.iter.next_back()? {
 			Normal(p) => cnv::to_bytes(p)?,
@@ -67,7 +67,7 @@ impl<'a> Splitter<'a> {
 		Some(self)
 	}
 
-	pub fn match_any(mut self, path_sep: bool) -> Option<Splitter<'a>> {
+	pub fn match_any(mut self, path_sep: bool) -> Option<Self> {
 		if !self.part.is_empty() {
 			self.part = self.part.split_last().unwrap().1;
 			Some(self)
@@ -78,7 +78,7 @@ impl<'a> Splitter<'a> {
 		}
 	}
 
-	pub fn next_char(mut self) -> Option<(Splitter<'a>, char)> {
+	pub fn next_char(mut self) -> Option<(Self, char)> {
 		if let Some((idx, c)) = self.find_next_char() {
 			self.part = self.part.split_at(idx).0;
 			Some((self, c))
@@ -102,7 +102,7 @@ impl<'a> Splitter<'a> {
 		Some((idx, c))
 	}
 
-	pub fn match_sep(mut self) -> Option<Splitter<'a>> {
+	pub fn match_sep(mut self) -> Option<Self> {
 		if self.part.is_empty() {
 			self.matched_sep = true;
 			Some(self)
@@ -111,7 +111,7 @@ impl<'a> Splitter<'a> {
 		}
 	}
 
-	pub fn match_suffix(mut self, suffix: &str) -> Option<Splitter<'a>> {
+	pub fn match_suffix(mut self, suffix: &str) -> Option<Self> {
 		if self.part.is_empty() && self.matched_sep {
 			self.matched_sep = false;
 			self = self.next()?;
@@ -122,5 +122,30 @@ impl<'a> Splitter<'a> {
 		} else {
 			None
 		}
+	}
+
+	pub fn match_number(mut self, lower: isize, upper: isize) -> Option<Self> {
+		let mut q = std::collections::VecDeque::<char>::new();
+		let mut allow_zero: bool = true;
+		let mut last_ok = self.clone();
+		while let Some((next_ok, c)) = self.next_char() {
+			if c.is_numeric() && (c != '0' || allow_zero) {
+				last_ok = next_ok.clone();
+				allow_zero = c == '0';
+				q.push_front(c);
+			} else if c == '-' {
+				last_ok = next_ok.clone();
+				q.push_front('-');
+				break;
+			} else {
+				break;
+			}
+			self = next_ok;
+		}
+		let i = q.iter().collect::<String>().parse::<isize>().ok()?;
+		if i < lower || i > upper {
+			return None;
+		}
+		Some(last_ok)
 	}
 }

@@ -29,22 +29,20 @@ impl AltStack {
 	}
 
 	pub fn join_and_pop(&mut self, glob: Glob) -> (Glob, bool) {
-		match self.0.pop() {
-			Some(mut builder) => {
-				builder.add(glob);
-				(builder.join(), self.is_empty())
-			}
-			None => (glob, true),
+		if let Some(mut builder) = self.0.pop() {
+			builder.add(glob);
+			(builder.join(), self.is_empty())
+		} else {
+			(glob, true)
 		}
 	}
 
 	pub fn add_alt_and_pop(&mut self, glob: Glob) -> (Glob, bool) {
-		match self.0.pop() {
-			Some(mut builder) => {
-				builder.add(glob);
-				(builder.build(), false)
-			}
-			None => (glob, true),
+		if let Some(mut builder) = self.0.pop() {
+			builder.add(glob);
+			(builder.build(), false)
+		} else {
+			(glob, true)
 		}
 	}
 }
