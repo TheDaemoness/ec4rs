@@ -2,16 +2,18 @@
 
 An
 [EditorConfig](https://editorconfig.org/)
-[core](https://editorconfig-specification.readthedocs.io/#terminology) in Rust.
-
-This library enables you to integrate EditorConfig support into any tools which may benefit from it,
-such as code editors, formatters, and style linters.
-It includes mechanisms for type-safe parsing of properties,
-so that your tool doesn't have to do it itself.
-It also exposes significant portions of its logic,
-allowing you to use only the parts you need.
+[core](https://editorconfig-specification.readthedocs.io/#terminology)
+in safe Rust.
+See [the Github repo](https://github.com/TheDaemoness/ec4rs)
+for more information.
 
 ## Basic Example Usage
+
+The most common usecase for `ec4rs` involves
+determining how an editor/linter/etc should be configured
+for a file at a given path.
+
+The simplest way to load these is using [`properties_of`], like so:
 
 ```
 // Read the EditorConfig files that would apply to a file at the given path.

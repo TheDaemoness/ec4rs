@@ -5,9 +5,11 @@
 
 An
 [EditorConfig](https://editorconfig.org/)
-[core](https://editorconfig-specification.readthedocs.io/#terminology) in Rust.
+[core](https://editorconfig-specification.readthedocs.io/#terminology)
+in safe Rust.
 
-This library enables you to integrate EditorConfig support into any tools which may benefit from it,
+This library enables you to integrate EditorConfig support
+into any tools which may benefit from it,
 such as code editors, formatters, and style linters.
 It includes mechanisms for type-safe parsing of properties,
 so that your tool doesn't have to do it itself.
@@ -15,16 +17,15 @@ It also exposes significant portions of its logic,
 allowing you to use only the parts you need.
 
 Name idea shamelessly stolen from [ec4j](https://github.com/ec4j/ec4j).
-This library has minimal dependencies (only `std` at this time),
+This library has minimal dependencies (only `std` at this time).
 
-For more information, see [the docs](https://docs.rs/ec4rs).
+For example usage, see [the docs](https://docs.rs/ec4rs).
 
 ## Testing
 
-This repository includes the
-[EditorConfig core tests](https://github.com/editorconfig/editorconfig-core-test)
-as a Git submodule.
-`ec4rs` should pass all of these tests.
+The main repository for this library includes the EditorConfig
+[core tests](https://github.com/editorconfig/editorconfig-core-test)
+as a Git submodule. `ec4rs` should pass all of these tests.
 To run the test suite, run the following commands in a POSIX-like shell:
 
 ```bash
