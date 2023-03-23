@@ -73,6 +73,5 @@ jobs:
       - name: Core Tests
         shell: bash
         run: |
-          cd tests
-          cmake -DEDITORCONFIG_CMD="$PWD/../target/debug/ec4rs-parse" .
-          ctest .
+          cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" tests
+          ctest --target-dir tests

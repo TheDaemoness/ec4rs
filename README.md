@@ -18,3 +18,17 @@ Name idea shamelessly stolen from [ec4j](https://github.com/ec4j/ec4j).
 This library has minimal dependencies (only `std` at this time),
 
 For more information, see [the docs](https://docs.rs/ec4rs).
+
+## Testing
+
+This repository includes the
+[EditorConfig core tests](https://github.com/editorconfig/editorconfig-core-test)
+as a Git submodule.
+`ec4rs` should pass all of these tests.
+To run the test suite, run the following commands in a POSIX-like shell:
+
+```bash
+cargo build -p ec4rs_tools
+cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" tests
+ctest --test-dir tests
+```
