@@ -14,6 +14,9 @@ use crate::rawvalue::RawValue;
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone)]
 pub struct Properties {
+	// Don't use Cow<'static, str> here because it's actually less-optimal
+	// for the vastly more-common case of reading parsed properties.
+	// It's a micro-optimization anyway.
 	pairs: Vec<(String, RawValue)>,
 	/// Indices of `pairs`, sorted by the key of the pair each index refers to.
 	idxes: Vec<usize>,
@@ -113,7 +116,6 @@ impl Properties {
 	///
 	/// If the key was already associated with a value, returns the old value.
 	pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
-		//TODO: Store Cow strings internally.
 		self.insert_raw_for_key(T::key(), prop.into())
 	}
 

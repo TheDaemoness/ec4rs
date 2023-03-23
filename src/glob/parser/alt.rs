@@ -77,8 +77,6 @@ impl AltBuilder {
 				self.glob
 			}
 			_ => {
-				// TODO: Maybe make Matcher sortable,
-				// even if it's a bad Ord implementation.
 				self.options.sort_by(|a, b| (!a.0.is_empty()).cmp(&!b.0.is_empty()));
 				self.options.dedup();
 				self.glob.append(crate::glob::Matcher::Any(self.options));
