@@ -14,7 +14,7 @@ edition = "2021"
 authors = ["TheDaemoness"]
 include = ["/src", "/README.md", "/DOC.md"]
 rust-version = "1.56" # 2021 edition
-version = "1.0.1"
+version = "1.0.2"
 
 [workspace]
 members = ["tools"]
