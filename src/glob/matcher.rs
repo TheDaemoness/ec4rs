@@ -71,7 +71,7 @@ fn try_match<'a, 'b>(
 }
 
 #[must_use]
-pub fn matches<'a, 'b>(path: &'a std::path::Path, glob: &'b Glob) -> Option<Splitter<'a>> {
+pub fn matches<'a>(path: &'a std::path::Path, glob: &Glob) -> Option<Splitter<'a>> {
 	let mut splitter = super::Splitter::new(path)?;
 	let mut state = super::stack::SaveStack::new(&splitter, glob);
 	loop {

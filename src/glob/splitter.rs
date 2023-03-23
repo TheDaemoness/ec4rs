@@ -9,10 +9,6 @@ mod cnv {
 		use std::os::unix::ffi::OsStrExt;
 		Some(s.as_bytes())
 	}
-	pub fn to_path(s: &[u8]) -> &std::path::Path {
-		use std::os::unix::ffi::OsStrExt;
-		OsStr::from_bytes(s).as_ref()
-	}
 }
 
 #[cfg(target_os = "wasi")]
@@ -22,9 +18,6 @@ mod cnv {
 		use std::os::wasi::ffi::OsStrExt;
 		Some(s.as_bytes())
 	}
-	pub fn to_path(s: &[u8]) -> &std::path::Path {
-		use std::os::wasi::ffi::OsStrExt;
-	}
 }
 
 #[cfg(all(not(target_family = "unix"), not(target_os = "wasi")))]
@@ -32,9 +25,6 @@ mod cnv {
 	use std::ffi::OsStr;
 	pub fn to_bytes(s: &OsStr) -> Option<&[u8]> {
 		s.to_str().map(|s| s.as_ref())
-	}
-	pub fn to_path(s: &[u8]) -> &std::path::Path {
-		std::str::from_utf8(s).unwrap().as_ref()
 	}
 }
 

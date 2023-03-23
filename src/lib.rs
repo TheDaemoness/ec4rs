@@ -1,5 +1,4 @@
 #![doc = include_str!("../DOC.md")]
-#![allow(dead_code)]
 #![deny(missing_docs)]
 
 mod error;

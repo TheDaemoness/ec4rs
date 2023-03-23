@@ -12,12 +12,6 @@ pub enum Line<'a> {
 	Pair(&'a str, &'a str),
 }
 
-#[derive(Clone, Copy)]
-pub enum MaybeLast<V> {
-	Last(V),
-	More(V),
-}
-
 type LineReadResult<'a> = Result<Line<'a>, ParseError>;
 
 /// Identifies the line type and extracts relevant slices.
