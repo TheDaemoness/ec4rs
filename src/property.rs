@@ -10,9 +10,9 @@ use std::fmt::Display;
 pub struct UnknownValueError;
 
 impl Display for UnknownValueError {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "unknown value")
-	}
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown value")
+    }
 }
 
 impl std::error::Error for UnknownValueError {}
@@ -109,9 +109,9 @@ macro_rules! property_valued {
 }
 
 property_choice! {
-	IndentStyle, "indent_style";
-	(Tabs, "tab"),
-	(Spaces, "space")
+    IndentStyle, "indent_style";
+    (Tabs, "tab"),
+    (Spaces, "space")
 }
 
 // NOTE:
@@ -125,19 +125,19 @@ property_valued! {IndentSize, "indent_size", usize; (UseTabWidth, "tab")}
 property_valued! {TabWidth, "tab_width", usize;}
 
 property_choice! {
-	EndOfLine, "end_of_line";
-	(Lf,   "lf"),
-	(CrLf, "crlf"),
-	(Cr,   "cr")
+    EndOfLine, "end_of_line";
+    (Lf,   "lf"),
+    (CrLf, "crlf"),
+    (Cr,   "cr")
 }
 
 property_choice! {
-	Charset, "charset";
-	(Utf8,    "utf-8"),
-	(Latin1,  "latin1"),
-	(Utf16Le, "utf-16le"),
-	(Utf16Be, "utf-16be"),
-	(Utf8Bom, "utf-8-bom")
+    Charset, "charset";
+    (Utf8,    "utf-8"),
+    (Latin1,  "latin1"),
+    (Utf16Le, "utf-16le"),
+    (Utf16Be, "utf-16be"),
+    (Utf8Bom, "utf-8-bom")
 }
 
 property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
@@ -148,11 +148,11 @@ property_valued! {MaxLineLen, "max_line_length", usize; (Off, "off")}
 ///
 /// Can be used to determine if a property is defined in the specification or not.
 pub static STANDARD_KEYS: &[&str] = &[
-	"indent_size",
-	"indent_style",
-	"tab_width",
-	"end_of_line",
-	"charset",
-	"trim_trailing_whitespace",
-	"insert_final_newline", // NOT "max_line_length".
+    "indent_size",
+    "indent_style",
+    "tab_width",
+    "end_of_line",
+    "charset",
+    "trim_trailing_whitespace",
+    "insert_final_newline", // NOT "max_line_length".
 ];

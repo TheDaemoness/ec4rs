@@ -33,7 +33,7 @@ pub use traits::*;
 /// EditorConfig files are assumed to be named `.editorconfig`.
 /// If not, use [properties_from_config_of]
 pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Error> {
-	properties_from_config_of(path, None as Option<&std::path::Path>)
+    properties_from_config_of(path, None as Option<&std::path::Path>)
 }
 
 /// Retrieves the [Properties] for a file at the given path,
@@ -43,13 +43,14 @@ pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Er
 /// but will join relative paths onto the current working directory.
 ///
 /// If the provided config path is absolute, uses the EditorConfig file at that path.
-/// If it's relative, joins it onto every ancestor of the target file, and looks for config files at those paths.
+/// If it's relative, joins it onto every ancestor of the target file,
+/// and looks for config files at those paths.
 /// If it's `None`, EditorConfig files are assumed to be named `.editorconfig`.
 pub fn properties_from_config_of(
-	target_path: impl AsRef<std::path::Path>,
-	config_path_override: Option<impl AsRef<std::path::Path>>,
+    target_path: impl AsRef<std::path::Path>,
+    config_path_override: Option<impl AsRef<std::path::Path>>,
 ) -> Result<Properties, Error> {
-	let mut retval = Properties::new();
-	ConfigFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
-	Ok(retval)
+    let mut retval = Properties::new();
+    ConfigFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
+    Ok(retval)
 }

@@ -2,8 +2,8 @@ mod iter;
 
 pub use iter::{Iter, IterMut};
 
-use crate::{PropertyKey, PropertyValue};
 use crate::rawvalue::RawValue;
+use crate::{PropertyKey, PropertyValue};
 
 /// Map of property names to property values.
 ///
@@ -14,194 +14,202 @@ use crate::rawvalue::RawValue;
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone)]
 pub struct Properties {
-	// Don't use Cow<'static, str> here because it's actually less-optimal
-	// for the vastly more-common case of reading parsed properties.
-	// It's a micro-optimization anyway.
-	pairs: Vec<(String, RawValue)>,
-	/// Indices of `pairs`, sorted by the key of the pair each index refers to.
-	idxes: Vec<usize>,
+    // Don't use Cow<'static, str> here because it's actually less-optimal
+    // for the vastly more-common case of reading parsed properties.
+    // It's a micro-optimization anyway.
+    pairs: Vec<(String, RawValue)>,
+    /// Indices of `pairs`, sorted by the key of the pair each index refers to.
+    idxes: Vec<usize>,
 }
 
 impl Properties {
-	/// Returns an empty [Properties] object.
-	pub fn new() -> Properties {
-		Properties {
-			pairs: Vec::new(),
-			idxes: Vec::new(),
-		}
-	}
+    /// Returns an empty [Properties] object.
+    pub fn new() -> Properties {
+        Properties {
+            pairs: Vec::new(),
+            idxes: Vec::new(),
+        }
+    }
 
-	/// Returns either the index of the pair with the desired key in `pairs`,
-	/// or the index to insert a new index into `index`.
-	fn find_idx(&self, key: &str) -> Result<usize, usize> {
-		self
-			.idxes
-			.as_slice()
-			.binary_search_by_key(&key, |ki| self.pairs[*ki].0.as_str())
-			.map(|idx| self.idxes[idx])
-	}
+    /// Returns either the index of the pair with the desired key in `pairs`,
+    /// or the index to insert a new index into `index`.
+    fn find_idx(&self, key: &str) -> Result<usize, usize> {
+        self.idxes
+            .as_slice()
+            .binary_search_by_key(&key, |ki| self.pairs[*ki].0.as_str())
+            .map(|idx| self.idxes[idx])
+    }
 
-	/// Returns the unparsed "raw" value for the specified key.
-	///
-	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
-	pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
-		self
-			.find_idx(key.as_ref())
-			.ok()
-			.map(|idx| &self.pairs[idx].1)
-			.unwrap_or(&crate::rawvalue::UNSET)
-	}
+    /// Returns the unparsed "raw" value for the specified key.
+    ///
+    /// Does not test for the "unset" value. Use [RawValue::filter_unset].
+    pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
+        self.find_idx(key.as_ref())
+            .ok()
+            .map(|idx| &self.pairs[idx].1)
+            .unwrap_or(&crate::rawvalue::UNSET)
+    }
 
-	/// Returns the unpared "raw" value for the specified property.
-	///
-	/// Does not test for the "unset" value. Use [RawValue::filter_unset].
-	pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
-		self.get_raw_for_key(T::key())
-	}
+    /// Returns the unpared "raw" value for the specified property.
+    ///
+    /// Does not test for the "unset" value. Use [RawValue::filter_unset].
+    pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
+        self.get_raw_for_key(T::key())
+    }
 
-	/// Returns the parsed value for the specified property.
-	///
-	/// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
-	pub fn get<T: PropertyKey + PropertyValue>(&self) -> Result<T, &RawValue> {
-		let retval = self.get_raw::<T>();
-		retval.parse::<T>().or(Err(retval))
-	}
+    /// Returns the parsed value for the specified property.
+    ///
+    /// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
+    pub fn get<T: PropertyKey + PropertyValue>(&self) -> Result<T, &RawValue> {
+        let retval = self.get_raw::<T>();
+        retval.parse::<T>().or(Err(retval))
+    }
 
-	/// Returns an iterator over the key-value pairs.
-	///
-	/// Pairs are returned from oldest to newest.
-	pub fn iter(&self) -> Iter<'_> {
-		Iter(self.pairs.iter())
-	}
+    /// Returns an iterator over the key-value pairs.
+    ///
+    /// Pairs are returned from oldest to newest.
+    pub fn iter(&self) -> Iter<'_> {
+        Iter(self.pairs.iter())
+    }
 
-	/// Returns an iterator over the key-value pairs that allows mutation of the values.
-	///
-	/// Pairs are returned from oldest to newest.
-	pub fn iter_mut(&mut self) -> IterMut<'_> {
-		IterMut(self.pairs.iter_mut())
-	}
+    /// Returns an iterator over the key-value pairs that allows mutation of the values.
+    ///
+    /// Pairs are returned from oldest to newest.
+    pub fn iter_mut(&mut self) -> IterMut<'_> {
+        IterMut(self.pairs.iter_mut())
+    }
 
-	fn get_at_mut(&mut self, idx: usize) -> &mut RawValue {
-		&mut self.pairs.get_mut(idx).unwrap().1
-	}
+    fn get_at_mut(&mut self, idx: usize) -> &mut RawValue {
+        &mut self.pairs.get_mut(idx).unwrap().1
+    }
 
-	fn insert_at(&mut self, idx: usize, key: String, val: RawValue) {
-		self.idxes.insert(idx, self.pairs.len());
-		self.pairs.push((key, val));
-	}
+    fn insert_at(&mut self, idx: usize, key: String, val: RawValue) {
+        self.idxes.insert(idx, self.pairs.len());
+        self.pairs.push((key, val));
+    }
 
-	/// Sets the value for a specified key.
-	pub fn insert_raw_for_key(
-		&mut self,
-		key: impl AsRef<str>,
-		val: impl Into<RawValue>
-	) {
-		let key_str = key.as_ref();
-		match self.find_idx(key_str) {
-			Ok(idx) => {
-				*self.get_at_mut(idx) = val.into();
-			}
-			Err(idx) => {
-				self.insert_at(idx, key_str.to_owned(), val.into());
-			}
-		}
-	}
+    /// Sets the value for a specified key.
+    pub fn insert_raw_for_key(&mut self, key: impl AsRef<str>, val: impl Into<RawValue>) {
+        let key_str = key.as_ref();
+        match self.find_idx(key_str) {
+            Ok(idx) => {
+                *self.get_at_mut(idx) = val.into();
+            }
+            Err(idx) => {
+                self.insert_at(idx, key_str.to_owned(), val.into());
+            }
+        }
+    }
 
-	/// Sets the value for a specified property's key.
-	pub fn insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) {
-		self.insert_raw_for_key(K::key(), val)
-	}
+    /// Sets the value for a specified property's key.
+    pub fn insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) {
+        self.insert_raw_for_key(K::key(), val)
+    }
 
-	/// Inserts a specified property into the map.
-	///
-	/// If the key was already associated with a value, returns the old value.
-	pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
-		self.insert_raw_for_key(T::key(), prop.into())
-	}
+    /// Inserts a specified property into the map.
+    ///
+    /// If the key was already associated with a value, returns the old value.
+    pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
+        self.insert_raw_for_key(T::key(), prop.into())
+    }
 
-	/// Attempts to add a new key-value pair to the map.
-	///
-	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert_raw_for_key(
-		&mut self,
-		key: impl AsRef<str>,
-		value: impl Into<RawValue>
-	) -> Result<(), &mut RawValue> {
-		let key_str = key.as_ref();
-		#[allow(clippy::unit_arg)]
-		match self.find_idx(key_str) {
-			Ok(idx) => {
-				let valref = self.get_at_mut(idx);
-				if valref.is_unset() {
-					*valref = value.into();
-					Ok(())
-				} else {
-					Err(valref)
-				}
-			}
-			Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into())),
-		}
-	}
+    /// Attempts to add a new key-value pair to the map.
+    ///
+    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    pub fn try_insert_raw_for_key(
+        &mut self,
+        key: impl AsRef<str>,
+        value: impl Into<RawValue>,
+    ) -> Result<(), &mut RawValue> {
+        let key_str = key.as_ref();
+        #[allow(clippy::unit_arg)]
+        match self.find_idx(key_str) {
+            Ok(idx) => {
+                let valref = self.get_at_mut(idx);
+                if valref.is_unset() {
+                    *valref = value.into();
+                    Ok(())
+                } else {
+                    Err(valref)
+                }
+            }
+            Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into())),
+        }
+    }
 
-	/// Attempts to add a new property to the map with a specified value.
-	///
-	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) -> Result<(), &mut RawValue> {
-		self.try_insert_raw_for_key(K::key(), val)
-	}
+    /// Attempts to add a new property to the map with a specified value.
+    ///
+    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    pub fn try_insert_raw<K: PropertyKey, V: Into<RawValue>>(
+        &mut self,
+        val: V,
+    ) -> Result<(), &mut RawValue> {
+        self.try_insert_raw_for_key(K::key(), val)
+    }
 
-	/// Attempts to add a new property to the map.
-	///
-	/// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
-	pub fn try_insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) -> Result<(), &mut RawValue> {
-		self.try_insert_raw_for_key(T::key(), prop.into())
-	}
+    /// Attempts to add a new property to the map.
+    ///
+    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    pub fn try_insert<T: PropertyKey + Into<RawValue>>(
+        &mut self,
+        prop: T,
+    ) -> Result<(), &mut RawValue> {
+        self.try_insert_raw_for_key(T::key(), prop.into())
+    }
 
-	/// Adds fallback values for certain common key-value pairs.
-	///
-	/// Used to obtain spec-compliant values for [crate::property::IndentSize]
-	/// and [crate::property::TabWidth].
-	pub fn use_fallbacks(&mut self) {
-		crate::fallback::add_fallbacks(self, false)
-	}
+    /// Adds fallback values for certain common key-value pairs.
+    ///
+    /// Used to obtain spec-compliant values for [crate::property::IndentSize]
+    /// and [crate::property::TabWidth].
+    pub fn use_fallbacks(&mut self) {
+        crate::fallback::add_fallbacks(self, false)
+    }
 
-	/// Adds pre-0.9.0 fallback values for certain common key-value pairs.
-	///
-	/// This shouldn't be used outside of narrow cases where compatibility with those older standards is required.
-	/// Prefer [Properties::use_fallbacks] instead.
-	pub fn use_fallbacks_legacy(&mut self) {
-		crate::fallback::add_fallbacks(self, true)
-	}
+    /// Adds pre-0.9.0 fallback values for certain common key-value pairs.
+    ///
+    /// This shouldn't be used outside of narrow cases where compatibility with those older standards is required.
+    /// Prefer [Properties::use_fallbacks] instead.
+    pub fn use_fallbacks_legacy(&mut self) {
+        crate::fallback::add_fallbacks(self, true)
+    }
 }
 
 impl Default for Properties {
-	fn default() -> Properties {
-		Properties::new()
-	}
+    fn default() -> Properties {
+        Properties::new()
+    }
 }
 
 impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
-	fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
-		let mut result = Properties::new();
-		for (k, v) in iter {
-			result.insert_raw_for_key(k, v);
-		}
-		result
-	}
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        let mut result = Properties::new();
+        for (k, v) in iter {
+            result.insert_raw_for_key(k, v);
+        }
+        result
+    }
 }
 
 /// Trait for types that can add properties to a [Properties] map.
 pub trait PropertiesSource {
-	/// Adds properties that apply to a file at the specified path
-	/// to the provided [Properties].
-	fn apply_to(self, props: &mut Properties, path: impl AsRef<std::path::Path>) -> Result<(), crate::Error>;
+    /// Adds properties that apply to a file at the specified path
+    /// to the provided [Properties].
+    fn apply_to(
+        self,
+        props: &mut Properties,
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<(), crate::Error>;
 }
 
 impl<'a> PropertiesSource for &'a Properties {
-	fn apply_to(self, props: &mut Properties, _: impl AsRef<std::path::Path>) -> Result<(), crate::Error> {
-		for (k, v) in self.iter() {
-			props.insert_raw_for_key(k, v.clone());
-		}
-		Ok(())
-	}
+    fn apply_to(
+        self,
+        props: &mut Properties,
+        _: impl AsRef<std::path::Path>,
+    ) -> Result<(), crate::Error> {
+        for (k, v) in self.iter() {
+            props.insert_raw_for_key(k, v.clone());
+        }
+        Ok(())
+    }
 }
