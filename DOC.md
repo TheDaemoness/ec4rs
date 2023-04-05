@@ -13,7 +13,14 @@ The most common usecase for `ec4rs` involves
 determining how an editor/linter/etc should be configured
 for a file at a given path.
 
-The simplest way to load these is using [`properties_of`], like so:
+The simplest way to load these is using [`properties_of`].
+This function, if successful, will return a [`Properties`],
+a map of config keys to values for a file at the provided path.
+In order to get values for tab width and indent size that are compliant
+with the standard, [`use_fallbacks`][Properties::use_fallbacks]
+should be called before retrieving them.
+
+From there, `Properties` offers several methods for retrieving values:
 
 ```
 // Read the EditorConfig files that would apply to a file at the given path.

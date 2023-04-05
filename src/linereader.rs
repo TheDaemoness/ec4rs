@@ -75,10 +75,10 @@ impl<R: io::BufRead> LineReader<R> {
         self.line.as_str()
     }
 
-    /// Parses the contained line using [parse_line].
+    /// Parses the contained line using [`parse_line`].
     ///
     /// It's usually not necessary to call this method.
-    /// See [LineReader::next].
+    /// See [`LineReader::next`].
     pub fn reparse(&self) -> LineReadResult<'_> {
         parse_line(self.line())
     }

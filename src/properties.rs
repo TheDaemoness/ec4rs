@@ -17,13 +17,17 @@ pub struct Properties {
     // Don't use Cow<'static, str> here because it's actually less-optimal
     // for the vastly more-common case of reading parsed properties.
     // It's a micro-optimization anyway.
+    /// Key-value pairs, ordered from oldest to newest.
     pairs: Vec<(String, RawValue)>,
-    /// Indices of `pairs`, sorted by the key of the pair each index refers to.
+    /// Indices of `pairs`, ordered matching the key of the pair each index refers to.
+    /// This part is what allows logarithmic lookups.
     idxes: Vec<usize>,
 }
 
+// TODO: Deletion?
+
 impl Properties {
-    /// Returns an empty [Properties] object.
+    /// Constructs a new empty [`Properties`].
     pub fn new() -> Properties {
         Properties {
             pairs: Vec::new(),
@@ -42,7 +46,7 @@ impl Properties {
 
     /// Returns the unparsed "raw" value for the specified key.
     ///
-    /// Does not test for the "unset" value. Use [RawValue::filter_unset].
+    /// Does not test for the "unset" value. Use [`RawValue::filter_unset`].
     pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
         self.find_idx(key.as_ref())
             .ok()
@@ -52,14 +56,14 @@ impl Properties {
 
     /// Returns the unpared "raw" value for the specified property.
     ///
-    /// Does not test for the "unset" value. Use [RawValue::filter_unset].
+    /// Does not test for the "unset" value. Use [`RawValue::filter_unset`].
     pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
         self.get_raw_for_key(T::key())
     }
 
     /// Returns the parsed value for the specified property.
     ///
-    /// Does not test for the "unset" value if parsing fails. Use [RawValue::filter_unset].
+    /// Does not test for the "unset" value if parsing fails. Use [`RawValue::filter_unset`].
     pub fn get<T: PropertyKey + PropertyValue>(&self) -> Result<T, &RawValue> {
         let retval = self.get_raw::<T>();
         retval.parse::<T>().or(Err(retval))
@@ -115,7 +119,8 @@ impl Properties {
 
     /// Attempts to add a new key-value pair to the map.
     ///
-    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    /// If the key was already associated with a value,
+    /// returns a mutable reference to the old value and does not update the map.
     pub fn try_insert_raw_for_key(
         &mut self,
         key: impl AsRef<str>,
@@ -139,7 +144,8 @@ impl Properties {
 
     /// Attempts to add a new property to the map with a specified value.
     ///
-    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    /// If the key was already associated with a value,
+    /// returns a mutable reference to the old value and does not update the map.
     pub fn try_insert_raw<K: PropertyKey, V: Into<RawValue>>(
         &mut self,
         val: V,
@@ -149,7 +155,8 @@ impl Properties {
 
     /// Attempts to add a new property to the map.
     ///
-    /// If the key was already associated with a value, returns a mutable reference to the old value and does not update the map.
+    /// If the key was already associated with a value,
+    /// returns a mutable reference to the old value and does not update the map.
     pub fn try_insert<T: PropertyKey + Into<RawValue>>(
         &mut self,
         prop: T,
@@ -159,16 +166,17 @@ impl Properties {
 
     /// Adds fallback values for certain common key-value pairs.
     ///
-    /// Used to obtain spec-compliant values for [crate::property::IndentSize]
-    /// and [crate::property::TabWidth].
+    /// Used to obtain spec-compliant values for [`crate::property::IndentSize`]
+    /// and [`crate::property::TabWidth`].
     pub fn use_fallbacks(&mut self) {
         crate::fallback::add_fallbacks(self, false)
     }
 
     /// Adds pre-0.9.0 fallback values for certain common key-value pairs.
     ///
-    /// This shouldn't be used outside of narrow cases where compatibility with those older standards is required.
-    /// Prefer [Properties::use_fallbacks] instead.
+    /// This shouldn't be used outside of narrow cases where
+    /// compatibility with those older standards is required.
+    /// Prefer [`Properties::use_fallbacks`] instead.
     pub fn use_fallbacks_legacy(&mut self) {
         crate::fallback::add_fallbacks(self, true)
     }
@@ -190,10 +198,10 @@ impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
     }
 }
 
-/// Trait for types that can add properties to a [Properties] map.
+/// Trait for types that can add properties to a [`Properties`] map.
 pub trait PropertiesSource {
     /// Adds properties that apply to a file at the specified path
-    /// to the provided [Properties].
+    /// to the provided [`Properties`].
     fn apply_to(
         self,
         props: &mut Properties,

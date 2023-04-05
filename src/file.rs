@@ -2,18 +2,18 @@ use std::path::{Path, PathBuf};
 
 use crate::{ConfigParser, Error, ParseError, Properties, PropertiesSource, Section};
 
-/// Convenience wrapper for an [ConfigParser] that reads files.
+/// Convenience wrapper for an [`ConfigParser`] that reads files.
 pub struct ConfigFile {
     /// The path to the open file.
     pub path: PathBuf,
-    /// A [ConfigParser] that reads from the file.
+    /// A [`ConfigParser`] that reads from the file.
     pub reader: ConfigParser<std::io::BufReader<std::fs::File>>,
 }
 
 impl ConfigFile {
-    /// Opens a file for reading and uses it to construct an [ConfigParser].
+    /// Opens a file for reading and uses it to construct an [`ConfigParser`].
     ///
-    /// If the file cannot be opened, wraps the [std::io::Error] in a [ParseError].
+    /// If the file cannot be opened, wraps the [`std::io::Error`] in a [`ParseError`].
     pub fn open(path: impl Into<PathBuf>) -> Result<ConfigFile, ParseError> {
         let path = path.into();
         let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
@@ -21,7 +21,7 @@ impl ConfigFile {
         Ok(ConfigFile { path, reader })
     }
 
-    /// Wraps a [ParseError] in an [Error::InFile].
+    /// Wraps a [`ParseError`] in an [`Error::InFile`].
     ///
     /// Uses the path and current line number from this instance.
     pub fn add_error_context(&self, error: ParseError) -> Error {
@@ -39,10 +39,10 @@ impl Iterator for ConfigFile {
 impl std::iter::FusedIterator for ConfigFile {}
 
 impl PropertiesSource for &mut ConfigFile {
-    /// Adds properties from the file's sections to the specified [Properties] map.
+    /// Adds properties from the file's sections to the specified [`Properties`] map.
     ///
-    /// Uses [ConfigFile::path] when determining applicability to stop `**` from going too far.
-    /// Returns parse errors wrapped in an [Error::InFile].
+    /// Uses [`ConfigFile::path`] when determining applicability to stop `**` from going too far.
+    /// Returns parse errors wrapped in an [`Error::InFile`].
     fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {
         let get_parent = || self.path.parent();
         let path = if let Some(parent) = get_parent() {
@@ -62,9 +62,9 @@ impl PropertiesSource for &mut ConfigFile {
 /// Directory traverser for finding and opening EditorConfig files.
 ///
 /// All the contained files are open for reading and have not had any sections read.
-/// When iterated over, either by using it as an [Iterator]
-/// or by calling [ConfigFiles::iter],
-/// returns [ConfigFile]s in the order that they would apply to a [Properties] map.
+/// When iterated over, either by using it as an [`Iterator`]
+/// or by calling [`ConfigFiles::iter`],
+/// returns [`ConfigFile`]s in the order that they would apply to a [`Properties`] map.
 pub struct ConfigFiles(Vec<ConfigFile>);
 
 impl ConfigFiles {
@@ -111,7 +111,7 @@ impl ConfigFiles {
         }))
     }
 
-    /// Returns an iterator over the contained [ConfigFiles].
+    /// Returns an iterator over the contained [`ConfigFiles`].
     pub fn iter(&self) -> impl Iterator<Item = &ConfigFile> {
         self.0.iter().rev()
     }
@@ -130,7 +130,7 @@ impl Iterator for ConfigFiles {
 impl std::iter::FusedIterator for ConfigFiles {}
 
 impl PropertiesSource for ConfigFiles {
-    /// Adds properties from the files' sections to the specified [Properties] map.
+    /// Adds properties from the files' sections to the specified [`Properties`] map.
     ///
     /// Ignores the files' paths when determining applicability.
     fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {

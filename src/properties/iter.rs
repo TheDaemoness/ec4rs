@@ -21,13 +21,13 @@ macro_rules! impls {
     };
 }
 
-/// An iterator over [Properties].
+/// An iterator over [`Properties`].
 #[derive(Clone)]
 pub struct Iter<'a>(pub(super) std::slice::Iter<'a, (String, RawValue)>);
 
 impls! {Iter, &'a RawValue}
 
-/// An iterator over [Properties] that allows value mutation.
+/// An iterator over [`Properties`] that allows value mutation.
 pub struct IterMut<'a>(pub(super) std::slice::IterMut<'a, (String, RawValue)>);
 
 impls! {IterMut, &'a mut RawValue}

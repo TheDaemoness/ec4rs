@@ -1,7 +1,7 @@
 use crate::Properties;
 
-static BASIC_KEYS: [&'static str; 4] = ["2", "3", "0", "1"];
-static ALT_VALUES: [&'static str; 4] = ["a", "b", "c", "d"];
+static BASIC_KEYS: [&str; 4] = ["2", "3", "0", "1"];
+static ALT_VALUES: [&str; 4] = ["a", "b", "c", "d"];
 
 fn zip_self() -> impl Iterator<Item = (&'static str, &'static str)> {
     BASIC_KEYS.iter().cloned().zip(BASIC_KEYS.iter().cloned())

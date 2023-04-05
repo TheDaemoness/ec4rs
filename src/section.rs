@@ -17,7 +17,7 @@ impl Section {
             props: crate::Properties::new(),
         }
     }
-    /// Returns an immutable reference to the internal [Properties] map.
+    /// Returns an immutable reference to the internal [`Properties`] map.
     pub fn props(&self) -> &Properties {
         &self.props
     }
@@ -36,7 +36,7 @@ impl Section {
 }
 
 impl crate::PropertiesSource for &Section {
-    /// Adds this section's properties to a [Properties].
+    /// Adds this section's properties to a [`Properties`].
     ///
     /// This implementation is infallible.
     fn apply_to(

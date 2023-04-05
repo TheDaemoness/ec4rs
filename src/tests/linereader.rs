@@ -3,7 +3,7 @@ use crate::ParseError;
 
 fn test_lines(lines: &[(&'static str, Line<'static>)]) {
     for (line, expected) in lines {
-        assert_eq!(parse_line(*line).unwrap(), *expected)
+        assert_eq!(parse_line(line).unwrap(), *expected)
     }
 }
 

@@ -2,7 +2,7 @@
 //!
 //! The constants in this module specify the latest version of EditorConfig that ec4rs
 //! is known to be compliant with.
-//! Compliance is determined by running the ec4rs_parse tool
+//! Compliance is determined by running the `ec4rs_parse` tool
 //! against the same core test suite used by the reference implementation of EditorConfig.
 #![allow(missing_docs)]
 

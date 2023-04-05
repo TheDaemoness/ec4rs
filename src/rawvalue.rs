@@ -4,7 +4,7 @@ use crate::PropertyValue;
 
 use std::borrow::Cow;
 
-/// An unset RawValue.
+/// An unset `RawValue`.
 ///
 /// Not all unset `&RawValues` returned by this library are referentially equal to this one.
 /// This exists to provide an unset raw value for whenever a reference to one is necessary.
@@ -12,8 +12,7 @@ pub static UNSET: RawValue = RawValue(Cow::Borrowed(""));
 
 /// An unparsed property value.
 ///
-/// It provides convenience methods to convert to [Option] and [Result],
-/// as well as parse the value.
+/// This is conceptually an optional non-empty string with some convenience methods.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct RawValue(Cow<'static, str>);
 
@@ -32,15 +31,15 @@ impl RawValue {
     /// Returns true if the value is unset.
     ///
     /// Does not handle values of "unset".
-    /// See [RawValue::filter_unset].
+    /// See [`RawValue::filter_unset`].
     #[must_use]
     pub fn is_unset(&self) -> bool {
         self.0.is_empty()
     }
 
-    /// Filters out values that case-insensitively match `"unset"` without mutation.
-    ///
-    /// Returns a reference to.a static unset `RawValue` if `"unset"` is found.
+    /// Returns a reference to.an unset `RawValue`
+    /// if the value case-insensitively matches `"unset"`,
+    /// otherwise returns `self`.
     #[must_use]
     pub fn filter_unset(&self) -> &Self {
         if let Some(true) = self.detect_unset() {
@@ -50,7 +49,8 @@ impl RawValue {
         }
     }
 
-    /// Filters out values that case-insensitively match `"unset"` by mutation.
+    /// Changes `self` to unset
+    /// if the value case-insensitively matches `"unset"`.
     pub fn filter_unset_mut(&mut self) -> &mut Self {
         if let Some(true) = self.detect_unset() {
             *self = UNSET.clone();
@@ -58,7 +58,7 @@ impl RawValue {
         self
     }
 
-    /// Converts this `RawValue` into a [Result].
+    /// Converts this `RawValue` into a [`Result`].
     ///
     /// This function filters out values of "unset".
     /// The `bool` in the `Err` variant will be false
@@ -71,7 +71,7 @@ impl RawValue {
         }
     }
 
-    /// Converts this `RawValue` into an [Option].
+    /// Converts this `RawValue` into an [`Option`].
     pub fn into_option(&self) -> Option<&str> {
         Some(self.0.as_ref()).filter(|v| !v.is_empty())
     }

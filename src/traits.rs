@@ -1,6 +1,6 @@
 use crate::rawvalue::RawValue;
 
-/// Trait for types that be parsed out of [RawValue]s.
+/// Trait for types that be parsed out of [`RawValue`]s.
 ///
 /// Types that implement this trait should also implement `Into<RawValue>`.
 pub trait PropertyValue: Sized {
@@ -13,20 +13,20 @@ pub trait PropertyValue: Sized {
     /// The type of value returned on a failed parse.
     type Err;
 
-    /// Parses a value from a not-unset [RawValue].
+    /// Parses a value from a not-unset [`RawValue`].
     ///
     /// This usually shouldn't be called directly.
-    /// See [crate::Properties] or [RawValue::parse].
+    /// See [`crate::Properties`] or [`RawValue::parse`].
     fn parse(value: &RawValue) -> Result<Self, Self::Err>;
 }
 
 /// Trait for types that are associated with property names.
 ///
-/// Types that implement this trait will usually also implement [PropertyValue].
+/// Types that implement this trait will usually also implement [`PropertyValue`].
 pub trait PropertyKey {
     /// The lowercase string key for this property.
     ///
-    /// Used to look up the value in a [crate::Properties] map.
+    /// Used to look up the value in a [`crate::Properties`] map.
     fn key() -> &'static str;
 }
 
