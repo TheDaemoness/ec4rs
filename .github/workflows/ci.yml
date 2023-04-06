@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Library Tests
+    name: MSRV Library Tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -21,11 +21,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Install Rust
+      - name: Install MSRV Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.56.0
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -34,40 +34,32 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-  clippy:
-    name: MSRV Clippy
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Install Clippy
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: 1.56.0
-          components: clippy
-      - name: Clippy
+          profile: default
+          toolchain: stable
+      - name: Check Clippy
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-  fmt:
-    name: Check Style
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install Rustfmt
-        uses: actions-rs/toolchain@v1
+      - name: Check Docs
+        uses: actions-rs/cargo@v1
         with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt
+          command: doc
+          args: "--no-deps"
       - name: Check Style
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: "--check"
-  tests:
+  compliance:
     name: Binary Tests
     runs-on: ubuntu-latest
     steps:
