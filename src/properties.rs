@@ -197,7 +197,9 @@ impl PartialEq for Properties {
         if self.len() != other.len() {
             return false;
         }
-        std::iter::zip(self.idxes.iter(), other.idxes.iter())
+        self.idxes
+            .iter()
+            .zip(other.idxes.iter())
             .all(|(idx_s, idx_o)| self.pairs[*idx_s] == other.pairs[*idx_o])
     }
 }
