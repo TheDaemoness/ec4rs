@@ -60,8 +60,7 @@ impl Properties {
     pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
         self.find_idx(key.as_ref())
             .ok()
-            .map(|idx| &self.pairs[idx].1)
-            .unwrap_or(&crate::rawvalue::UNSET)
+            .map_or(&crate::rawvalue::UNSET, |idx| &self.pairs[idx].1)
     }
 
     /// Returns the unparsed "raw" value for the specified property.

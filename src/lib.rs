@@ -1,4 +1,7 @@
 #![doc = include_str!("../DOC.md")]
+#![deny(clippy::as_conversions)]
+#![deny(clippy::enum_glob_use)]
+#![deny(clippy::wildcard_imports)]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 #![deny(rustdoc::bare_urls)]
@@ -7,6 +10,14 @@
 #![deny(rustdoc::invalid_html_tags)]
 #![deny(rustdoc::invalid_rust_codeblocks)]
 #![deny(rustdoc::private_intra_doc_links)]
+#![warn(clippy::if_then_some_else_none)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::doc_markdown)] // reason = "False positives on EditorConfig".
+#![allow(clippy::module_name_repetitions)] // reason = "Affects re-exports from private modules."
+#![allow(clippy::must_use_candidate)] // reason = "Too pedantic."
+#![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
+#![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
+#![allow(clippy::missing_errors_doc)] // reason = "TODO: Fix."
 
 mod error;
 mod fallback;
@@ -40,7 +51,7 @@ pub use traits::*;
 /// EditorConfig files are assumed to be named `.editorconfig`.
 /// If not, use [`properties_from_config_of`]
 pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Error> {
-    properties_from_config_of(path, None as Option<&std::path::Path>)
+    properties_from_config_of(path, Option::<&std::path::Path>::None)
 }
 
 /// Retrieves the [`Properties`] for a file at the given path,

@@ -23,9 +23,8 @@ impl<'a> GlobStack<'a> {
             if let Some((retval, rest)) = front.split_last() {
                 *front = rest;
                 return Some(retval);
-            } else {
-                self.0.pop();
             }
+            self.0.pop();
         }
         None
     }

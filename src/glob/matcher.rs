@@ -31,7 +31,7 @@ fn try_match<'a, 'b>(
         Matcher::Suffix(s) => splitter.match_suffix(s.as_str()),
         Matcher::CharClass(cs, should_have) => {
             let (splitter, c) = splitter.next_char()?;
-            if cs.contains(&c) != *should_have {
+            if cs.contains(c) != *should_have {
                 return None;
             }
             Some(splitter)

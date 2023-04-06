@@ -51,8 +51,8 @@ impl<R: io::BufRead> ConfigParser<R> {
         };
         Ok(ConfigParser {
             is_root,
-            reader,
             eof,
+            reader,
         })
     }
 
@@ -68,32 +68,31 @@ impl<R: io::BufRead> ConfigParser<R> {
 
     /// Parses a [`Section`], reading more if needed.
     pub fn read_section(&mut self) -> Result<Section, ParseError> {
-        if !self.eof {
-            use crate::linereader::Line;
-            if let Ok(Line::Section(header)) = self.reader.reparse() {
-                let mut section = Section::new(header);
-                loop {
-                    match self.reader.next_line() {
-                        Err(e) => {
-                            self.eof = true;
-                            if let ParseError::Eof = e {
-                                break Ok(section);
-                            } else {
-                                break Err(e);
-                            }
-                        }
-                        Ok(Line::Section(_)) => break Ok(section),
-                        Ok(Line::Nothing) => (),
-                        Ok(Line::Pair(k, v)) => {
-                            section.insert(k, v.to_owned());
-                        }
+        use crate::linereader::Line;
+        if self.eof {
+            return Err(ParseError::Eof);
+        }
+        if let Ok(Line::Section(header)) = self.reader.reparse() {
+            let mut section = Section::new(header);
+            loop {
+                match self.reader.next_line() {
+                    Err(e) => {
+                        self.eof = true;
+                        break if matches!(e, ParseError::Eof) {
+                            Ok(section)
+                        } else {
+                            Err(e)
+                        };
+                    }
+                    Ok(Line::Section(_)) => break Ok(section),
+                    Ok(Line::Nothing) => (),
+                    Ok(Line::Pair(k, v)) => {
+                        section.insert(k, v.to_owned());
                     }
                 }
-            } else {
-                Err(ParseError::InvalidLine)
             }
         } else {
-            Err(ParseError::Eof)
+            Err(ParseError::InvalidLine)
         }
     }
 }

@@ -75,6 +75,7 @@ impl ConfigFiles {
     ///
     /// EditorConfig files are assumed to be named `.editorconfig`
     /// unless an override is supplied as the second argument.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn open(
         path: impl AsRef<Path>,
         config_path_override: Option<impl AsRef<std::path::Path>>,
@@ -82,8 +83,7 @@ impl ConfigFiles {
         use std::borrow::Cow;
         let filename = config_path_override
             .as_ref()
-            .map(|f| f.as_ref())
-            .unwrap_or_else(|| ".editorconfig".as_ref());
+            .map_or_else(|| ".editorconfig".as_ref(), |f| f.as_ref());
         Ok(ConfigFiles(if filename.is_relative() {
             let mut abs_path = Cow::from(path.as_ref());
             if abs_path.is_relative() {

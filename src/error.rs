@@ -13,12 +13,11 @@ pub enum ParseError {
 
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use ParseError::*;
         match self {
-            Eof => write!(f, "end of data"),
-            Io(e) => write!(f, "io failure: {}", e),
-            InvalidLine => write!(f, "invalid line"),
-            EmptyCharClass => write!(f, "empty char class"),
+            ParseError::Eof => write!(f, "end of data"),
+            ParseError::Io(e) => write!(f, "io failure: {}", e),
+            ParseError::InvalidLine => write!(f, "invalid line"),
+            ParseError::EmptyCharClass => write!(f, "empty char class"),
         }
     }
 }
@@ -46,24 +45,21 @@ pub enum Error {
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
         match self {
-            Parse(error) => write!(f, "{}", error),
-            InFile(path, line, error) => {
+            Error::Parse(error) => write!(f, "{}", error),
+            Error::InFile(path, line, error) => {
                 write!(f, "{}:{}: {}", path.to_string_lossy(), line, error)
             }
-            InvalidCwd(ioe) => write!(f, "invalid cwd: {}", ioe),
+            Error::InvalidCwd(ioe) => write!(f, "invalid cwd: {}", ioe),
         }
     }
 }
 
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
         match self {
-            Parse(pe) => pe.source(),
-            InFile(_, _, pe) => pe.source(),
-            InvalidCwd(ioe) => Some(ioe),
+            Error::Parse(pe) | Error::InFile(_, _, pe) => pe.source(),
+            Error::InvalidCwd(ioe) => Some(ioe),
         }
     }
 }

@@ -6,8 +6,9 @@ mod parser;
 mod splitter;
 mod stack;
 
-pub(self) use flatset::FlatSet;
 pub use matcher::Matcher;
+
+use flatset::FlatSet;
 use splitter::Splitter;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]

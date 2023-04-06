@@ -5,6 +5,7 @@
 #[cfg(target_family = "unix")]
 mod cnv {
     use std::ffi::OsStr;
+    #[allow(clippy::unnecessary_wraps)]
     pub fn to_bytes(s: &OsStr) -> Option<&[u8]> {
         use std::os::unix::ffi::OsStrExt;
         Some(s.as_bytes())
@@ -14,6 +15,7 @@ mod cnv {
 #[cfg(target_os = "wasi")]
 mod cnv {
     use std::ffi::OsStr;
+    #[allow(clippy::unnecessary_wraps)]
     pub fn to_bytes(s: &OsStr) -> Option<&[u8]> {
         use std::os::wasi::ffi::OsStrExt;
         Some(s.as_bytes())
@@ -46,22 +48,21 @@ impl<'a> Splitter<'a> {
     }
 
     pub fn match_end(mut self) -> Option<Self> {
-        if !self.part.is_empty() {
-            return None;
-        }
         use std::path::Component as C;
-        match self.iter.next_back() {
-            None => Some(self),
-            Some(C::CurDir | C::RootDir | C::Prefix(_)) => Some(self),
-            _ => None,
+        if self.part.is_empty() {
+            let next = self.iter.next_back();
+            if matches!(next, None | Some(C::CurDir | C::RootDir | C::Prefix(_))) {
+                return Some(self);
+            }
         }
+        None
     }
 
     pub fn next(mut self) -> Option<Self> {
-        use std::path::Component::*;
+        use std::path::Component;
         self.part = match self.iter.next_back()? {
-            Normal(p) => cnv::to_bytes(p)?,
-            ParentDir => "..".as_bytes(),
+            Component::Normal(p) => cnv::to_bytes(p)?,
+            Component::ParentDir => "..".as_bytes(),
             _ => "".as_bytes(),
         };
         Some(self)
@@ -103,12 +104,11 @@ impl<'a> Splitter<'a> {
     }
 
     pub fn match_sep(mut self) -> Option<Self> {
-        if self.part.is_empty() {
+        let is_empty = self.part.is_empty();
+        is_empty.then(|| {
             self.matched_sep = true;
-            Some(self)
-        } else {
-            None
-        }
+            self
+        })
     }
 
     pub fn match_suffix(mut self, suffix: &str) -> Option<Self> {
