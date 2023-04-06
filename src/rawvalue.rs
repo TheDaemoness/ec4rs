@@ -13,7 +13,7 @@ pub static UNSET: RawValue = RawValue(Cow::Borrowed(""));
 /// An unparsed property value.
 ///
 /// This is conceptually an optional non-empty string with some convenience methods.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct RawValue(Cow<'static, str>);
 
 impl RawValue {
@@ -32,7 +32,6 @@ impl RawValue {
     ///
     /// Does not handle values of "unset".
     /// See [`RawValue::filter_unset`].
-    #[must_use]
     pub fn is_unset(&self) -> bool {
         self.0.is_empty()
     }
@@ -79,7 +78,6 @@ impl RawValue {
     /// Converts this `RawValue` into `&str`.
     ///
     /// If the value was not set, returns "unset".
-    #[must_use]
     pub fn into_str(&self) -> &str {
         if self.is_unset() {
             "unset"

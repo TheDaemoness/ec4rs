@@ -44,7 +44,7 @@ pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Er
 }
 
 /// Retrieves the [`Properties`] for a file at the given path,
-/// optionally using the specified configuration path.
+/// expecting EditorConfig files to be named matching `config_path_override`.
 ///
 /// This function does not canonicalize the path,
 /// but will join relative paths onto the current working directory.

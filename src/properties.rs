@@ -12,7 +12,7 @@ use crate::{PropertyKey, PropertyValue};
 ///
 /// This structure is case-sensitive.
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Properties {
     // Don't use Cow<'static, str> here because it's actually less-optimal
     // for the vastly more-common case of reading parsed properties.
@@ -28,11 +28,21 @@ pub struct Properties {
 
 impl Properties {
     /// Constructs a new empty [`Properties`].
-    pub fn new() -> Properties {
+    pub const fn new() -> Properties {
         Properties {
             pairs: Vec::new(),
             idxes: Vec::new(),
         }
+    }
+
+    /// Returns the number of key-value pairs.
+    pub fn len(&self) -> usize {
+        self.pairs.len()
+    }
+
+    /// Returns `true` if `self` contains no key-value pairs.
+    pub fn is_empty(&self) -> bool {
+        self.pairs.is_empty()
     }
 
     /// Returns either the index of the pair with the desired key in `pairs`,
@@ -54,7 +64,7 @@ impl Properties {
             .unwrap_or(&crate::rawvalue::UNSET)
     }
 
-    /// Returns the unpared "raw" value for the specified property.
+    /// Returns the unparsed "raw" value for the specified property.
     ///
     /// Does not test for the "unset" value. Use [`RawValue::filter_unset`].
     pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
@@ -182,9 +192,23 @@ impl Properties {
     }
 }
 
-impl Default for Properties {
-    fn default() -> Properties {
-        Properties::new()
+impl PartialEq for Properties {
+    fn eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+        std::iter::zip(self.idxes.iter(), other.idxes.iter())
+            .all(|(idx_s, idx_o)| self.pairs[*idx_s] == other.pairs[*idx_o])
+    }
+}
+
+impl Eq for Properties {}
+
+impl std::fmt::Debug for Properties {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Properties")
+            .field(&self.pairs.as_slice())
+            .finish()
     }
 }
 
