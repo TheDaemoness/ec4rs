@@ -1,4 +1,4 @@
-use crate::glob::Glob;
+use crate::glob::{Glob, Matcher};
 
 pub struct AltStack(Vec<AltBuilder>);
 
@@ -81,7 +81,7 @@ impl AltBuilder {
                 self.options
                     .sort_by(|a, b| (!a.0.is_empty()).cmp(&!b.0.is_empty()));
                 self.options.dedup();
-                self.glob.append(crate::glob::Matcher::Any(self.options));
+                self.glob.append(Matcher::Any(self.options.into()));
                 self.glob
             }
         }

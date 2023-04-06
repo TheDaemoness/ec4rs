@@ -1,18 +1,16 @@
 use super::{Glob, Splitter};
 
-use std::collections::BTreeSet;
-
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Matcher {
     End,
-    Sep,
-    AnyChar,
     AnySeq(bool),
+    AnyChar,
+    Sep,
     Suffix(String),
     // TODO: Grapheme clusters?
-    CharClass(BTreeSet<char>, bool),
+    CharClass(super::FlatSet<char>, bool),
     Range(isize, isize),
-    Any(Vec<super::Glob>),
+    Any(super::FlatSet<super::Glob>),
 }
 
 fn try_match<'a, 'b>(

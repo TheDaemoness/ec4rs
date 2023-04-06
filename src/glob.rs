@@ -1,14 +1,16 @@
 // TODO: All of this glob stuff should be extracted to its own crate.
 
+mod flatset;
 mod matcher;
 mod parser;
 mod splitter;
 mod stack;
 
+pub(self) use flatset::FlatSet;
 pub use matcher::Matcher;
 use splitter::Splitter;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Glob(pub(super) Vec<Matcher>);
 
 impl Glob {
