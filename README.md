@@ -29,7 +29,8 @@ as a Git submodule. `ec4rs` should pass all of these tests.
 To run the test suite, run the following commands in a POSIX-like shell:
 
 ```bash
-cargo build -p ec4rs_tools
-cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" tests
+cargo build --package ec4rs_tools
+git submodule update --init --recursive
+cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" -Stests -Btests
 ctest --test-dir tests
 ```
