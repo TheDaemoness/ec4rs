@@ -1,4 +1,4 @@
-#![doc = include_str!("../DOC.md")]
+#![doc = include_str!("../rustdoc.md")]
 #![deny(clippy::as_conversions)]
 #![deny(clippy::enum_glob_use)]
 #![deny(clippy::wildcard_imports)]

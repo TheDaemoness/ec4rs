@@ -25,7 +25,7 @@ For example usage, see [the docs](https://docs.rs/ec4rs).
 
 The main repository for this library includes the EditorConfig
 [core tests](https://github.com/editorconfig/editorconfig-core-test)
-as a Git submodule. `ec4rs` should pass all of these tests.
+as a Git submodule. This library should pass all of these tests.
 To run the test suite, run the following commands in a POSIX-like shell:
 
 ```bash
@@ -34,3 +34,16 @@ git submodule update --init --recursive
 cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" -Stests -Btests
 ctest --test-dir tests
 ```
+
+## License
+
+**ec4rs** is licensed under the
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
+with no `NOTICE` text.
+
+Contributors submitting code changes must agree to the terms of the
+[Developer Certificate of Origin (DCO)](https://developercertificate.org/)
+to have their contributions accepted for inclusion.
+A copy of the DCO may be found in `DCO.txt`.
+Contributors should sign-off on their commits (see `git commit -s`)
+to indicate explicit agreement.
