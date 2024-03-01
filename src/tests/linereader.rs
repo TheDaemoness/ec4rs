@@ -19,6 +19,10 @@ fn valid_props() {
         ("  foo =  bar = baz  ", Pair("foo", "bar = baz")),
         ("foo = bar #baz", Pair("foo", "bar #baz")),
         ("foo = [bar]", Pair("foo", "[bar]")),
+        #[cfg(feature = "allow-empty-values")]
+        ("foo =", Line::Nothing),
+        #[cfg(feature = "allow-empty-values")]
+        ("foo = ", Line::Nothing),
     ])
 }
 
@@ -64,8 +68,9 @@ fn invalid() {
         "][",
         "nonproperty",
         "=",
-        "noval =  ",
         "  = nokey",
+        #[cfg(not(feature = "allow-empty-values"))]
+        "noval = ",
     ];
     for line in lines {
         assert!(matches!(
