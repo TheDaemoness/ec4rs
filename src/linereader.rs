@@ -20,29 +20,41 @@ type LineReadResult<'a> = Result<Line<'a>, ParseError>;
 /// It's usually not necessary to call this function directly.
 pub fn parse_line(line: &str) -> LineReadResult<'_> {
     let mut l = line.trim_start();
-    if l.starts_with(|c| c == ';' || c == '#') {
-        Ok(Line::Nothing)
-    } else {
-        l = l.trim_end();
-        if l.is_empty() {
-            Ok(Line::Nothing)
-        } else if let Some(s) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
-            if s.is_empty() {
-                Err(ParseError::InvalidLine)
-            } else {
-                Ok(Line::Section(s))
-            }
-        } else if let Some((key_raw, val_raw)) = l.split_once('=') {
-            let key = key_raw.trim_end();
-            let val = val_raw.trim_start();
-            if key.is_empty() || val.is_empty() {
-                Err(ParseError::InvalidLine)
-            } else {
-                Ok(Line::Pair(key.trim_end(), val.trim_start()))
-            }
-        } else {
-            Err(ParseError::InvalidLine)
+    if l.starts_with(is_comment) {
+        return Ok(Line::Nothing);
+    }
+
+    // check for trailing comments after section headers
+    let last_closing_bracket = l.rfind(']');
+    let last_comment = l.rfind(is_comment);
+
+    match (last_closing_bracket, last_comment) {
+        (Some(bracket), Some(comment)) if comment > bracket => {
+            // there is a comment following a closing bracket, trim it.
+            l = l[0..comment].as_ref();
         }
+        _ => (),
+    }
+
+    l = l.trim_end();
+    if l.is_empty() {
+        Ok(Line::Nothing)
+    } else if let Some(s) = l.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+        if s.is_empty() {
+            Err(ParseError::InvalidLine)
+        } else {
+            Ok(Line::Section(s))
+        }
+    } else if let Some((key_raw, val_raw)) = l.split_once('=') {
+        let key = key_raw.trim_end();
+        let val = val_raw.trim_start();
+        if key.is_empty() || val.is_empty() {
+            Err(ParseError::InvalidLine)
+        } else {
+            Ok(Line::Pair(key.trim_end(), val.trim_start()))
+        }
+    } else {
+        Err(ParseError::InvalidLine)
     }
 }
 
@@ -99,4 +111,8 @@ impl<R: io::BufRead> LineReader<R> {
             }
         }
     }
+}
+
+fn is_comment(c: char) -> bool {
+    c == ';' || c == '#'
 }

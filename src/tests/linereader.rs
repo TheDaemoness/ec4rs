@@ -34,6 +34,8 @@ fn valid_sections() {
         (" [foo] ", Section("foo")),
         ("[a=b]", Section("a=b")),
         ("[#foo]", Section("#foo")),
+        ("[foo] #comment", Section("foo")),
+        ("[foo] ;comment", Section("foo")),
     ])
 }
 
@@ -57,7 +59,6 @@ fn valid_nothing() {
 fn invalid() {
     let lines = [
         "[]",
-        "[section] #comment",
         "[close",
         "open]",
         "][",
