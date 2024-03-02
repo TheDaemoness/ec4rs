@@ -3,7 +3,8 @@ fn validate<'a>(
     should_be_root: bool,
     expected: impl IntoIterator<Item = &'a [(&'a str, &'a str)]>,
 ) {
-    let mut parser = crate::ConfigParser::new(text.as_bytes()).unwrap();
+    let mut parser =
+        crate::ConfigParser::new(text.as_bytes()).expect("Should have created the parser");
     assert_eq!(parser.is_root, should_be_root);
     for section_expected in expected {
         let section = parser.next().unwrap().unwrap();
@@ -11,9 +12,9 @@ fn validate<'a>(
         for (key, value) in section_expected {
             assert_eq!(iter.next(), Some((*key, *value)))
         }
-        assert!(matches!(iter.next(), None));
+        assert!(iter.next().is_none());
     }
-    assert!(matches!(parser.next(), None));
+    assert!(parser.next().is_none());
 }
 
 macro_rules! expect {
@@ -70,4 +71,13 @@ fn sections() {
 fn trailing_newline() {
     validate("[foo]\nbar=baz\n", false, expect![[("bar", "baz")]]);
     validate("[foo]\nbar=baz\n\n", false, expect![[("bar", "baz")]]);
+}
+
+#[test]
+fn section_with_comment_after_it() {
+    validate(
+        "[/*] # ignore this comment\nk=v",
+        false,
+        expect![[("k", "v")]],
+    );
 }
