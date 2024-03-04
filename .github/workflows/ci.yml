@@ -30,10 +30,15 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-      - name: Unit Tests
+      - name: Unit Tests (default features)
         uses: actions-rs/cargo@v1
         with:
           command: test
+      - name: "Unit Tests (all features)"
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: "--all-features"
   quality:
     name: Code Quality
     runs-on: ubuntu-latest
