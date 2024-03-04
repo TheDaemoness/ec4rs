@@ -20,9 +20,9 @@ fn valid_props() {
         ("foo = bar #baz", Pair("foo", "bar #baz")),
         ("foo = [bar]", Pair("foo", "[bar]")),
         #[cfg(feature = "allow-empty-values")]
-        ("foo =", Line::Nothing),
+        ("foo =", Pair("foo", "")),
         #[cfg(feature = "allow-empty-values")]
-        ("foo = ", Line::Nothing),
+        ("foo = ", Pair("foo", "")),
     ])
 }
 

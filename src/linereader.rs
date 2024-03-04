@@ -53,7 +53,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
             (false, true) => {
                 #[cfg(feature = "allow-empty-values")]
                 {
-                    Ok(Line::Nothing)
+                    Ok(Line::Pair(key.trim_end(), val))
                 }
                 #[cfg(not(feature = "allow-empty-values"))]
                 {
