@@ -28,12 +28,11 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
     let last_closing_bracket = l.rfind(']');
     let last_comment = l.rfind(is_comment);
 
-    match (last_closing_bracket, last_comment) {
-        (Some(bracket), Some(comment)) if comment > bracket => {
+    if let (Some(bracket), Some(comment)) = (last_closing_bracket, last_comment) {
+        if comment > bracket {
             // there is a comment following a closing bracket, trim it.
             l = l[0..comment].as_ref();
         }
-        _ => (),
     }
 
     l = l.trim_end();
