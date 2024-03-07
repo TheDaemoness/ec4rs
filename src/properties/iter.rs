@@ -15,8 +15,25 @@ macro_rules! impls {
                     break Some((key, val));
                 }
             }
-            //TODO: Non-default implementations.
+
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                // TODO: Exact size when empty pairs are disallowed from Properties.
+                (0, self.0.size_hint().1)
+            }
         }
+        impl<'a> DoubleEndedIterator for $name<'a> {
+            fn next_back(&mut self) -> Option<Self::Item> {
+                loop {
+                    let pair = self.0.next_back()?;
+                    if pair.1.is_unset() {
+                        continue;
+                    }
+                    let (ref key, val) = pair;
+                    break Some((key, val));
+                }
+            }
+        }
+        impl<'a> std::iter::FusedIterator for $name<'a> {}
         //TODO: PartialEq/Eq?
     };
 }

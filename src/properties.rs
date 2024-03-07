@@ -22,9 +22,13 @@ pub struct Properties {
     /// Indices of `pairs`, ordered matching the key of the pair each index refers to.
     /// This part is what allows logarithmic lookups.
     idxes: Vec<usize>,
+    // Unfortunately, we hand out `&mut RawValue`s all over the place,
+    // so "no empty RawValues in Properties" cannot be made an invariant
+    // without breaking API changes.
 }
 
-// TODO: Deletion?
+// TODO: Deletion, cleaning empty-valued pairs.
+// TODO: Access to empty-valued pairs.
 
 impl Properties {
     /// Constructs a new empty [`Properties`].
@@ -35,7 +39,7 @@ impl Properties {
         }
     }
 
-    /// Returns the number of key-value pairs.
+    /// Returns the number of key-value pairs, including those with empty values.
     pub fn len(&self) -> usize {
         self.pairs.len()
     }
@@ -81,6 +85,7 @@ impl Properties {
     /// Returns an iterator over the key-value pairs.
     ///
     /// Pairs are returned from oldest to newest.
+    /// Only pairs with a non-empty value are returned.
     pub fn iter(&self) -> Iter<'_> {
         Iter(self.pairs.iter())
     }
@@ -88,6 +93,7 @@ impl Properties {
     /// Returns an iterator over the key-value pairs that allows mutation of the values.
     ///
     /// Pairs are returned from oldest to newest.
+    /// Only pairs with a non-empty value are returned.
     pub fn iter_mut(&mut self) -> IterMut<'_> {
         IterMut(self.pairs.iter_mut())
     }
@@ -120,8 +126,6 @@ impl Properties {
     }
 
     /// Inserts a specified property into the map.
-    ///
-    /// If the key was already associated with a value, returns the old value.
     pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
         self.insert_raw_for_key(T::key(), prop.into())
     }
@@ -213,13 +217,45 @@ impl std::fmt::Debug for Properties {
     }
 }
 
+impl<'a> IntoIterator for &'a Properties {
+    type Item = <Iter<'a> as Iterator>::Item;
+
+    type IntoIter = Iter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Properties {
+    type Item = <IterMut<'a> as Iterator>::Item;
+
+    type IntoIter = IterMut<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut result = Properties::new();
-        for (k, v) in iter {
-            result.insert_raw_for_key(k, v);
-        }
+        result.extend(iter);
         result
+    }
+}
+
+impl<K: AsRef<str>, V: Into<RawValue>> Extend<(K, V)> for Properties {
+    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
+        let iter = iter.into_iter();
+        let min_len = iter.size_hint().0;
+        self.pairs.reserve(min_len);
+        self.idxes.reserve(min_len);
+        for (k, v) in iter {
+            let k = k.as_ref();
+            let v = v.into();
+            self.insert_raw_for_key(k, v);
+        }
     }
 }
 
@@ -240,7 +276,7 @@ impl<'a> PropertiesSource for &'a Properties {
         props: &mut Properties,
         _: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
-        for (k, v) in self.iter() {
+        for (k, v) in self {
             props.insert_raw_for_key(k, v.clone());
         }
         Ok(())
