@@ -6,7 +6,7 @@
 //! against the same core test suite used by the reference implementation of EditorConfig.
 #![allow(missing_docs)]
 
-pub static STRING: &str = "0.15.1";
+pub static STRING: &str = "0.16.0";
 pub static MAJOR: usize = 0;
-pub static MINOR: usize = 15;
-pub static PATCH: usize = 1;
+pub static MINOR: usize = 16;
+pub static PATCH: usize = 0;

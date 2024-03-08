@@ -27,7 +27,7 @@ macro_rules! property_choice {
         // MISTAKE: These need to be #[non_exhaustive],
         // but adding it would be a breaking change.
         // Hold off on adding it until the breakage would need to happen anyway.
-        #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
         #[repr(u8)]
         #[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
         #[allow(missing_docs)]
@@ -150,6 +150,55 @@ property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
 property_valued! {FinalNewline, "insert_final_newline", bool;}
 property_valued! {MaxLineLen, "max_line_length", usize; (Off, "off")}
 
+// As of the authorship of this comment, spelling_language isn't on the wiki.
+// Ooop.
+
+#[cfg(feature = "language-tags")]
+/// The `spelling_language` property added by EditorConfig 0.16.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[allow(missing_docs)]
+pub enum SpellingLanguage {
+    Value(crate::language_tags::LanguageTag),
+}
+
+#[cfg(feature = "language-tags")]
+impl PropertyValue for SpellingLanguage {
+    const MAYBE_UNSET: bool = false;
+    type Err = crate::language_tags::ParseError;
+    fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
+        if let Some(string) = raw.into_option() {
+            string.parse().map(SpellingLanguage::Value)
+        } else {
+            Err(crate::language_tags::ParseError::EmptySubtag)
+        }
+    }
+}
+
+#[cfg(feature = "language-tags")]
+impl From<SpellingLanguage> for RawValue {
+    fn from(val: SpellingLanguage) -> RawValue {
+        match val {
+            SpellingLanguage::Value(v) => v.to_string().into(),
+        }
+    }
+}
+
+#[cfg(feature = "language-tags")]
+impl PropertyKey for SpellingLanguage {
+    fn key() -> &'static str {
+        "spelling_language"
+    }
+}
+
+#[cfg(feature = "language-tags")]
+impl Display for SpellingLanguage {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            SpellingLanguage::Value(v) => v.fmt(f),
+        }
+    }
+}
+
 /// All the keys of the standard properties.
 ///
 /// Can be used to determine if a property is defined in the specification or not.
@@ -160,5 +209,7 @@ pub static STANDARD_KEYS: &[&str] = &[
     "end_of_line",
     "charset",
     "trim_trailing_whitespace",
-    "insert_final_newline", // NOT "max_line_length".
+    "insert_final_newline",
+    "spelling_language",
+    // NOT "max_line_length".
 ];

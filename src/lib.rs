@@ -41,6 +41,12 @@ pub use properties::{Properties, PropertiesSource};
 pub use section::Section;
 pub use traits::*;
 
+#[cfg(feature = "language-tags")]
+pub mod language_tags {
+    //! Re-export of the `language-tags` crate.
+    pub use ::language_tags::*;
+}
+
 /// Retrieves the [`Properties`] for a file at the given path.
 ///
 /// This is the simplest way to use this library in an EditorConfig integration or plugin.

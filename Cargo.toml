@@ -21,3 +21,6 @@ members = ["tools"]
 
 [features]
 allow-empty-values = []
+
+[dependencies]
+language-tags = { version = "0.3.2", optional = true }
