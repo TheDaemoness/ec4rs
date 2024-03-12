@@ -276,9 +276,7 @@ impl<'a> PropertiesSource for &'a Properties {
         props: &mut Properties,
         _: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
-        for (k, v) in self {
-            props.insert_raw_for_key(k, v.clone());
-        }
+        props.extend(self.pairs.iter().cloned());
         Ok(())
     }
 }

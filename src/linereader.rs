@@ -18,6 +18,10 @@ type LineReadResult<'a> = Result<Line<'a>, ParseError>;
 /// Does not do any lowercasing or anything beyond basic validation.
 ///
 /// It's usually not necessary to call this function directly.
+///
+/// If the `allow-empty-values` feature is enabled,
+/// lines with a key but no value will be returned as a [`Line::Pair`].
+/// Otherwise, they are considered invalid.
 pub fn parse_line(line: &str) -> LineReadResult<'_> {
     let mut l = line.trim_start();
     if l.starts_with(is_comment) {

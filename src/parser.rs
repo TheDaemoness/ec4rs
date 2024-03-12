@@ -86,8 +86,6 @@ impl<R: io::BufRead> ConfigParser<R> {
                     }
                     Ok(Line::Section(_)) => break Ok(section),
                     Ok(Line::Nothing) => (),
-                    #[cfg(feature = "allow-empty-values")]
-                    Ok(Line::Pair(_, v)) if v.is_empty() => (),
                     Ok(Line::Pair(k, v)) => {
                         section.insert(k, v.to_owned());
                     }

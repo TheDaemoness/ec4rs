@@ -1,4 +1,4 @@
-use crate::Properties;
+use crate::{rawvalue::RawValue, Properties, PropertiesSource};
 
 static BASIC_KEYS: [&str; 4] = ["2", "3", "0", "1"];
 static ALT_VALUES: [&str; 4] = ["a", "b", "c", "d"];
@@ -78,4 +78,20 @@ fn try_insert_replacing() {
             k
         );
     }
+}
+
+#[test]
+fn apply_empty_to() {
+    let mut props = Properties::new();
+    props.insert_raw_for_key("foo", "a");
+    props.insert_raw_for_key("bar", "b");
+    let mut empty_pairs = Properties::new();
+    empty_pairs.insert_raw_for_key("bar", "");
+    empty_pairs.insert_raw_for_key("baz", "");
+    assert_eq!(empty_pairs.len(), 2);
+    empty_pairs
+        .apply_to(&mut props, "")
+        .expect("Properties::apply_to should be infallible");
+    assert_eq!(props.len(), 3);
+    assert_eq!(props.get_raw_for_key("bar"), &RawValue::from(""));
 }
