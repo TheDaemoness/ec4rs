@@ -18,6 +18,7 @@
 #![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
 #![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
 #![allow(clippy::missing_errors_doc)] // reason = "TODO: Fix."
+#![cfg_attr(doc_unstable, feature(doc_auto_cfg))]
 
 mod error;
 mod fallback;

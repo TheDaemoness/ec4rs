@@ -14,7 +14,7 @@ edition = "2021"
 authors = ["TheDaemoness"]
 include = ["/src", "/README.md", "/DOC.md"]
 rust-version = "1.56"                       # 2021 edition
-version = "1.0.2"
+version = "1.1.0"
 
 [workspace]
 members = ["tools"]
@@ -24,3 +24,7 @@ allow-empty-values = []
 
 [dependencies]
 language-tags = { version = "0.3.2", optional = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "doc_unstable"]

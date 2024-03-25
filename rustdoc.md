@@ -45,3 +45,13 @@ let hard_wrap = cfg.get_raw_for_key("max_line_length")
     .into_str()
     .parse::<usize>();
 ```
+
+## Features
+
+**allow-empty-values**: Consider lines with a key but no value as valid.
+This is likely to be explicitly allowed in a future version of the
+EditorConfig specification, but `ec4rs` currently by default treats such lines
+as invalid, necessitating this feature flag to reduce behavioral breakage.
+
+**language-tags**: Use the `language-tags` crate, which adds parsing for the
+[`SpellingLanguage`][crate::property::SpellingLanguage] property.
