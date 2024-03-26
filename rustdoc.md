@@ -54,4 +54,4 @@ EditorConfig specification, but `ec4rs` currently by default treats such lines
 as invalid, necessitating this feature flag to reduce behavioral breakage.
 
 **language-tags**: Use the `language-tags` crate, which adds parsing for the
-[`SpellingLanguage`][crate::property::SpellingLanguage] property.
+`spelling_language` property.
