@@ -12,7 +12,7 @@ categories = ["config", "parser-implementations"]
 edition = "2021"
 
 authors = ["TheDaemoness"]
-include = ["/src", "/README.md", "/DOC.md"]
+include = ["/src", "/README.md", "/rustdoc.md"]
 rust-version = "1.56"                       # 2021 edition
 version = "1.1.0"
 
