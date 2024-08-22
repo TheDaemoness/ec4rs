@@ -4,10 +4,8 @@ use crate::glob::{Glob, Matcher};
 pub fn parse(glob: &str) -> Glob {
     let mut retval = Glob(vec![]);
     let mut stack = AltStack::new();
-    let mut found_sep: bool = false;
     for segment in glob.split('/') {
         retval.append_char('/');
-        found_sep = retval.0.len() > 1;
         let mut chars = segment.chars().peekable();
         while let Some(c) = chars.next() {
             match c {
@@ -64,7 +62,7 @@ pub fn parse(glob: &str) -> Glob {
             break;
         }
     }
-    if found_sep {
+    if glob.contains("/") {
         *retval.0.first_mut().unwrap() = Matcher::End;
     }
     if let Some(Matcher::Sep) = retval.0.last() {
