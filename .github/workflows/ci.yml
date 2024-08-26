@@ -88,4 +88,4 @@ jobs:
         shell: bash
         run: |
           cmake -DEDITORCONFIG_CMD="$PWD/target/debug/ec4rs-parse" tests
-          ctest --target-dir tests
+          ctest --test-dir tests
