@@ -45,6 +45,31 @@ fn path() {
 }
 
 #[test]
+fn root_star() {
+    test(
+        "/*",
+        ["/foo.txt", "/bar.xml", "/baz.json"],
+        ["/bar/foo/baz.txt", "/baz/bar/foo.xml", "/bar/foo.txt"],
+    );
+}
+
+#[test]
+fn root_double_star() {
+    test(
+        "/**",
+        [
+            "/foo.txt",
+            "/bar.xml",
+            "/baz.json",
+            "/bar/foo/baz.txt",
+            "/baz/bar/foo.xml",
+            "/bar/foo.txt",
+        ],
+        [],
+    );
+}
+
+#[test]
 fn star() {
     test("*", ["/*", "/a"], []);
     test(
