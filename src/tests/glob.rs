@@ -57,7 +57,14 @@ fn root_star() {
 fn root_double_star() {
     test(
         "/**",
-        ["/foo.txt", "/bar.xml", "/baz.json","/bar/foo/baz.txt", "/baz/bar/foo.xml", "/bar/foo.txt"],
+        [
+            "/foo.txt",
+            "/bar.xml",
+            "/baz.json",
+            "/bar/foo/baz.txt",
+            "/baz/bar/foo.xml",
+            "/bar/foo.txt",
+        ],
         [],
     );
 }
