@@ -13,8 +13,8 @@ edition = "2021"
 
 authors = ["TheDaemoness"]
 include = ["/src", "/README.md", "/rustdoc.md"]
-rust-version = "1.56"                       # 2021 edition
-version = "1.1.0"
+rust-version = "1.56" # 2021 edition
+version = "1.1.1"
 
 [workspace]
 members = ["tools"]

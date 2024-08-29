@@ -1,5 +1,10 @@
 # 1.x
 
+## 1.1.1 (2024-08-29)
+
+- Update testing instructions to work with the latest versions of cmake+ctest.
+- Fix `/*` matching too broadly (#12).
+
 ## 1.1.0 (2024-03-26)
 
 - Added optional `spelling_language` parsing for EditorConfig `0.16.0`.
