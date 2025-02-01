@@ -55,3 +55,7 @@ as invalid, necessitating this feature flag to reduce behavioral breakage.
 
 **language-tags**: Use the `language-tags` crate, which adds parsing for the
 `spelling_language` property.
+
+**track-source**: Allow [`RawValue`][crate::rawvalue::RawValue]
+to store the file and line number it originates from.
+[`ConfigParser`] will add this information where applicable.

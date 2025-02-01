@@ -4,6 +4,7 @@ use crate::{ConfigParser, Error, ParseError, Properties, PropertiesSource, Secti
 
 /// Convenience wrapper for an [`ConfigParser`] that reads files.
 pub struct ConfigFile {
+    // TODO: Arc<Path>. It's more important to have cheap clones than mutability.
     /// The path to the open file.
     pub path: PathBuf,
     /// A [`ConfigParser`] that reads from the file.
@@ -17,7 +18,7 @@ impl ConfigFile {
     pub fn open(path: impl Into<PathBuf>) -> Result<ConfigFile, ParseError> {
         let path = path.into();
         let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
-        let reader = ConfigParser::new_buffered(file)?;
+        let reader = ConfigParser::new_buffered_with_path(file, Some(path.as_ref()))?;
         Ok(ConfigFile { path, reader })
     }
 

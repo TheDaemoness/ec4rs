@@ -2,6 +2,8 @@
 
 ## 1.2.0 (Next)
 
+- Added feature `track-source` to track what file and line number any given
+value came from.
 - Added `RawValue::to_lowercase`.
 - Implemented `Display` for `RawValue`.
 - Changed `ec4rs-parse` to support empty values for compliance with
