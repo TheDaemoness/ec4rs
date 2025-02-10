@@ -14,14 +14,12 @@ pub fn add_fallbacks(props: &mut crate::Properties, legacy: bool) {
             let value = value.to_owned();
             let _ = props.try_insert_raw::<prop::TabWidth, _>(value);
         }
-    } else {
-        let value = props
-            .get_raw::<prop::TabWidth>()
-            .filter_unset()
-            .into_result()
-            .unwrap_or("")
-            .to_owned();
-        let _ = props.try_insert_raw::<prop::IndentSize, _>(value);
+    } else if let Some(value) = props
+        .get_raw::<prop::TabWidth>()
+        .filter_unset()
+        .into_option()
+    {
+        let _ = props.try_insert_raw::<prop::IndentSize, _>(value.to_owned());
     }
     if !legacy {
         if let Ok(prop::IndentStyle::Tabs) = props.get::<prop::IndentStyle>() {

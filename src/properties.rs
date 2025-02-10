@@ -1,6 +1,6 @@
 mod iter;
 
-pub use iter::{Iter, IterMut};
+pub use iter::*;
 
 use crate::rawvalue::RawValue;
 use crate::{PropertyKey, PropertyValue};
@@ -27,8 +27,7 @@ pub struct Properties {
     // without breaking API changes.
 }
 
-// TODO: Deletion, cleaning empty-valued pairs.
-// TODO: Access to empty-valued pairs.
+// TODO: Deletion.
 
 impl Properties {
     /// Constructs a new empty [`Properties`].
@@ -84,16 +83,22 @@ impl Properties {
 
     /// Returns an iterator over the key-value pairs.
     ///
+    /// If the `allow-empty-values` feature is NOT used,
+    /// key-value pairs where the value is empty will be skipped.
+    /// Otherwise, they will be returned as normal.
+    ///
     /// Pairs are returned from oldest to newest.
-    /// Only pairs with a non-empty value are returned.
     pub fn iter(&self) -> Iter<'_> {
         Iter(self.pairs.iter())
     }
 
     /// Returns an iterator over the key-value pairs that allows mutation of the values.
     ///
+    /// If the `allow-empty-values` feature is NOT used,
+    /// key-value pairs where the value is empty will be skipped.
+    /// Otherwise, they will be returned as normal.
+    ///
     /// Pairs are returned from oldest to newest.
-    /// Only pairs with a non-empty value are returned.
     pub fn iter_mut(&mut self) -> IterMut<'_> {
         IterMut(self.pairs.iter_mut())
     }

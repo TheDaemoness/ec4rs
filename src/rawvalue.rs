@@ -107,6 +107,18 @@ impl RawValue {
             T::parse(this).map_err(Some)
         }
     }
+
+    /// Returns a lowercased version of `self`.
+    #[must_use]
+    pub fn to_lowercase(&self) -> Self {
+        Self(Cow::Owned(self.0.to_lowercase()))
+    }
+}
+
+impl std::fmt::Display for RawValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.as_ref())
+    }
 }
 
 impl From<String> for RawValue {

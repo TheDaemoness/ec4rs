@@ -5,6 +5,7 @@ macro_rules! impls {
     ($name:ident, $valuetype:ty) => {
         impl<'a> Iterator for $name<'a> {
             type Item = (&'a str, $valuetype);
+            #[cfg(not(feature = "allow-empty-values"))]
             fn next(&mut self) -> Option<Self::Item> {
                 loop {
                     let pair = self.0.next()?;
@@ -15,13 +16,24 @@ macro_rules! impls {
                     break Some((key, val));
                 }
             }
+            #[cfg(feature = "allow-empty-values")]
+            fn next(&mut self) -> Option<Self::Item> {
+                let pair = self.0.next()?;
+                let (ref key, val) = pair;
+                Some((key, val))
+            }
 
+            #[cfg(not(feature = "allow-empty-values"))]
             fn size_hint(&self) -> (usize, Option<usize>) {
-                // TODO: Exact size when empty pairs are disallowed from Properties.
                 (0, self.0.size_hint().1)
+            }
+            #[cfg(feature = "allow-empty-values")]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.0.size_hint()
             }
         }
         impl<'a> DoubleEndedIterator for $name<'a> {
+            #[cfg(not(feature = "allow-empty-values"))]
             fn next_back(&mut self) -> Option<Self::Item> {
                 loop {
                     let pair = self.0.next_back()?;
@@ -31,6 +43,12 @@ macro_rules! impls {
                     let (ref key, val) = pair;
                     break Some((key, val));
                 }
+            }
+            #[cfg(feature = "allow-empty-values")]
+            fn next_back(&mut self) -> Option<Self::Item> {
+                let pair = self.0.next_back()?;
+                let (ref key, val) = pair;
+                Some((key, val))
             }
         }
         impl<'a> std::iter::FusedIterator for $name<'a> {}

@@ -1,5 +1,15 @@
 # 1.x
 
+## 1.2.0 (Next)
+
+- Added `RawValue::to_lowercase`.
+- Implemented `Display` for `RawValue`.
+- Changed `ec4rs-parse` to support empty values for compliance with
+EditorConfig `0.17.2`.
+- Fixed fallbacks adding an empty value for `indent_size`.
+- Fixed `Properties::iter` and `Properties::iter_mut` not returning
+pairs with empty values when `allow-empty-values` is enabled.
+
 ## 1.1.1 (2024-08-29)
 
 - Update testing instructions to work with the latest versions of cmake+ctest.
