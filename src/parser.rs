@@ -108,9 +108,9 @@ impl<R: io::BufRead> ConfigParser<R> {
         if let Ok(Line::Section(header)) = self.reader.reparse() {
             let mut section = Section::new(header);
             loop {
-                // Get line_no here because next_line increments it. Also avoids borrowing issues.
+                // Get line_no here to avoid borrowing issues, increment for 1-based indices.
                 #[cfg(feature = "track-source")]
-                let line_no = self.reader.line_no();
+                let line_no = self.reader.line_no() + 1;
                 match self.reader.next_line() {
                     Err(e) => {
                         self.eof = true;

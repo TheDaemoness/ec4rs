@@ -65,6 +65,9 @@ impl RawValue {
 
     #[cfg(feature = "track-source")]
     /// Returns the path to the file and the line number that this value originates from.
+    ///
+    /// The line number is 1-indexed to match convention;
+    /// the first line will have a line number of 1 rather than 0.
     pub fn source(&self) -> Option<(&std::path::Path, usize)> {
         self.source
             .as_ref()
@@ -73,6 +76,9 @@ impl RawValue {
 
     #[cfg(feature = "track-source")]
     /// Sets the path and line number from which this value originated.
+    ///
+    /// The line number should be 1-indexed to match convention;
+    /// the first line should have a line number of 1 rather than 0.
     pub fn set_source(&mut self, path: impl Into<std::sync::Arc<std::path::Path>>, line: usize) {
         self.source = Some((path.into(), line))
     }

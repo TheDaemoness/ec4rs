@@ -63,24 +63,24 @@ fn sections() {
     validate(
         "[foo]\nbk=bv\nak=av",
         false,
-        expect![[("bk", "bv", 1), ("ak", "av", 2)]],
+        expect![[("bk", "bv", 2), ("ak", "av", 3)]],
     );
     validate(
         "[foo]\nbk=bv\n[bar]\nak=av",
         false,
-        expect![[("bk", "bv", 1)], [("ak", "av", 3)]],
+        expect![[("bk", "bv", 2)], [("ak", "av", 4)]],
     );
     validate(
         "[foo]\nk=a\n[bar]\nk=b",
         false,
-        expect![[("k", "a", 1)], [("k", "b", 3)]],
+        expect![[("k", "a", 2)], [("k", "b", 4)]],
     );
 }
 
 #[test]
 fn trailing_newline() {
-    validate("[foo]\nbar=baz\n", false, expect![[("bar", "baz", 1)]]);
-    validate("[foo]\nbar=baz\n\n", false, expect![[("bar", "baz", 1)]]);
+    validate("[foo]\nbar=baz\n", false, expect![[("bar", "baz", 2)]]);
+    validate("[foo]\nbar=baz\n\n", false, expect![[("bar", "baz", 2)]]);
 }
 
 #[test]
@@ -88,11 +88,11 @@ fn section_with_comment_after_it() {
     validate(
         "[/*] # ignore this comment\nk=v",
         false,
-        expect![[("k", "v", 1)]],
+        expect![[("k", "v", 2)]],
     );
 }
 
 #[test]
 fn duplicate_key() {
-    validate("[*]\nfoo=bar\nfoo=baz", false, expect![[("foo", "baz", 2)]]);
+    validate("[*]\nfoo=bar\nfoo=baz", false, expect![[("foo", "baz", 3)]]);
 }
