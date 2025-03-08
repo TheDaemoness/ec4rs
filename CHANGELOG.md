@@ -2,6 +2,8 @@
 
 ## 1.2.0 (Next)
 
+- Added feature `track-source` to track where any given value came from.
+- Added `-0Hl` flags to `ec4rs-parse` for displaying value sources.
 - Added `RawValue::to_lowercase`.
 - Implemented `Display` for `RawValue`.
 - Changed `ec4rs-parse` to support empty values for compliance with

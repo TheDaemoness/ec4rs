@@ -1,12 +1,12 @@
 [package]
 name = "ec4rs_tools"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ec4rs = { path = "..", features = ["allow-empty-values"] }
+ec4rs = { path = "..", features = ["allow-empty-values", "track-source"] }
 semver = "1.0"
 clap = { version = "3.1", features = ["derive"] }
 
