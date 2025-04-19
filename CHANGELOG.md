@@ -1,6 +1,6 @@
 # 1.x
 
-## 1.2.0 (2024-04-19)
+## 1.2.0 (2025-04-19)
 
 - Added feature `track-source` to track where any given value came from.
 - Added `-0Hl` flags to `ec4rs-parse` for displaying value sources.
