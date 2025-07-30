@@ -275,7 +275,7 @@ pub trait PropertiesSource {
     ) -> Result<(), crate::Error>;
 }
 
-impl<'a> PropertiesSource for &'a Properties {
+impl PropertiesSource for &Properties {
     fn apply_to(
         self,
         props: &mut Properties,

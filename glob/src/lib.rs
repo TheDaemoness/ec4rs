@@ -16,8 +16,8 @@ mod stack;
 #[cfg(test)]
 mod tests;
 
-use matcher::Matcher;
 use flatset::FlatSet;
+use matcher::Matcher;
 use splitter::Splitter;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]

@@ -4,7 +4,7 @@ The globbing engine used by [`ec4rs`](https://github.com/TheDaemoness/ec4rs).
 Please refer to that project for licensing and contribution info.
 
 You're probably better-served by using the
-[`glob` crate](https://crates.io/crates/glob),
+[`glob` crate](https://crates.io/crates/glob)
 or the [`globset` crate](https://crates.io/crates/globset),
 both of which are widely-used and have good maintenance status at the time of
 writing. The only reason to use this crate is if you need:
