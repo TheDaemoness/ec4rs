@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use super::Chars;
-use crate::glob::{Glob, Matcher};
+use crate::{Glob, Matcher};
 
 #[inline]
 fn grow_char_class(chars: &mut Chars<'_>, charclass: &mut BTreeSet<char>) -> Option<()> {
@@ -43,7 +43,7 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
     let invert = if let Some(c) = chars.peek() {
         *c == '!'
     } else {
-        glob.append_char('[');
+        glob.append_escaped('[');
         return (glob, chars);
     };
     let restore = chars.clone();
@@ -57,19 +57,19 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
         match charclass.len() {
             0 => {
                 if invert {
-                    glob.append(Matcher::AnyChar);
+                    glob.push(Matcher::AnyChar);
                 } else {
-                    glob.append_char('[');
-                    glob.append_char(']');
+                    glob.append_escaped('[');
+                    glob.append_escaped(']');
                 }
             }
             // Don't use BTreeSet::first here (stable: 1.66).
-            1 => glob.append_char(*charclass.iter().next().unwrap()),
-            _ => glob.append(Matcher::CharClass(charclass.into(), !invert)),
+            1 => glob.append_escaped(*charclass.iter().next().unwrap()),
+            _ => glob.push(Matcher::CharClass(charclass.into(), !invert)),
         }
         (glob, chars)
     } else {
-        glob.append_char('[');
+        glob.append_escaped('[');
         (glob, restore)
     }
 }

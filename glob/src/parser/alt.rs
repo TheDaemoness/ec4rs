@@ -1,4 +1,4 @@
-use crate::glob::{Glob, Matcher};
+use crate::{Glob, Matcher};
 
 pub struct AltStack(Vec<AltBuilder>);
 
@@ -65,35 +65,35 @@ impl AltBuilder {
     pub fn build(mut self) -> Glob {
         match self.options.len() {
             0 => {
-                self.glob.append_char('{');
-                self.glob.append_char('}');
+                self.glob.append_escaped('{');
+                self.glob.append_escaped('}');
                 self.glob
             }
             1 => {
-                self.glob.append_char('{');
+                self.glob.append_escaped('{');
                 for matcher in self.options.pop().unwrap().0 {
-                    self.glob.append(matcher);
+                    self.glob.push(matcher);
                 }
-                self.glob.append_char('}');
+                self.glob.append_escaped('}');
                 self.glob
             }
             _ => {
                 self.options
                     .sort_by(|a, b| (!a.0.is_empty()).cmp(&!b.0.is_empty()));
                 self.options.dedup();
-                self.glob.append(Matcher::Any(self.options.into()));
+                self.glob.push(Matcher::Any(self.options.into()));
                 self.glob
             }
         }
     }
     pub fn join(mut self) -> Glob {
         let mut first = true;
-        self.glob.append_char('{');
+        self.glob.append_escaped('{');
         for option in self.options {
             if first {
                 first = false;
             } else {
-                self.glob.append_char(',')
+                self.glob.append_escaped(',')
             }
             self.glob.append_glob(option);
         }

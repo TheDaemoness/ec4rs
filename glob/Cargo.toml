@@ -1,0 +1,13 @@
+[package]
+name = "ec4rs_glob"
+description = "Permissive glob engine used by ec4rs"
+license = "Apache-2.0"
+homepage = "https://github.com/TheDaemoness/ec4rs/tree/main/glob"
+repository = "https://github.com/TheDaemoness/ec4rs"
+readme = "README.md"
+
+authors = ["TheDaemoness"]
+include = ["/src", "/README.md"]
+rust-version = "1.56" # 2021 edition
+version = "0.1.0"
+edition = "2021"

@@ -23,7 +23,6 @@
 mod error;
 mod fallback;
 mod file;
-mod glob;
 mod linereader;
 mod parser;
 mod properties;
@@ -34,6 +33,10 @@ mod section;
 mod tests;
 mod traits;
 pub mod version;
+
+mod glob {
+    pub use ec4rs_glob::*;
+}
 
 pub use error::{Error, ParseError};
 pub use file::{ConfigFile, ConfigFiles};

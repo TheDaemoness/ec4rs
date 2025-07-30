@@ -17,13 +17,14 @@ rust-version = "1.56" # 2021 edition
 version = "1.2.0"
 
 [workspace]
-members = ["tools"]
+members = ["glob", "tools"]
 
 [features]
 allow-empty-values = []
 track-source = []
 
 [dependencies]
+ec4rs_glob = { version = "0.1.0", path = "glob" }
 language-tags = { version = "0.3.2", optional = true }
 
 [package.metadata.docs.rs]

@@ -1,21 +1,21 @@
 use super::alt::AltStack;
-use crate::glob::{Glob, Matcher};
+use crate::{Glob, Matcher};
 
 pub fn parse(glob: &str) -> Glob {
     let mut retval = Glob(vec![]);
     let mut stack = AltStack::new();
     for segment in glob.split('/') {
-        retval.append_char('/');
+        retval.append_escaped('/');
         let mut chars = segment.chars().peekable();
         while let Some(c) = chars.next() {
             match c {
                 '\\' => {
                     if let Some(escaped) = chars.next() {
-                        retval.append_char(escaped);
+                        retval.append_escaped(escaped);
                     }
                 }
-                '?' => retval.append(Matcher::AnyChar),
-                '*' => retval.append(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
+                '?' => retval.push(Matcher::AnyChar),
+                '*' => retval.push(Matcher::AnySeq(matches!(chars.peek(), Some('*')))),
                 '[' => {
                     let (retval_n, chars_n) = super::charclass::parse(retval, chars);
                     retval = retval_n;
@@ -24,7 +24,7 @@ pub fn parse(glob: &str) -> Glob {
                 '{' => {
                     if let Some((a, b, chars_new)) = super::numrange::parse(chars.clone()) {
                         chars = chars_new;
-                        retval.append(Matcher::Range(
+                        retval.push(Matcher::Range(
                             // Reading the spec strictly,
                             // a compliant implementation must handle cases where
                             // the left integer is greater than the right integer.
@@ -39,7 +39,7 @@ pub fn parse(glob: &str) -> Glob {
                 ',' => {
                     if let Some(rejected) = stack.add_alt(retval) {
                         retval = rejected;
-                        retval.append_char(',');
+                        retval.append_escaped(',');
                     } else {
                         retval = Glob(vec![]);
                     }
@@ -48,10 +48,10 @@ pub fn parse(glob: &str) -> Glob {
                     let (retval_n, add_brace) = stack.add_alt_and_pop(retval);
                     retval = retval_n;
                     if add_brace {
-                        retval.append_char('}');
+                        retval.append_escaped('}');
                     }
                 }
-                _ => retval.append_char(c),
+                _ => retval.append_escaped(c),
             }
         }
     }
@@ -66,7 +66,7 @@ pub fn parse(glob: &str) -> Glob {
         *retval.0.first_mut().unwrap() = Matcher::End;
     }
     if let Some(Matcher::Sep) = retval.0.last() {
-        retval.append(Matcher::AnySeq(false));
+        retval.push(Matcher::AnySeq(false));
     }
     retval
 }
