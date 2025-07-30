@@ -6,13 +6,15 @@
 //!
 //! Create a [`Glob`] using [`Glob::new`],
 //! then match it against paths with [`Glob::matches`].
-//!
 
 mod flatset;
 mod matcher;
 mod parser;
 mod splitter;
 mod stack;
+
+#[cfg(test)]
+mod tests;
 
 use matcher::Matcher;
 use flatset::FlatSet;

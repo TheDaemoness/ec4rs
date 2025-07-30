@@ -3,11 +3,11 @@ pub fn test<'a, 'b>(
     valid: impl IntoIterator<Item = &'a str>,
     invalid: impl IntoIterator<Item = &'b str>,
 ) {
-    use crate::glob::Glob;
+    use crate::Glob;
     let glob = Glob::new(pattern);
     for path in valid {
         assert!(
-            glob.matches(path.as_ref()),
+            glob.matches(path),
             "`{}` didn't match pattern `{}`; chain: {:?}",
             path,
             pattern,
@@ -16,7 +16,7 @@ pub fn test<'a, 'b>(
     }
     for path in invalid {
         assert!(
-            !glob.matches(path.as_ref()),
+            !glob.matches(path),
             "`{}` wrongly matched pattern `{}`; chain {:?}",
             path,
             pattern,
