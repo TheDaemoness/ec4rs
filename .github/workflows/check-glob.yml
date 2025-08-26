@@ -1,0 +1,50 @@
+name: Check ec4rs_glob
+
+on:
+  pull_request:
+    paths:
+      - 'glob/**.rs'
+      - 'glob/Cargo.toml'
+      - '.github/workflows/check-glob.yml'
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: MSRV Tests (glob)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, windows]
+        include:
+          - build: linux
+            os: ubuntu-latest
+          - build: windows
+            os: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install MSRV Rust
+        run: "rustup toolchain install --profile minimal 1.56"
+      - name: Build (glob)
+        run: "cargo build -p ec4rs_glob"
+      - name: Unit Tests (glob)
+        run: "cargo test -p ec4rs_glob"
+  quality:
+    name: Check Quality (glob)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install Rust
+        run: |
+          rustup toolchain install --profile minimal
+          rustup component add clippy
+          rustup component add rustfmt
+      - name: Check Clippy
+        run: "cargo clippy -p ec4rs_glob"
+      - name: Check Docs
+        run: "cargo doc --no-deps -p ec4rs_glob"
+      - name: Check Style
+        run: "cargo fmt --check -p ec4rs_glob"
