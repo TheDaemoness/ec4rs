@@ -1,0 +1,30 @@
+name: Check Compliance
+
+on:
+  pull_request:
+    paths:
+      - '**.rs'
+      - '.github/workflows/check-ctest.yml'
+  push:
+    branches:
+      - main
+
+jobs:
+  compliance:
+    name: Check Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+      - name: Install Rust
+        run: "rustup toolchain install --profile minimal stable"
+      - name: Build
+        run: "cargo build -p ec4rs_tools"
+      - name: Core Tests
+        shell: bash
+        run: |
+          cd tests
+          cmake -DEDITORCONFIG_CMD="$PWD/../target/debug/ec4rs-parse" .
+          ctest .
