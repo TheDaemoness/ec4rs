@@ -148,7 +148,7 @@ property_choice! {
 
 property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
 property_valued! {FinalNewline, "insert_final_newline", bool;}
-property_valued! {MaxLineLen, "max_line_length", usize; (Off, "off")}
+property_valued! {MaxLineLen, "max_line_length", usize;}
 
 // As of the authorship of this comment, spelling_language isn't on the wiki.
 // Ooop.
