@@ -29,6 +29,7 @@ mod properties;
 pub mod property;
 pub mod rawvalue;
 mod section;
+pub mod string;
 #[cfg(test)]
 mod tests;
 mod traits;
