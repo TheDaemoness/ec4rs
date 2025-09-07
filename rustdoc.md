@@ -35,27 +35,21 @@ let indent_style: IndentStyle = cfg.get::<IndentStyle>()
     .unwrap_or(IndentStyle::Tabs);
 
 // Get a string value, with a default.
-let charset: &str = cfg.get_raw::<Charset>()
-    .filter_unset() // Handle the special "unset" value.
-    .into_option()
-    .unwrap_or("utf-8");
+// ec4rs has a string type designed for immutability and minimal allocations.
+let charset = cfg.get_raw::<Charset>()
+    .cloned()
+    .unwrap_or(ec4rs::string::SharedString::new_static("utf-8"));
 
 // Parse a non-standard property.
 let hard_wrap = cfg.get_raw_for_key("max_line_length")
-    .into_str()
+    .unwrap_or_default()
     .parse::<usize>();
 ```
 
 ## Features
 
-**allow-empty-values**: Consider lines with a key but no value as valid.
-This is likely to be explicitly allowed in a future version of the
-EditorConfig specification, but `ec4rs` currently by default treats such lines
-as invalid, necessitating this feature flag to reduce behavioral breakage.
+**language-tags**: NYI for 2.0.
 
-**language-tags**: Use the `language-tags` crate, which adds parsing for the
-`spelling_language` property.
-
-**track-source**: Allow [`RawValue`][crate::rawvalue::RawValue]
+**track-source**: Allow [`SharedString`][crate::string::SharedString]
 to store the file and line number it originates from.
 [`ConfigParser`] will add this information where applicable.

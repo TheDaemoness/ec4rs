@@ -45,7 +45,7 @@ impl<R: io::BufRead> ConfigParser<R> {
     /// otherwise returns `Err` with the error that occurred during reading.
     ///
     /// If the `track-source` feature is enabled and `path` is `Some`,
-    /// [`RawValue`][crate::rawvalue::RawValue]s produced by this parser will
+    /// [`SharedString`][crate::string::SharedString]s produced by this parser will
     /// have their sources set appropriately.
     /// Otherwise, `path` is unused.
     pub fn new_with_path(
@@ -124,7 +124,7 @@ impl<R: io::BufRead> ConfigParser<R> {
                     Ok(Line::Nothing) => (),
                     Ok(Line::Pair(k, v)) => {
                         #[allow(unused_mut)]
-                        let mut v = crate::rawvalue::RawValue::from(v.to_owned());
+                        let mut v = crate::string::SharedString::new(v);
                         #[cfg(feature = "track-source")]
                         if let Some(path) = self.path.as_ref() {
                             v.set_source(path.clone(), line_no);

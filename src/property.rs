@@ -2,9 +2,15 @@
 //!
 //! This crate contains every current universal property specified by standard,
 //! plus others that are common enough to be worth supporting.
+//! All of them are non-exhaustive enums in order to support future additions to the standard
+//! as well as handle the common special value `"unset"`.
+
+mod language_tag;
+
+pub use language_tag::*;
 
 use super::{PropertyKey, PropertyValue};
-use crate::rawvalue::RawValue;
+use crate::string::SharedString;
 
 use std::fmt::Display;
 
@@ -20,37 +26,47 @@ impl Display for UnknownValueError {
 
 impl std::error::Error for UnknownValueError {}
 
-//TODO: Deduplicate these macros a bit?
+// TODO: Deduplicate these macros a bit?
 
 macro_rules! property_choice {
     ($prop_id:ident, $name:literal; $(($variant:ident, $string:literal)),+) => {
-        // MISTAKE: These need to be #[non_exhaustive],
-        // but adding it would be a breaking change.
-        // Hold off on adding it until the breakage would need to happen anyway.
-        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-        #[repr(u8)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
         #[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
         #[allow(missing_docs)]
-        pub enum $prop_id {$($variant),+}
+        #[non_exhaustive]
+        pub enum $prop_id {
+            #[default]
+            Unset,
+            $($variant),+
+        }
 
-        impl PropertyValue for $prop_id {
-            const MAYBE_UNSET: bool = false;
+        impl std::str::FromStr for $prop_id {
             type Err = UnknownValueError;
-            fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
-                match raw.into_str().to_lowercase().as_str() {
+            fn from_str(raw: &str) -> Result<Self, Self::Err> {
+                match &*crate::string::into_lowercase(raw) {
                     $($string => Ok($prop_id::$variant),)+
                     _ => Err(UnknownValueError)
                 }
             }
         }
 
-        impl From<$prop_id> for RawValue {
-            fn from(val: $prop_id) -> RawValue {
-                match val {
-                    $($prop_id::$variant => RawValue::from($string)),*
-                }
+        impl crate::string::ToSharedString for $prop_id {
+            fn to_shared_string(self) -> SharedString {
+                SharedString::new_static(match self {
+                    $prop_id::Unset => "unset",
+                    $($prop_id::$variant => $string),*
+                })
+            }
+
+            fn try_as_str(&self) -> Option<&str> {
+                Some(match self {
+                    $prop_id::Unset => "unset",
+                    $($prop_id::$variant => $string),*
+                })
             }
         }
+
+        impl PropertyValue for $prop_id {}
 
         impl PropertyKey for $prop_id {
             fn key() -> &'static str {$name}
@@ -58,9 +74,10 @@ macro_rules! property_choice {
 
         impl Display for $prop_id {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", match self {
-                    $($prop_id::$variant => $string),*
-                })
+                match self {
+                    $prop_id::Unset => "unset".fmt(f),
+                    $($prop_id::$variant => $string.fmt(f)),*
+                }
             }
         }
     }
@@ -71,33 +88,47 @@ macro_rules! property_valued {
         $prop_id:ident, $name:literal, $value_type:ty;
         $(($variant:ident, $string:literal)),*
     ) => {
-        #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+        #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
         #[doc = concat!("The [`",$name,"`](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#",$name,") property.")]
         #[allow(missing_docs)]
+        #[non_exhaustive]
         pub enum $prop_id {
+            #[default]
+            Unset,
             Value($value_type)
             $(,$variant)*
         }
 
-        impl PropertyValue for $prop_id {
-            const MAYBE_UNSET: bool = false;
+        impl std::str::FromStr for $prop_id {
             type Err = UnknownValueError;
-            fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
-                match raw.into_str().to_lowercase().as_str() {
+            fn from_str(raw: &str) -> Result<Self, Self::Err> {
+                match &*crate::string::into_lowercase(raw) {
+                    "unset" => Ok($prop_id::Unset),
                     $($string => Ok($prop_id::$variant),)*
                     v => v.parse::<$value_type>().map(Self::Value).or(Err(UnknownValueError))
                 }
             }
         }
 
-        impl From<$prop_id> for RawValue {
-            fn from(val: $prop_id) -> RawValue {
-                match val {
-                    $prop_id::Value(v) => RawValue::from(v.to_string()),
-                    $($prop_id::$variant => RawValue::from($string)),*
+        impl crate::string::ToSharedString for $prop_id {
+            fn to_shared_string(self) -> SharedString {
+                match self {
+                    $prop_id::Unset => SharedString::new_static("unset"),
+                    $prop_id::Value(v) => SharedString::new(v.to_string()),
+                    $($prop_id::$variant => SharedString::new_static($string)),*
+                }
+            }
+
+            fn try_as_str(&self) -> Option<&str> {
+                match self {
+                    $prop_id::Unset => Some("unset"),
+                    $prop_id::Value(_) => None,
+                    $($prop_id::$variant => Some($string)),*
                 }
             }
         }
+
+        impl PropertyValue for $prop_id {}
 
         impl PropertyKey for $prop_id {
             fn key() -> &'static str {$name}
@@ -106,8 +137,9 @@ macro_rules! property_valued {
         impl Display for $prop_id {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 match self {
-                    $prop_id::Value(v) => write!(f, "{}", v),
-                    $($prop_id::$variant => write!(f, "{}", $string)),*
+                    $prop_id::Unset => "unset".fmt(f),
+                    $prop_id::Value(v) => v.fmt(f),
+                    $($prop_id::$variant => $string.fmt(f)),*
                 }
             }
         }
@@ -150,50 +182,66 @@ property_valued! {TrimTrailingWs, "trim_trailing_whitespace", bool;}
 property_valued! {FinalNewline, "insert_final_newline", bool;}
 property_valued! {MaxLineLen, "max_line_length", usize;}
 
-// As of the authorship of this comment, spelling_language isn't on the wiki.
-// Ooop.
-
-#[cfg(feature = "language-tags")]
 /// The `spelling_language` property added by EditorConfig 0.16.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+///
+/// This type's [`PropertyValue`] implementation, by default,
+/// adheres strictly to the EditorConfig spec.
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
 #[allow(missing_docs)]
+#[non_exhaustive]
 pub enum SpellingLanguage {
-    Value(crate::language_tags::LanguageTag),
+    #[default]
+    Unset,
+    Value(LanguageTag),
 }
 
-#[cfg(feature = "language-tags")]
-impl PropertyValue for SpellingLanguage {
-    const MAYBE_UNSET: bool = false;
-    type Err = crate::language_tags::ParseError;
-    fn parse(raw: &RawValue) -> Result<Self, Self::Err> {
-        if let Some(string) = raw.into_option() {
-            string.parse().map(SpellingLanguage::Value)
+impl std::str::FromStr for SpellingLanguage {
+    type Err = UnknownValueError;
+    fn from_str(raw: &str) -> Result<Self, Self::Err> {
+        if raw.eq_ignore_ascii_case("unset") {
+            Ok(SpellingLanguage::Unset)
         } else {
-            Err(crate::language_tags::ParseError::EmptySubtag)
+            LanguageTag::try_from(SharedString::new(raw)).map(SpellingLanguage::Value)
         }
     }
 }
 
-#[cfg(feature = "language-tags")]
-impl From<SpellingLanguage> for RawValue {
-    fn from(val: SpellingLanguage) -> RawValue {
-        match val {
-            SpellingLanguage::Value(v) => v.to_string().into(),
+impl crate::string::ToSharedString for SpellingLanguage {
+    fn to_shared_string(self) -> SharedString {
+        match self {
+            SpellingLanguage::Unset => crate::string::UNSET.clone(),
+            SpellingLanguage::Value(retval) => SharedString::new(retval.to_string()),
+        }
+    }
+
+    fn try_as_str(&self) -> Option<&str> {
+        match self {
+            SpellingLanguage::Unset => Some("unset"),
+            SpellingLanguage::Value(_) => None,
         }
     }
 }
 
-#[cfg(feature = "language-tags")]
+impl PropertyValue for SpellingLanguage {
+    fn from_shared_string(raw: &SharedString) -> Result<Self, Self::Err> {
+        if raw.eq_ignore_ascii_case("unset") {
+            Ok(SpellingLanguage::Unset)
+        } else {
+            LanguageTag::try_from(raw.clone()).map(SpellingLanguage::Value)
+        }
+    }
+}
+
 impl PropertyKey for SpellingLanguage {
     fn key() -> &'static str {
         "spelling_language"
     }
 }
 
-#[cfg(feature = "language-tags")]
 impl Display for SpellingLanguage {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            SpellingLanguage::Unset => crate::string::UNSET.fmt(f),
             SpellingLanguage::Value(v) => v.fmt(f),
         }
     }

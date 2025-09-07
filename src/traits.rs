@@ -1,23 +1,21 @@
-use crate::rawvalue::RawValue;
+use crate::string::SharedString;
 
-/// Trait for types that be parsed out of [`RawValue`]s.
-///
-/// Types that implement this trait should also implement `Into<RawValue>`.
-pub trait PropertyValue: Sized {
-    /// Indicates whether a value that is case-insensitively equal to "unset"
-    /// should NOT be treated as if the value is unset.
+/// Trait for types that be converted to [`SharedString`]s
+/// and parsed back out of the returned [`SharedString`]s.
+pub trait PropertyValue:
+    Sized + std::str::FromStr + crate::string::ToSharedString + Default
+{
+    /// Parses a value from a [`SharedString`].
     ///
-    /// This will typically be false for non-string properties.
-    const MAYBE_UNSET: bool;
-
-    /// The type of value returned on a failed parse.
-    type Err;
-
-    /// Parses a value from a not-unset [`RawValue`].
+    /// Some types may contain a copy of the string they were parsed from.
+    /// This function allows an more-efficient implementation.
     ///
-    /// This usually shouldn't be called directly.
-    /// See [`crate::Properties`] or [`RawValue::parse`].
-    fn parse(value: &RawValue) -> Result<Self, Self::Err>;
+    /// For consistency reasons, if `self` contains a `SharedString`,
+    /// it should not have a source.
+    /// See [`SharedString::clear_source`].
+    fn from_shared_string(value: &SharedString) -> Result<Self, Self::Err> {
+        std::str::FromStr::from_str(value)
+    }
 }
 
 /// Trait for types that are associated with property names.
@@ -30,17 +28,20 @@ pub trait PropertyKey {
     fn key() -> &'static str;
 }
 
-/// Tests if the result of parsing the result of an `Into<RawValue>` conversion
+/// Tests if the result of parsing the result of a `ToSharedString` conversion
 /// is *not unequal* to the original value.
+///
+/// # Panics
+/// Panics if the initial and result values are not equal.
 #[cfg(test)]
-pub fn test_reparse<T, E: std::fmt::Debug>(initial: T)
+pub fn test_reparse<T, E: std::fmt::Debug>(initial: &T)
 where
-    T: Clone + PropertyValue<Err = E> + Into<RawValue> + std::fmt::Debug + PartialEq,
+    T: Clone + PropertyValue<Err = E> + std::fmt::Debug + PartialEq,
 {
-    let written: RawValue = initial.clone().into();
-    let result = T::parse(&written).expect("reparse errored");
+    let written: SharedString = initial.clone().to_shared_string();
+    let result = T::from_shared_string(&written).expect("reparse errored");
     assert!(
-        !result.ne(&initial),
+        !result.ne(initial),
         "reparsed value is unequal to original; expected `{:?}`, got `{:?}`",
         initial,
         result

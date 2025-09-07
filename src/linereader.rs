@@ -53,16 +53,7 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
         let val = val_raw.trim_start();
         match (key.is_empty(), val.is_empty()) {
             (true, _) => Err(ParseError::InvalidLine),
-            (false, true) => {
-                #[cfg(feature = "allow-empty-values")]
-                {
-                    Ok(Line::Pair(key.trim_end(), val))
-                }
-                #[cfg(not(feature = "allow-empty-values"))]
-                {
-                    Err(ParseError::InvalidLine)
-                }
-            }
+            (false, true) => Ok(Line::Pair(key.trim_end(), val)),
             (false, false) => Ok(Line::Pair(key.trim_end(), val.trim_start())),
         }
     } else {

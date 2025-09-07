@@ -56,9 +56,9 @@ fn print_config(
                 props.use_fallbacks();
             }
             for (key, value) in props.iter() {
-                let mut lc_value: Option<ec4rs::rawvalue::RawValue> = None;
+                let mut lc_value: Option<ec4rs::string::SharedString> = None;
                 let value_ref = if ec4rs::property::STANDARD_KEYS.contains(&key) {
-                    lc_value.get_or_insert(value.to_lowercase())
+                    lc_value.get_or_insert(value.into_lowercase())
                 } else {
                     value
                 };

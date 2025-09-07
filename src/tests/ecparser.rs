@@ -14,7 +14,7 @@ fn validate<'a>(
         for (key, value, line_no) in section_expected {
             let (key_test, value_test) = iter.next().expect("Unexpected end of section");
             assert_eq!(key_test, *key, "unexpected key");
-            assert_eq!(value_test.into_str(), *value, "unexpected value");
+            assert_eq!(value_test.as_str(), *value, "unexpected value");
             #[cfg(feature = "track-source")]
             assert_eq!(
                 value_test.source().map(|(_, idx)| idx),

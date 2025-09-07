@@ -2,8 +2,10 @@ mod iter;
 
 pub use iter::*;
 
-use crate::rawvalue::RawValue;
-use crate::{PropertyKey, PropertyValue};
+use crate::{
+    string::{SharedString, ToSharedString},
+    PropertyKey, PropertyValue,
+};
 
 /// Map of property names to property values.
 ///
@@ -14,17 +16,11 @@ use crate::{PropertyKey, PropertyValue};
 /// It's the caller's responsibility to ensure all keys and values are lowercased.
 #[derive(Clone, Default)]
 pub struct Properties {
-    // Don't use Cow<'static, str> here because it's actually less-optimal
-    // for the vastly more-common case of reading parsed properties.
-    // It's a micro-optimization anyway.
     /// Key-value pairs, ordered from oldest to newest.
-    pairs: Vec<(String, RawValue)>,
+    pairs: Vec<(SharedString, SharedString)>,
     /// Indices of `pairs`, ordered matching the key of the pair each index refers to.
     /// This part is what allows logarithmic lookups.
     idxes: Vec<usize>,
-    // Unfortunately, we hand out `&mut RawValue`s all over the place,
-    // so "no empty RawValues in Properties" cannot be made an invariant
-    // without breaking API changes.
 }
 
 // TODO: Deletion.
@@ -53,32 +49,42 @@ impl Properties {
     fn find_idx(&self, key: &str) -> Result<usize, usize> {
         self.idxes
             .as_slice()
-            .binary_search_by_key(&key, |ki| self.pairs[*ki].0.as_str())
+            .binary_search_by_key(&key, |ki| &self.pairs[*ki].0)
             .map(|idx| self.idxes[idx])
     }
 
     /// Returns the unparsed "raw" value for the specified key.
-    ///
-    /// Does not test for the "unset" value. Use [`RawValue::filter_unset`].
-    pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> &RawValue {
+    pub fn get_raw_for_key(&self, key: impl AsRef<str>) -> Option<&SharedString> {
         self.find_idx(key.as_ref())
             .ok()
-            .map_or(&crate::rawvalue::UNSET, |idx| &self.pairs[idx].1)
+            .map(|idx| &self.pairs[idx].1)
     }
 
     /// Returns the unparsed "raw" value for the specified property.
-    ///
-    /// Does not test for the "unset" value. Use [`RawValue::filter_unset`].
-    pub fn get_raw<T: PropertyKey>(&self) -> &RawValue {
+    pub fn get_raw<T: PropertyKey>(&self) -> Option<&SharedString> {
         self.get_raw_for_key(T::key())
     }
 
     /// Returns the parsed value for the specified property.
     ///
-    /// Does not test for the "unset" value if parsing fails. Use [`RawValue::filter_unset`].
-    pub fn get<T: PropertyKey + PropertyValue>(&self) -> Result<T, &RawValue> {
-        let retval = self.get_raw::<T>();
-        retval.parse::<T>().or(Err(retval))
+    /// If `self` does not contain a key matching [`T::key()`][PropertyKey::key()],
+    /// `Err(None)` is returned. Otherwise attempts to parse `T`
+    /// out of the string value, and returns `Err(Some)` if the parse fails.
+    pub fn get<T: PropertyKey + PropertyValue>(
+        &self,
+    ) -> Result<T, Option<crate::string::ParseError<T::Err>>> {
+        // The Option is on the error because all PropertyValues implement Default and the default
+        // should be assumed if the property is unset, meaning handling invalid values and unset
+        // values can be done with just one unwrap_or_default.
+        let Some(raw) = self.get_raw::<T>() else {
+            return Err(None);
+        };
+        raw.parse::<T>().map_err(|error| {
+            Some(crate::string::ParseError {
+                error,
+                string: raw.clone(),
+            })
+        })
     }
 
     /// Returns an iterator over the key-value pairs.
@@ -103,36 +109,48 @@ impl Properties {
         IterMut(self.pairs.iter_mut())
     }
 
-    fn get_at_mut(&mut self, idx: usize) -> &mut RawValue {
+    fn get_at_mut(&mut self, idx: usize) -> &mut SharedString {
+        // PANIC: idx needs to be within the bounds of the pairs vec.
         &mut self.pairs.get_mut(idx).unwrap().1
     }
 
-    fn insert_at(&mut self, idx: usize, key: String, val: RawValue) {
+    fn insert_at(&mut self, idx: usize, key: SharedString, val: SharedString) {
         self.idxes.insert(idx, self.pairs.len());
         self.pairs.push((key, val));
     }
 
     /// Sets the value for a specified key.
-    pub fn insert_raw_for_key(&mut self, key: impl AsRef<str>, val: impl Into<RawValue>) {
-        let key_str = key.as_ref();
-        match self.find_idx(key_str) {
-            Ok(idx) => {
-                *self.get_at_mut(idx) = val.into();
+    pub fn insert_raw_for_key(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+        if let Some(key_str) = key.try_as_str() {
+            match self.find_idx(key_str) {
+                Ok(idx) => {
+                    *self.get_at_mut(idx) = val.to_shared_string();
+                }
+                Err(idx) => {
+                    self.insert_at(idx, key.to_shared_string(), val.to_shared_string());
+                }
             }
-            Err(idx) => {
-                self.insert_at(idx, key_str.to_owned(), val.into());
+        } else {
+            let key = key.to_shared_string();
+            match self.find_idx(&key) {
+                Ok(idx) => {
+                    *self.get_at_mut(idx) = val.to_shared_string();
+                }
+                Err(idx) => {
+                    self.insert_at(idx, key, val.to_shared_string());
+                }
             }
         }
     }
 
     /// Sets the value for a specified property's key.
-    pub fn insert_raw<K: PropertyKey, V: Into<RawValue>>(&mut self, val: V) {
+    pub fn insert_raw<K: PropertyKey, V: ToSharedString>(&mut self, val: V) {
         self.insert_raw_for_key(K::key(), val)
     }
 
     /// Inserts a specified property into the map.
-    pub fn insert<T: PropertyKey + Into<RawValue>>(&mut self, prop: T) {
-        self.insert_raw_for_key(T::key(), prop.into())
+    pub fn insert<T: PropertyKey + PropertyValue>(&mut self, prop: T) {
+        self.insert_raw_for_key(T::key(), prop)
     }
 
     /// Attempts to add a new key-value pair to the map.
@@ -141,22 +159,26 @@ impl Properties {
     /// returns a mutable reference to the old value and does not update the map.
     pub fn try_insert_raw_for_key(
         &mut self,
-        key: impl AsRef<str>,
-        value: impl Into<RawValue>,
-    ) -> Result<(), &mut RawValue> {
-        let key_str = key.as_ref();
-        #[allow(clippy::unit_arg)]
-        match self.find_idx(key_str) {
-            Ok(idx) => {
-                let valref = self.get_at_mut(idx);
-                if valref.is_unset() {
-                    *valref = value.into();
+        key: impl ToSharedString,
+        val: impl ToSharedString,
+    ) -> Result<(), &mut SharedString> {
+        if let Some(key_str) = key.try_as_str() {
+            match self.find_idx(key_str) {
+                Ok(idx) => Err(self.get_at_mut(idx)),
+                Err(idx) => {
+                    self.insert_at(idx, key.to_shared_string(), val.to_shared_string());
                     Ok(())
-                } else {
-                    Err(valref)
                 }
             }
-            Err(idx) => Ok(self.insert_at(idx, key_str.to_owned(), value.into())),
+        } else {
+            let key = key.to_shared_string();
+            match self.find_idx(&key) {
+                Ok(idx) => Err(self.get_at_mut(idx)),
+                Err(idx) => {
+                    self.insert_at(idx, key, val.to_shared_string());
+                    Ok(())
+                }
+            }
         }
     }
 
@@ -164,10 +186,10 @@ impl Properties {
     ///
     /// If the key was already associated with a value,
     /// returns a mutable reference to the old value and does not update the map.
-    pub fn try_insert_raw<K: PropertyKey, V: Into<RawValue>>(
+    pub fn try_insert_raw<K: PropertyKey, V: ToSharedString>(
         &mut self,
         val: V,
-    ) -> Result<(), &mut RawValue> {
+    ) -> Result<(), &mut SharedString> {
         self.try_insert_raw_for_key(K::key(), val)
     }
 
@@ -175,11 +197,11 @@ impl Properties {
     ///
     /// If the key was already associated with a value,
     /// returns a mutable reference to the old value and does not update the map.
-    pub fn try_insert<T: PropertyKey + Into<RawValue>>(
+    pub fn try_insert<T: PropertyKey + PropertyValue>(
         &mut self,
         prop: T,
-    ) -> Result<(), &mut RawValue> {
-        self.try_insert_raw_for_key(T::key(), prop.into())
+    ) -> Result<(), &mut SharedString> {
+        self.try_insert_raw_for_key(T::key(), prop)
     }
 
     /// Adds fallback values for certain common key-value pairs.
@@ -242,7 +264,7 @@ impl<'a> IntoIterator for &'a mut Properties {
     }
 }
 
-impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
+impl<K: Into<SharedString>, V: Into<SharedString>> FromIterator<(K, V)> for Properties {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut result = Properties::new();
         result.extend(iter);
@@ -250,14 +272,14 @@ impl<K: AsRef<str>, V: Into<RawValue>> FromIterator<(K, V)> for Properties {
     }
 }
 
-impl<K: AsRef<str>, V: Into<RawValue>> Extend<(K, V)> for Properties {
+impl<K: Into<SharedString>, V: Into<SharedString>> Extend<(K, V)> for Properties {
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         let iter = iter.into_iter();
         let min_len = iter.size_hint().0;
         self.pairs.reserve(min_len);
         self.idxes.reserve(min_len);
         for (k, v) in iter {
-            let k = k.as_ref();
+            let k = k.into();
             let v = v.into();
             self.insert_raw_for_key(k, v);
         }

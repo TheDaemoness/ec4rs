@@ -1,5 +1,6 @@
 use crate::glob::Glob;
-use crate::{rawvalue::RawValue, Properties};
+use crate::string::ToSharedString;
+use crate::Properties;
 
 use std::path::Path;
 
@@ -33,9 +34,9 @@ impl Section {
         self.props
     }
     /// Adds a property with the specified key, lowercasing the key.
-    pub fn insert(&mut self, key: impl AsRef<str>, val: impl Into<RawValue>) {
+    pub fn insert(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
         self.props
-            .insert_raw_for_key(key.as_ref().to_lowercase(), val);
+            .insert_raw_for_key(key.to_shared_string().into_lowercase(), val)
     }
     /// Returns true if and only if this section applies to a file at the specified path.
     pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {

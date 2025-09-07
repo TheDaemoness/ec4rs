@@ -27,7 +27,6 @@ mod linereader;
 mod parser;
 mod properties;
 pub mod property;
-pub mod rawvalue;
 mod section;
 pub mod string;
 #[cfg(test)]
@@ -45,12 +44,6 @@ pub use parser::ConfigParser;
 pub use properties::{Properties, PropertiesSource};
 pub use section::Section;
 pub use traits::*;
-
-#[cfg(feature = "language-tags")]
-pub mod language_tags {
-    //! Re-export of the `language-tags` crate.
-    pub use ::language_tags::*;
-}
 
 /// Retrieves the [`Properties`] for a file at the given path.
 ///

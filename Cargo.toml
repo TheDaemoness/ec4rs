@@ -20,12 +20,11 @@ version = "1.2.0"
 members = ["glob", "tools"]
 
 [features]
-allow-empty-values = []
 track-source = []
+language-tags = []
 
 [dependencies]
 ec4rs_glob = { version = "0.1.0", path = "glob" }
-language-tags = { version = "0.3.2", optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
