@@ -1,5 +1,5 @@
 # ec4rs: EditorConfig For Rust
-[![CI](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/ci.yml)
+[![Check ec4rs](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-lib.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-lib.yml)
 [![crates.io](https://img.shields.io/crates/v/ec4rs.svg)](https://crates.io/crates/ec4rs)
 [![API docs](https://docs.rs/ec4rs/badge.svg)](https://docs.rs/ec4rs)
 
@@ -23,6 +23,8 @@ For example usage, see [the docs](https://docs.rs/ec4rs).
 
 ## Testing
 
+[![Check Compliance](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-ctest.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-ctest.yml)
+
 The main repository for this library includes the EditorConfig
 [core tests](https://github.com/editorconfig/editorconfig-core-test)
 as a Git submodule. This library should pass all of these tests.
@@ -36,9 +38,17 @@ cmake -DEDITORCONFIG_CMD="$PWD/../target/debug/ec4rs-parse" .
 ctest .
 ```
 
+## Glob Library
+
+[![Check ec4rs_glob](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-glob.yml/badge.svg)](https://github.com/TheDaemoness/ec4rs/actions/workflows/check-glob.yml)
+
+This repository also includes the [`ec4rs_glob`](/glob) library which is
+primarily intended for internal use but can be used by other projects. See
+[its README](/glob/README.md) for more information.
+
 ## License
 
-**ec4rs** is licensed under the
+**ec4rs**, **ec4rs_glob**, and **ec4rs_tools** are licensed under the
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
 with no `NOTICE` text.
 
