@@ -4,7 +4,7 @@ use super::UnknownValueError;
 
 /// The subset of BCP 47 language tags permitted by the EditorConfig standard.
 ///
-/// This type doesn't implement [`PropertyValue`].
+/// This type doesn't implement [`PropertyValue`][crate::PropertyValue].
 /// See [`SpellingLanguage`][super::SpellingLanguage].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct LanguageTag([u8; 4]);
@@ -33,11 +33,13 @@ impl LanguageTag {
     }
     /// Returns the language subtag, e.g. the "en" in "en-US".
     pub fn primary_language(&self) -> &str {
+        #[allow(clippy::missing_panics_doc)]
         std::str::from_utf8(&self.0[0..2]).expect("Non-UTF-8 bytes in LanguageTag")
     }
     /// Returns the region subtag, if any, e.g. the "US" in "en-US".
     pub fn region(&self) -> Option<&str> {
         let slice = &self.0[2..4];
+        #[allow(clippy::missing_panics_doc)]
         (*slice != [0, 0])
             .then(|| std::str::from_utf8(slice).expect("Non-UTF-8 bytes in LanguageTag"))
     }
@@ -46,9 +48,9 @@ impl LanguageTag {
 impl std::fmt::Display for LanguageTag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(region) = self.region() {
-            write!(f, "{}-{}", self.language(), region)
+            write!(f, "{}-{}", self.primary_language(), region)
         } else {
-            write!(f, "{}", self.language())
+            write!(f, "{}", self.primary_language())
         }
     }
 }
