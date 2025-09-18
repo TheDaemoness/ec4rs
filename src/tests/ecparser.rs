@@ -1,10 +1,14 @@
+use crate::glob::Glob;
+
+use crate::parser::ConfigParser;
+
 fn validate<'a>(
     text: &str,
     should_be_root: bool,
     expected: impl IntoIterator<Item = &'a [(&'a str, &'a str, usize)]>,
 ) {
-    let path = std::sync::Arc::<std::path::Path>::from(std::path::Path::new(".editorconfig"));
-    let mut parser = crate::ConfigParser::new_buffered_with_path(text.as_bytes(), Some(path))
+    let path = std::path::Path::new(".editorconfig");
+    let mut parser = ConfigParser::<_, Glob>::new_buffered_with_path(text.as_bytes(), Some(path))
         .expect("Should have created the parser");
     assert_eq!(parser.is_root, should_be_root);
     for section_expected in expected {

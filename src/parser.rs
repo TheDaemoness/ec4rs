@@ -1,3 +1,4 @@
+use crate::glob::Pattern;
 use crate::linereader::LineReader;
 use crate::ParseError;
 use crate::Section;
@@ -9,20 +10,22 @@ use std::path::Path;
 /// This struct wraps any [`BufRead`][std::io::BufRead].
 /// It eagerly parses the preamble on construction.
 /// [`Section`]s may then be parsed by calling [`ConfigParser::read_section`].
-pub struct ConfigParser<R: io::BufRead> {
+pub struct ConfigParser<R: io::BufRead, P: Pattern> {
     /// Incidates if a `root = true` line was found in the preamble.
     pub is_root: bool,
     eof: bool,
     reader: LineReader<R>,
+    #[allow(clippy::type_complexity)]
+    glob_marker: std::marker::PhantomData<fn() -> Result<P, P::Error>>,
     #[cfg(feature = "track-source")]
-    path: Option<std::sync::Arc<Path>>,
+    path: Option<crate::string::Shared<Path>>,
 }
 
-impl<R: io::Read> ConfigParser<io::BufReader<R>> {
+impl<R: io::Read, P: Pattern> ConfigParser<io::BufReader<R>, P> {
     /// Convenience function for construction using an unbuffered [`io::Read`].
     ///
     /// See [`ConfigParser::new`].
-    pub fn new_buffered(source: R) -> Result<ConfigParser<io::BufReader<R>>, ParseError> {
+    pub fn new_buffered(source: R) -> Result<ConfigParser<io::BufReader<R>, P>, ParseError> {
         Self::new(io::BufReader::new(source))
     }
     /// Convenience function for construction using an unbuffered [`io::Read`]
@@ -31,27 +34,22 @@ impl<R: io::Read> ConfigParser<io::BufReader<R>> {
     /// See [`ConfigParser::new_with_path`].
     pub fn new_buffered_with_path(
         source: R,
-        path: Option<impl Into<std::sync::Arc<Path>>>,
-    ) -> Result<ConfigParser<io::BufReader<R>>, ParseError> {
-        Self::new_with_path(io::BufReader::new(source), path)
+        path: Option<impl AsRef<Path>>,
+    ) -> Result<ConfigParser<io::BufReader<R>, P>, ParseError> {
+        Self::new_with_path(io::BufReader::new(source), path.as_ref())
     }
 }
 
-impl<R: io::BufRead> ConfigParser<R> {
+impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
     /// Constructs a new [`ConfigParser`] and reads the preamble from the provided source,
     /// which is assumed to be a file at `path`.
     ///
     /// Returns `Ok` if the preamble was parsed successfully,
     /// otherwise returns `Err` with the error that occurred during reading.
-    ///
-    /// If the `track-source` feature is enabled and `path` is `Some`,
-    /// [`SharedString`][crate::string::SharedString]s produced by this parser will
-    /// have their sources set appropriately.
-    /// Otherwise, `path` is unused.
     pub fn new_with_path(
         buf_source: R,
-        #[allow(unused)] path: Option<impl Into<std::sync::Arc<Path>>>,
-    ) -> Result<ConfigParser<R>, ParseError> {
+        #[allow(unused)] path: Option<impl AsRef<Path>>,
+    ) -> Result<Self, ParseError> {
         let mut reader = LineReader::new(buf_source);
         let mut is_root = false;
         let eof = loop {
@@ -71,22 +69,21 @@ impl<R: io::BufRead> ConfigParser<R> {
                 }
             }
         };
-        #[cfg(feature = "track-source")]
-        let path = path.map(Into::into);
         Ok(ConfigParser {
             is_root,
             eof,
             reader,
+            glob_marker: std::marker::PhantomData,
             #[cfg(feature = "track-source")]
-            path,
+            path: path.map(|p| crate::string::Shared::from(p.as_ref())),
         })
     }
     /// Constructs a new [`ConfigParser`] and reads the preamble from the provided source.
     ///
     /// Returns `Ok` if the preamble was parsed successfully,
     /// otherwise returns `Err` with the error that occurred during reading.
-    pub fn new(buf_source: R) -> Result<ConfigParser<R>, ParseError> {
-        Self::new_with_path(buf_source, Option::<std::sync::Arc<Path>>::None)
+    pub fn new(buf_source: R) -> Result<Self, ParseError> {
+        Self::new_with_path(buf_source, Option::<&Path>::None)
     }
 
     /// Returns `true` if there may be another section to read.
@@ -100,7 +97,7 @@ impl<R: io::BufRead> ConfigParser<R> {
     }
 
     /// Parses a [`Section`], reading more if needed.
-    pub fn read_section(&mut self) -> Result<Section, ParseError> {
+    pub fn read_section(&mut self) -> Result<Section<P>, ParseError> {
         use crate::linereader::Line;
         if self.eof {
             return Err(ParseError::Eof);
@@ -139,8 +136,8 @@ impl<R: io::BufRead> ConfigParser<R> {
     }
 }
 
-impl<R: io::BufRead> Iterator for ConfigParser<R> {
-    type Item = Result<Section, ParseError>;
+impl<R: io::BufRead, P: Pattern> Iterator for ConfigParser<R, P> {
+    type Item = Result<Section<P>, ParseError>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.read_section() {
             Ok(r) => Some(Ok(r)),
@@ -150,9 +147,9 @@ impl<R: io::BufRead> Iterator for ConfigParser<R> {
     }
 }
 
-impl<R: io::BufRead> std::iter::FusedIterator for ConfigParser<R> {}
+impl<R: io::BufRead, P: Pattern> std::iter::FusedIterator for ConfigParser<R, P> {}
 
-impl<R: io::BufRead> crate::PropertiesSource for &mut ConfigParser<R> {
+impl<R: io::BufRead, P: Pattern> crate::PropertiesSource for &mut ConfigParser<R, P> {
     fn apply_to(
         self,
         props: &mut crate::Properties,

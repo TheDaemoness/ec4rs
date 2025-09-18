@@ -17,12 +17,14 @@
 #![allow(clippy::must_use_candidate)] // reason = "Too pedantic."
 #![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
 #![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
+#![allow(clippy::needless_pass_by_value)] // reason = "FPs on Option<impl AsRef>"
 #![allow(clippy::missing_errors_doc)] // reason = "TODO: Fix."
 #![cfg_attr(doc_unstable, feature(doc_auto_cfg))]
 
 mod error;
 mod fallback;
 mod file;
+pub mod glob;
 mod linereader;
 mod parser;
 mod properties;
@@ -33,10 +35,6 @@ pub mod string;
 mod tests;
 mod traits;
 pub mod version;
-
-mod glob {
-    pub use ec4rs_glob::*;
-}
 
 pub use error::{Error, ParseError};
 pub use file::{ConfigFile, ConfigFiles};
@@ -54,8 +52,10 @@ pub use traits::*;
 ///
 /// EditorConfig files are assumed to be named `.editorconfig`.
 /// If not, use [`properties_from_config_of`]
-pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Error> {
-    properties_from_config_of(path, Option::<&std::path::Path>::None)
+pub fn properties_of<P: crate::glob::Pattern>(
+    path: impl AsRef<std::path::Path>,
+) -> Result<Properties, Error> {
+    properties_from_config_of::<P>(path, Option::<&std::path::Path>::None)
 }
 
 /// Retrieves the [`Properties`] for a file at the given path,
@@ -68,11 +68,15 @@ pub fn properties_of(path: impl AsRef<std::path::Path>) -> Result<Properties, Er
 /// If it's relative, joins it onto every ancestor of the target file,
 /// and looks for config files at those paths.
 /// If it's `None`, EditorConfig files are assumed to be named `.editorconfig`.
-pub fn properties_from_config_of(
+pub fn properties_from_config_of<P: crate::glob::Pattern>(
     target_path: impl AsRef<std::path::Path>,
     config_path_override: Option<impl AsRef<std::path::Path>>,
 ) -> Result<Properties, Error> {
     let mut retval = Properties::new();
-    ConfigFiles::open(&target_path, config_path_override)?.apply_to(&mut retval, &target_path)?;
+    ConfigFiles::<P>::open(
+        target_path.as_ref(),
+        config_path_override.as_ref().map(AsRef::as_ref),
+    )?
+    .apply_to(&mut retval, &target_path)?;
     Ok(retval)
 }

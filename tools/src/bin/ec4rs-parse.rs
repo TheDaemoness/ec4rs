@@ -48,7 +48,7 @@ fn print_config(
     legacy_fallbacks: bool,
     display: &DisplayArgs,
 ) {
-    match ec4rs::properties_from_config_of(path, filename) {
+    match ec4rs::properties_from_config_of::<ec4rs::glob::Glob>(path, filename) {
         Ok(mut props) => {
             if legacy_fallbacks {
                 props.use_fallbacks_legacy();

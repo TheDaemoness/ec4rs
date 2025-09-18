@@ -7,8 +7,6 @@ pub enum ParseError {
     Io(std::io::Error),
     /// An invalid line was read.
     InvalidLine,
-    /// An empty character class was found in a section header.
-    EmptyCharClass,
 }
 
 impl std::fmt::Display for ParseError {
@@ -17,17 +15,15 @@ impl std::fmt::Display for ParseError {
             ParseError::Eof => write!(f, "end of data"),
             ParseError::Io(e) => write!(f, "io failure: {}", e),
             ParseError::InvalidLine => write!(f, "invalid line"),
-            ParseError::EmptyCharClass => write!(f, "empty char class"),
         }
     }
 }
 
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        if let ParseError::Io(ioe) = self {
-            Some(ioe)
-        } else {
-            None
+        match self {
+            ParseError::Io(e) => Some(e),
+            _ => None,
         }
     }
 }

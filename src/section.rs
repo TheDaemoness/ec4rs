@@ -1,5 +1,5 @@
-use crate::glob::Glob;
-use crate::string::ToSharedString;
+use crate::glob::Pattern;
+use crate::string::{ParseError, ToSharedString};
 use crate::Properties;
 
 use std::path::Path;
@@ -8,18 +8,46 @@ use std::path::Path;
 
 /// One section of an EditorConfig file.
 #[derive(Clone)]
-pub struct Section {
-    pattern: Glob,
+pub struct Section<P: Pattern> {
+    pattern: Result<P, ParseError<P::Error>>,
     props: crate::Properties,
 }
 
-impl Section {
-    /// Constrcts a new [`Section`] that applies to files matching the specified pattern.
-    pub fn new(pattern: &str) -> Section {
+impl<P: Pattern> Section<P> {
+    /// Constructs a new [`Section`] that applies to files matching the specified pattern.
+    ///
+    /// If pattern parsing errors, the error will be retained internally
+    /// and no paths will be considered to match the pattern. Errors can be detected with
+    /// either [`or_err`][Self::or_err] or [`pattern`][Self::pattern].
+    pub fn new(pattern: &str) -> Self {
         Section {
-            pattern: Glob::new(pattern),
+            pattern: P::parse(pattern).map_err(|error| ParseError {
+                error,
+                string: pattern.into(),
+            }),
             props: crate::Properties::new(),
         }
+    }
+    /// Returns `Ok(self)` if there was no pattern parse error,
+    /// otherwise returns the error.
+    pub fn or_err(self) -> Result<Self, ParseError<P::Error>> {
+        if let Err(e) = self.pattern {
+            Err(e)
+        } else {
+            Ok(self)
+        }
+    }
+    /// Returns true if and only if this section applies to a file at the specified path.
+    pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {
+        // MSRV of 1.56 prevents use of is_ok_and from 1.70.
+        match self.pattern.as_ref() {
+            Ok(p) => p.matches(path.as_ref()),
+            _ => false,
+        }
+    }
+    /// Returns a reference to either the pattern or the error.
+    pub fn pattern(&self) -> &Result<P, ParseError<P::Error>> {
+        &self.pattern
     }
     /// Returns a shared reference to the internal [`Properties`] map.
     pub fn props(&self) -> &Properties {
@@ -38,13 +66,9 @@ impl Section {
         self.props
             .insert_raw_for_key(key.to_shared_string().into_lowercase(), val)
     }
-    /// Returns true if and only if this section applies to a file at the specified path.
-    pub fn applies_to(&self, path: impl AsRef<Path>) -> bool {
-        self.pattern.matches(path.as_ref())
-    }
 }
 
-impl crate::PropertiesSource for &Section {
+impl<P: Pattern> crate::PropertiesSource for &Section<P> {
     /// Adds this section's properties to a [`Properties`].
     ///
     /// This implementation is infallible.

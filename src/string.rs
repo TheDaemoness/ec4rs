@@ -2,11 +2,18 @@
 
 use std::borrow::Cow;
 
+// Shared is a purely internal type alias.
+// Its usage requires it to implement From<T> and Deref<Target = T>.
+
+pub(crate) type Shared<T> = std::sync::Arc<T>;
+
 #[cfg(feature = "track-source")]
 mod source {
+    use std::path::Path;
+
     #[derive(Clone)]
     pub struct Source {
-        path: std::sync::Arc<std::path::Path>,
+        path: super::Shared<Path>,
         line: usize,
     }
 
@@ -19,12 +26,12 @@ mod source {
     impl Source {
         pub fn new(path: &std::path::Path, line: usize) -> Self {
             Source {
-                path: std::sync::Arc::from(path),
+                path: super::Shared::from(path),
                 line,
             }
         }
         pub fn get(&self) -> (&std::path::Path, usize) {
-            (std::sync::Arc::as_ref(&self.path), self.line)
+            (super::Shared::as_ref(&self.path), self.line)
         }
     }
 }
@@ -35,19 +42,19 @@ mod source {
 #[derive(Clone, Debug)]
 enum SharedStringInner {
     Static(&'static str),
-    Owned(std::sync::Arc<str>),
+    Owned(Shared<str>),
 }
 
 impl SharedStringInner {
     #[inline]
     pub fn new(string: &str) -> Self {
-        SharedStringInner::Owned(std::sync::Arc::from(string))
+        SharedStringInner::Owned(Shared::from(string))
     }
     #[inline]
     pub fn get(&self) -> &str {
         match self {
             SharedStringInner::Static(v) => v,
-            SharedStringInner::Owned(v) => std::sync::Arc::as_ref(v),
+            SharedStringInner::Owned(v) => Shared::as_ref(v),
         }
     }
 }

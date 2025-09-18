@@ -20,11 +20,13 @@ version = "1.2.0"
 members = ["glob", "tools"]
 
 [features]
+default = ["ec4rs_glob"]
 track-source = []
 language-tags = []
+ec4rs_glob = ["dep:ec4rs_glob"]
 
 [dependencies]
-ec4rs_glob = { version = "0.1.0", path = "glob" }
+ec4rs_glob = { version = "0.1.0", path = "glob", optional = true }
 
 [package.metadata.docs.rs]
 all-features = true

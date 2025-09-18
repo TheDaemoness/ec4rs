@@ -24,7 +24,8 @@ From there, `Properties` offers several methods for retrieving values:
 
 ```
 // Read the EditorConfig files that would apply to a file at the given path.
-let mut cfg = ec4rs::properties_of("src/main.rs").unwrap_or_default();
+let mut cfg = ec4rs::properties_of::<ec4rs::glob::Glob>("src/main.rs")
+    .unwrap_or_default();
 // Convenient access to ec4rs's property parsers.
 use ec4rs::property::*;
 // Use fallback values for tab width and/or indent size.
@@ -47,6 +48,9 @@ let hard_wrap = cfg.get_raw_for_key("max_line_length")
 ```
 
 ## Features
+
+**ec4rs_glob** (Default):
+Enable support for an EditorConfig-compliant glob implementation.
 
 **language-tags**: NYI for 2.0.
 

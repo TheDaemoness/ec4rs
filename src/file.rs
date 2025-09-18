@@ -1,25 +1,29 @@
 use std::path::{Path, PathBuf};
 
-use crate::{ConfigParser, Error, ParseError, Properties, PropertiesSource, Section};
+use crate::{
+    glob::Pattern, ConfigParser, Error, ParseError, Properties, PropertiesSource, Section,
+};
 
 /// Convenience wrapper for an [`ConfigParser`] that reads files.
-pub struct ConfigFile {
+pub struct ConfigFile<P: Pattern> {
     // TODO: Arc<Path>. It's more important to have cheap clones than mutability.
     /// The path to the open file.
     pub path: PathBuf,
     /// A [`ConfigParser`] that reads from the file.
-    pub reader: ConfigParser<std::io::BufReader<std::fs::File>>,
+    pub reader: ConfigParser<std::io::BufReader<std::fs::File>, P>,
 }
 
-impl ConfigFile {
+impl<P: Pattern> ConfigFile<P> {
     /// Opens a file for reading and uses it to construct an [`ConfigParser`].
     ///
     /// If the file cannot be opened, wraps the [`std::io::Error`] in a [`ParseError`].
-    pub fn open(path: impl Into<PathBuf>) -> Result<ConfigFile, ParseError> {
-        let path = path.into();
+    pub fn open(path: impl AsRef<Path>) -> Result<ConfigFile<P>, ParseError> {
         let file = std::fs::File::open(&path).map_err(ParseError::Io)?;
         let reader = ConfigParser::new_buffered_with_path(file, Some(path.as_ref()))?;
-        Ok(ConfigFile { path, reader })
+        Ok(ConfigFile {
+            path: path.as_ref().to_owned(),
+            reader,
+        })
     }
 
     /// Wraps a [`ParseError`] in an [`Error::InFile`].
@@ -30,16 +34,16 @@ impl ConfigFile {
     }
 }
 
-impl Iterator for ConfigFile {
-    type Item = Result<Section, ParseError>;
+impl<P: Pattern> Iterator for ConfigFile<P> {
+    type Item = Result<Section<P>, ParseError>;
     fn next(&mut self) -> Option<Self::Item> {
         self.reader.next()
     }
 }
 
-impl std::iter::FusedIterator for ConfigFile {}
+impl<P: Pattern> std::iter::FusedIterator for ConfigFile<P> {}
 
-impl PropertiesSource for &mut ConfigFile {
+impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
     /// Adds properties from the file's sections to the specified [`Properties`] map.
     ///
     /// Uses [`ConfigFile::path`] when determining applicability to stop `**` from going too far.
@@ -66,9 +70,9 @@ impl PropertiesSource for &mut ConfigFile {
 /// When iterated over, either by using it as an [`Iterator`]
 /// or by calling [`ConfigFiles::iter`],
 /// returns [`ConfigFile`]s in the order that they would apply to a [`Properties`] map.
-pub struct ConfigFiles(Vec<ConfigFile>);
+pub struct ConfigFiles<P: Pattern>(Vec<ConfigFile<P>>);
 
-impl ConfigFiles {
+impl<P: Pattern> ConfigFiles<P> {
     /// Searches for EditorConfig files that might apply to a file at the specified path.
     ///
     /// This function does not canonicalize the path,
@@ -79,10 +83,10 @@ impl ConfigFiles {
     #[allow(clippy::needless_pass_by_value)]
     pub fn open(
         path: impl AsRef<Path>,
-        config_path_override: Option<impl AsRef<std::path::Path>>,
-    ) -> Result<ConfigFiles, Error> {
+        config_name: Option<impl AsRef<Path>>,
+    ) -> Result<Self, Error> {
         use std::borrow::Cow;
-        let filename = config_path_override
+        let filename = config_name
             .as_ref()
             .map_or_else(|| ".editorconfig".as_ref(), |f| f.as_ref());
         Ok(ConfigFiles(if filename.is_relative() {
@@ -113,7 +117,7 @@ impl ConfigFiles {
     }
 
     /// Returns an iterator over the contained [`ConfigFiles`].
-    pub fn iter(&self) -> impl Iterator<Item = &ConfigFile> {
+    pub fn iter(&self) -> impl Iterator<Item = &ConfigFile<P>> {
         self.0.iter().rev()
     }
 
@@ -121,16 +125,16 @@ impl ConfigFiles {
     // there is no `iter_mut` method.
 }
 
-impl Iterator for ConfigFiles {
-    type Item = ConfigFile;
-    fn next(&mut self) -> Option<ConfigFile> {
+impl<P: Pattern> Iterator for ConfigFiles<P> {
+    type Item = ConfigFile<P>;
+    fn next(&mut self) -> Option<ConfigFile<P>> {
         self.0.pop()
     }
 }
 
-impl std::iter::FusedIterator for ConfigFiles {}
+impl<P: Pattern> std::iter::FusedIterator for ConfigFiles<P> {}
 
-impl PropertiesSource for ConfigFiles {
+impl<P: Pattern> PropertiesSource for ConfigFiles<P> {
     /// Adds properties from the files' sections to the specified [`Properties`] map.
     ///
     /// Ignores the files' paths when determining applicability.
