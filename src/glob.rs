@@ -42,3 +42,20 @@ impl Pattern for Glob {
         self.matches(path)
     }
 }
+
+#[cfg(feature = "globset")]
+impl Pattern for globset::GlobMatcher {
+    type Error = globset::Error;
+
+    fn parse(pattern: &str) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        let glob = globset::Glob::new(pattern)?;
+        Ok(glob.compile_matcher())
+    }
+
+    fn matches(&self, path: &std::path::Path) -> bool {
+        self.is_match(path)
+    }
+}
