@@ -48,7 +48,7 @@ primarily intended for internal use but can be used by other projects. See
 
 ## License
 
-**ec4rs**, **ec4rs_glob**, and **ec4rs_tools** are licensed under the
+`ec4rs`, `ec4rs_glob`, and `ec4rs_tools` are licensed under the
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
 with no `NOTICE` text.
 

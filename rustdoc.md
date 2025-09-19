@@ -49,11 +49,11 @@ let hard_wrap = cfg.get_raw_for_key("max_line_length")
 
 ## Features
 
-**ec4rs_glob** (Default):
+`ec4rs_glob` (Default):
 Enable support for an EditorConfig-compliant glob implementation.
 
-**language-tags**: NYI for 2.0.
+`language-tags`: NYI for 2.0.
 
-**track-source**: Allow [`SharedString`][crate::string::SharedString]
+`track-source`: Allow [`SharedString`][crate::string::SharedString]
 to store the file and line number it originates from.
 [`ConfigParser`] will add this information where applicable.
