@@ -49,6 +49,12 @@ let hard_wrap = cfg.get_raw_for_key("max_line_length")
 
 ## Features
 
+`bcp-47`:
+Makes [`LanguageTag`][crate::property::LanguageTag] accept any well-formed
+[Unicode BCP 47 locale identifier](https://unicode.org/reports/tr35/tr35.html#unicode_bcp47_locale_id)
+using [`unic-locale`](https://docs.rs/unic-locale) for parsing and internal
+representation.
+
 `ec4rs_glob` (Default):
 Enable support for an EditorConfig-compliant glob implementation.
 
@@ -57,8 +63,6 @@ Add support for [`globset`](https://docs.rs/globset/latest/globset/)
 as an alternative glob implementation.
 Note that `globset` patterns do not conform to the EditorConfig standard,
 but it should be good enough for most real-world cases.
-
-`language-tags`: NYI for 2.0.
 
 `track-source`: Allow [`SharedString`][crate::string::SharedString]
 to store the file and line number it originates from.

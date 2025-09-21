@@ -21,14 +21,15 @@ members = ["glob", "tools"]
 
 [features]
 default = ["ec4rs_glob"]
-track-source = []
-language-tags = []
+bcp-47 = ["dep:unic-locale"]
 ec4rs_glob = ["dep:ec4rs_glob"]
 globset = ["dep:globset"]
+track-source = []
 
 [dependencies]
 ec4rs_glob = { version = "0.1.0", path = "glob", optional = true }
 globset = { version = "0.4.16", optional = true, default-features = false }
+unic-locale = { version = "0.9.6", optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
