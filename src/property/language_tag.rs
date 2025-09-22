@@ -12,10 +12,8 @@ use super::UnknownValueError;
 /// See [`SpellingLanguage`][super::SpellingLanguage].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct LanguageTag(
-    #[cfg(not(feature = "bcp-47"))]
-    [u8; 4],
-    #[cfg(feature = "bcp-47")]
-    unic_locale::Locale
+    #[cfg(not(feature = "bcp-47"))] [u8; 4],
+    #[cfg(feature = "bcp-47")] unic_locale::Locale,
 );
 
 impl LanguageTag {
@@ -72,7 +70,11 @@ impl LanguageTag {
         }
         #[cfg(feature = "bcp-47")]
         {
-            self.0.id.region.as_ref().map(unic_locale::subtags::Region::as_str)
+            self.0
+                .id
+                .region
+                .as_ref()
+                .map(unic_locale::subtags::Region::as_str)
         }
     }
     /// Returns the script subtag, if any, e.g. the "Latn" in "en-Latn-US".
@@ -86,7 +88,11 @@ impl LanguageTag {
         }
         #[cfg(feature = "bcp-47")]
         {
-            self.0.id.script.as_ref().map(unic_locale::subtags::Script::as_str)
+            self.0
+                .id
+                .script
+                .as_ref()
+                .map(unic_locale::subtags::Script::as_str)
         }
     }
     #[cfg(feature = "bcp-47")]

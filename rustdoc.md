@@ -23,6 +23,7 @@ should be called before retrieving them.
 From there, `Properties` offers several methods for retrieving values:
 
 ```
+# #[cfg(feature = "ec4rs_glob")] {
 // Read the EditorConfig files that would apply to a file at the given path.
 let mut cfg = ec4rs::properties_of::<ec4rs::glob::Glob>("src/main.rs")
     .unwrap_or_default();
@@ -45,6 +46,7 @@ let charset = cfg.get_raw::<Charset>()
 let hard_wrap = cfg.get_raw_for_key("max_line_length")
     .unwrap_or_default()
     .parse::<usize>();
+# }
 ```
 
 ## Features

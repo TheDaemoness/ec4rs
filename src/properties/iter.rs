@@ -5,8 +5,7 @@ macro_rules! impls {
         impl<'a> Iterator for $name<'a> {
             type Item = (&'a str, $valuetype);
             fn next(&mut self) -> Option<Self::Item> {
-                let pair = self.0.next()?;
-                let (ref key, val) = pair;
+                let (ref key, val) = self.0.next()?;
                 Some((key, val))
             }
 
@@ -22,6 +21,11 @@ macro_rules! impls {
             }
         }
         impl<'a> std::iter::FusedIterator for $name<'a> {}
+        impl<'a> std::iter::ExactSizeIterator for $name<'a> {
+            fn len(&self) -> usize {
+                self.0.len()
+            }
+        }
         //TODO: PartialEq/Eq?
     };
 }
