@@ -1,3 +1,7 @@
+#[cfg(feature = "ec4rs_glob")]
+#[cfg(test)]
+mod tests;
+
 use crate::glob::Pattern;
 use crate::linereader::LineReader;
 use crate::ParseError;

@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::ParseError;
 
 use std::io;

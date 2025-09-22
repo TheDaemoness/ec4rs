@@ -1,4 +1,4 @@
-use crate::PropertyKey;
+use super::LanguageTag;
 
 #[test]
 fn standard_keys_matches() {
@@ -48,4 +48,9 @@ fn spelling_language() {
         }
     };
     assert_eq!(parsed.to_string(), &*testcase_en_us);
+}
+
+#[test]
+fn language_tag_rejects_root() {
+    LanguageTag::try_from("root").expect_err("Language name 'root' not rejected");
 }

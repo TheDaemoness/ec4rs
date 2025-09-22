@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-use crate::properties::Properties;
 use crate::string::SharedString;
 
 macro_rules! impls {

@@ -6,6 +6,8 @@
 //! as well as handle the common special value `"unset"`.
 
 mod language_tag;
+#[cfg(test)]
+mod tests;
 
 pub use language_tag::*;
 

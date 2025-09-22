@@ -1,4 +1,6 @@
 mod iter;
+#[cfg(test)]
+mod tests;
 
 pub use iter::*;
 

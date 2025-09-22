@@ -1,6 +1,5 @@
-#[cfg(feature = "ec4rs_glob")]
-mod ecparser;
-mod linereader;
-mod properties;
-mod property;
-mod version;
+#[test]
+fn version_string_matches_ints() {
+    use crate::version::*;
+    assert_eq!(STRING, format!("{}.{}.{}", MAJOR, MINOR, PATCH));
+}
