@@ -92,7 +92,7 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
 
     /// Returns `true` if there may be another section to read.
     pub fn has_more(&self) -> bool {
-        self.eof
+        !self.eof
     }
 
     /// Returns the current line number.
