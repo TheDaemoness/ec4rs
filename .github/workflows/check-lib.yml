@@ -47,6 +47,6 @@ jobs:
       - name: Check Clippy
         run: "cargo clippy -p ec4rs"
       - name: Check Docs
-        run: "cargo doc --no-deps -p ec4rs"
+        run: "cargo doc --all-features --no-deps -p ec4rs"
       - name: Check Style
         run: "cargo fmt --check -p ec4rs"
