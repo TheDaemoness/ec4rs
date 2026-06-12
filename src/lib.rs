@@ -47,35 +47,39 @@ pub use traits::*;
 ///
 /// This is the simplest way to use this library in an EditorConfig integration or plugin.
 ///
-/// This function does not canonicalize the path,
-/// but will join relative paths onto the current working directory.
+/// `target_path` should ideally be an absolute path.
+/// If it is not, this function will produce an absolute path using [`std::path::absolute`].
+/// This may differ from the canonical form of that path.
 ///
 /// EditorConfig files are assumed to be named `.editorconfig`.
-/// If not, use [`properties_from_config_of`]
+/// If not, use [`properties_from_config_of`].
+#[inline]
 pub fn properties_of<P: crate::glob::Pattern>(
-    path: impl AsRef<std::path::Path>,
+    target_path: impl AsRef<std::path::Path>,
 ) -> Result<Properties, Error> {
-    properties_from_config_of::<P>(path, Option::<&std::path::Path>::None)
+    properties_from_config_of::<P>(target_path.as_ref(), Option::<&std::path::Path>::None)
 }
 
 /// Retrieves the [`Properties`] for a file at the given path,
-/// expecting EditorConfig files to be named matching `config_path_override`.
+/// expecting EditorConfig files to be named matching `config_name`.
 ///
-/// This function does not canonicalize the path,
-/// but will join relative paths onto the current working directory.
+/// `target_path` should ideally be an absolute path.
+/// If it is not, this function will produce an absolute path using [`std::path::absolute`].
+/// This may differ from the canonical form of that path.
 ///
-/// If the provided config path is absolute, uses the EditorConfig file at that path.
-/// If it's relative, joins it onto every ancestor of the target file,
+/// If `config_name` is `None`, uses a default value of `".editorconfig"`.
+/// If `config_name` is an absolute path, uses the EditorConfig file at that path.
+/// If it's relative, joins it onto every ancestor of `target_path`
 /// and looks for config files at those paths.
-/// If it's `None`, EditorConfig files are assumed to be named `.editorconfig`.
+#[inline]
 pub fn properties_from_config_of<P: crate::glob::Pattern>(
     target_path: impl AsRef<std::path::Path>,
-    config_path_override: Option<impl AsRef<std::path::Path>>,
+    config_name: Option<impl AsRef<std::path::Path>>,
 ) -> Result<Properties, Error> {
     let mut retval = Properties::new();
     ConfigFiles::<P>::open(
         target_path.as_ref(),
-        config_path_override.as_ref().map(AsRef::as_ref),
+        config_name.as_ref().map(AsRef::as_ref),
     )?
     .apply_to(&mut retval, &target_path)?;
     Ok(retval)

@@ -6,7 +6,6 @@ use crate::{
 
 /// Convenience wrapper for an [`ConfigParser`] that reads files.
 pub struct ConfigFile<P: Pattern> {
-    // TODO: Arc<Path>. It's more important to have cheap clones than mutability.
     /// The path to the open file.
     pub path: PathBuf,
     /// A [`ConfigParser`] that reads from the file.
@@ -75,29 +74,30 @@ pub struct ConfigFiles<P: Pattern>(Vec<ConfigFile<P>>);
 impl<P: Pattern> ConfigFiles<P> {
     /// Searches for EditorConfig files that might apply to a file at the specified path.
     ///
-    /// This function does not canonicalize the path,
-    /// but will join relative paths onto the current working directory.
+    /// `target_path` should ideally be an absolute path.
+    /// If it is not, this function will produce an absolute path using [`std::path::absolute`].
+    /// This may differ from the canonical form of that path.
     ///
-    /// EditorConfig files are assumed to be named `.editorconfig`
-    /// unless an override is supplied as the second argument.
+    /// If `config_name` is `None`, uses a default value of `".editorconfig"`.
+    /// If `config_name` is an absolute path, uses the EditorConfig file at that path.
+    /// If it's relative, joins it onto every ancestor of `target_path`
+    /// and looks for config files at those paths.
     #[allow(clippy::needless_pass_by_value)]
     pub fn open(
-        path: impl AsRef<Path>,
+        target_path: impl AsRef<Path>,
         config_name: Option<impl AsRef<Path>>,
     ) -> Result<Self, Error> {
-        use std::borrow::Cow;
         let filename = config_name
             .as_ref()
             .map_or_else(|| ".editorconfig".as_ref(), |f| f.as_ref());
         Ok(ConfigFiles(if filename.is_relative() {
-            let mut abs_path = Cow::from(path.as_ref());
-            if abs_path.is_relative() {
-                abs_path = std::env::current_dir()
-                    .map_err(Error::InvalidCwd)?
-                    .join(&path)
-                    .into()
-            }
-            let mut path = abs_path.as_ref();
+            let path = target_path.as_ref();
+            let abs_path = if path.is_absolute() {
+                std::borrow::Cow::Borrowed(path)
+            } else {
+                std::borrow::Cow::Owned(std::path::absolute(path).map_err(Error::InvalidCwd)?)
+            };
+            let mut path: &Path = &abs_path;
             let mut vec = Vec::new();
             while let Some(dir) = path.parent() {
                 if let Ok(file) = ConfigFile::open(dir.join(filename)) {

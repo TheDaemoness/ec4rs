@@ -13,7 +13,7 @@ edition = "2021"
 
 authors = ["TheDaemoness"]
 include = ["/src", "/README.md", "/rustdoc.md"]
-rust-version = "1.56" # 2021 edition
+rust-version = "1.79" # std::path::absolute
 version = "1.2.0"
 
 [workspace]
