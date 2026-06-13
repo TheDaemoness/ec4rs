@@ -1,5 +1,11 @@
 //! The `SharedString` type and supporting types.
 
+mod convert;
+mod lowercase;
+
+pub use convert::*;
+pub(crate) use lowercase::into_lowercase;
+
 use std::borrow::Cow;
 
 // Shared is a purely internal type alias.
@@ -113,7 +119,7 @@ impl PartialEq for SharedString {
 impl Eq for SharedString {}
 impl PartialOrd for SharedString {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.value.cmp(&other.value))
+        Some(self.cmp(other))
     }
 }
 impl Ord for SharedString {
@@ -123,8 +129,7 @@ impl Ord for SharedString {
 }
 impl std::hash::Hash for SharedString {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write(self.value.as_bytes());
-        state.write_u8(0);
+        self.value.get().hash(state);
     }
 }
 
@@ -252,86 +257,5 @@ impl std::fmt::Display for SharedString {
 impl From<&str> for SharedString {
     fn from(value: &str) -> Self {
         Self::new(value)
-    }
-}
-
-pub(crate) fn into_lowercase(string: &str) -> std::borrow::Cow<'_, str> {
-    // TODO: This requires two iterations over the string, and it's definitely possible
-    // to do it in one.
-    if string.chars().all(char::is_lowercase) {
-        std::borrow::Cow::Borrowed(string)
-    } else {
-        std::borrow::Cow::Owned(string.to_lowercase())
-    }
-}
-
-/// A parse error and the [`SharedString`] that failed to parse.
-#[derive(Clone, Debug)]
-pub struct ParseError<E> {
-    /// The error that occurred during parsing.
-    pub error: E,
-    /// The string on which parsing was attempted.
-    pub string: SharedString,
-}
-
-impl<E: std::fmt::Display> std::fmt::Display for ParseError<E> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "parse error: {}", &self.error)
-    }
-}
-
-impl<E: std::error::Error + 'static> std::error::Error for ParseError<E> {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.error)
-    }
-}
-
-/// Specialized trait for types whose references can be converted to [`SharedString`]s
-/// or possibly [`str`]s.
-///
-/// This trait exists to enable faster insertions in data structures that use
-/// [`SharedString`]s as keys by avoiding a copy if the key already exists.
-pub trait ToSharedString {
-    /// Converts `self` into a [`SharedString`].
-    ///
-    /// Callers should assume this will involve full copy of `self`'s content,
-    /// though more efficient implementations are often possible.
-    fn to_shared_string(self) -> SharedString;
-    /// Cheaply get a reference to `self`'s data if possible.
-    ///
-    /// The returned value, if `Some`, should be equal to the value returned by
-    /// [`ToSharedString::to_shared_string`].
-    fn try_as_str(&self) -> Option<&str> {
-        None
-    }
-}
-
-impl ToSharedString for &str {
-    fn to_shared_string(self) -> SharedString {
-        SharedString::new(self)
-    }
-
-    fn try_as_str(&self) -> Option<&str> {
-        Some(self)
-    }
-}
-
-impl ToSharedString for String {
-    fn to_shared_string(self) -> SharedString {
-        SharedString::new(self.as_str())
-    }
-
-    fn try_as_str(&self) -> Option<&str> {
-        Some(self)
-    }
-}
-
-impl ToSharedString for SharedString {
-    fn to_shared_string(self) -> SharedString {
-        self
-    }
-
-    fn try_as_str(&self) -> Option<&str> {
-        Some(self)
     }
 }
