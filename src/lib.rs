@@ -1,9 +1,9 @@
 #![doc = include_str!("../rustdoc.md")]
+#![forbid(unsafe_code)]
 #![deny(clippy::as_conversions)]
 #![deny(clippy::enum_glob_use)]
 #![deny(clippy::wildcard_imports)]
 #![deny(missing_docs)]
-#![deny(unsafe_code)]
 #![deny(rustdoc::bare_urls)]
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::invalid_codeblock_attributes)]
@@ -18,7 +18,7 @@
 #![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
 #![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
 #![allow(clippy::needless_pass_by_value)] // reason = "FPs on Option<impl AsRef>"
-#![allow(clippy::missing_errors_doc)] // reason = "TODO: Fix."
+#![allow(clippy::missing_errors_doc)] // reason = "Too verbose in moste cases."
 #![cfg_attr(doc_unstable, feature(doc_auto_cfg))]
 
 pub mod cache;

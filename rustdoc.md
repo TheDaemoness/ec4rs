@@ -51,7 +51,7 @@ let hard_wrap = cfg.get_raw_for_key("max_line_length")
 
 ## Features
 
-`bcp-47`:
+`bcp_47`:
 Makes [`LanguageTag`][crate::property::LanguageTag] accept any well-formed
 [Unicode BCP 47 locale identifier](https://unicode.org/reports/tr35/tr35.html#unicode_bcp47_locale_id)
 using [`unic-locale`](https://docs.rs/unic-locale) for parsing and internal

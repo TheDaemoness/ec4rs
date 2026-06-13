@@ -1,19 +1,17 @@
-# Cheat sheet: https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [package]
 name = "ec4rs"
 description = "EditorConfig For Rust"
-license = "Apache-2.0"
-homepage = "https://github.com/TheDaemoness/ec4rs"
-repository = "https://github.com/TheDaemoness/ec4rs"
-readme = "README.md"
-keywords = ["editorconfig"]
-categories = ["config", "parser-implementations"]
-edition = "2021"
-
 authors = ["TheDaemoness"]
+categories = ["config", "parser-implementations"]
+homepage = "https://github.com/TheDaemoness/ec4rs"
+keywords = ["editorconfig"]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/TheDaemoness/ec4rs"
+
+edition = "2021"
 include = ["/src", "/README.md", "/rustdoc.md"]
-rust-version = "1.79" # std::path::absolute
+rust-version = "1.79.0" # std::path::absolute
 version = "1.2.0"
 
 [workspace]
@@ -21,7 +19,7 @@ members = ["glob", "tools"]
 
 [features]
 default = ["ec4rs_glob"]
-bcp-47 = ["dep:unic-locale"]
+bcp_47 = ["dep:unic-locale"]
 ec4rs_glob = ["dep:ec4rs_glob"]
 globset = ["dep:globset"]
 track-source = []
