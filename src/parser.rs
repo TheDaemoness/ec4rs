@@ -2,6 +2,9 @@
 #[cfg(test)]
 mod tests;
 
+use crate::cache::Cache;
+use crate::cache::CommonKeyCache;
+use crate::cache::CommonValueCache;
 use crate::glob::Pattern;
 use crate::linereader::LineReader;
 use crate::ParseError;
@@ -14,18 +17,20 @@ use std::path::Path;
 /// This struct wraps any [`BufRead`][std::io::BufRead].
 /// It eagerly parses the preamble on construction.
 /// [`Section`]s may then be parsed by calling [`ConfigParser::read_section`].
-pub struct ConfigParser<R: io::BufRead, P: Pattern> {
+pub struct ConfigParser<R: io::BufRead, P: Pattern, K = CommonKeyCache, V = CommonValueCache> {
     /// Incidates if a `root = true` line was found in the preamble.
     pub is_root: bool,
     eof: bool,
     reader: LineReader<R>,
+    cache_k: K,
+    cache_v: V,
     #[allow(clippy::type_complexity)]
     glob_marker: std::marker::PhantomData<fn() -> Result<P, P::Error>>,
     #[cfg(feature = "track-source")]
     path: Option<crate::string::Shared<Path>>,
 }
 
-impl<R: io::Read, P: Pattern> ConfigParser<io::BufReader<R>, P> {
+impl<R: io::Read, P: Pattern> ConfigParser<io::BufReader<R>, P, CommonKeyCache, CommonValueCache> {
     /// Convenience function for construction using an unbuffered [`io::Read`].
     ///
     /// See [`ConfigParser::new`].
@@ -44,7 +49,7 @@ impl<R: io::Read, P: Pattern> ConfigParser<io::BufReader<R>, P> {
     }
 }
 
-impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
+impl<R: io::BufRead, P: Pattern> ConfigParser<R, P, CommonKeyCache, CommonValueCache> {
     /// Constructs a new [`ConfigParser`] and reads the preamble from the provided source,
     /// which is assumed to be a file at `path`.
     ///
@@ -77,6 +82,8 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
             is_root,
             eof,
             reader,
+            cache_k: CommonKeyCache,
+            cache_v: CommonValueCache,
             glob_marker: std::marker::PhantomData,
             #[cfg(feature = "track-source")]
             path: path.map(|p| crate::string::Shared::from(p.as_ref())),
@@ -89,7 +96,9 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
     pub fn new(buf_source: R) -> Result<Self, ParseError> {
         Self::new_with_path(buf_source, Option::<&Path>::None)
     }
+}
 
+impl<R: io::BufRead, P: Pattern, K, V> ConfigParser<R, P, K, V> {
     /// Returns `true` if there may be another section to read.
     pub fn has_more(&self) -> bool {
         !self.eof
@@ -100,6 +109,36 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
         self.reader.line_no()
     }
 
+    /// Returns a version of `self` with the provided cache for keys.
+    pub fn with_key_cache<C>(self, cache_k: C) -> ConfigParser<R, P, C, V> {
+        ConfigParser {
+            is_root: self.is_root,
+            eof: self.eof,
+            reader: self.reader,
+            cache_k,
+            cache_v: self.cache_v,
+            glob_marker: std::marker::PhantomData,
+            #[cfg(feature = "track-source")]
+            path: self.path,
+        }
+    }
+
+    /// Returns a version of `self` with the provided cache for values.
+    pub fn with_value_cache<C>(self, cache_v: C) -> ConfigParser<R, P, K, C> {
+        ConfigParser {
+            is_root: self.is_root,
+            eof: self.eof,
+            reader: self.reader,
+            cache_k: self.cache_k,
+            cache_v,
+            glob_marker: std::marker::PhantomData,
+            #[cfg(feature = "track-source")]
+            path: self.path,
+        }
+    }
+}
+
+impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> ConfigParser<R, P, K, V> {
     /// Parses a [`Section`], reading more if needed.
     pub fn read_section(&mut self) -> Result<Section<P>, ParseError> {
         use crate::linereader::Line;
@@ -125,12 +164,12 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
                     Ok(Line::Nothing) => (),
                     Ok(Line::Pair(k, v)) => {
                         #[allow(unused_mut)]
-                        let mut v = crate::string::SharedString::new(v);
+                        let mut v = self.cache_v.get_shared_string(v);
                         #[cfg(feature = "track-source")]
                         if let Some(path) = self.path.as_ref() {
                             v.set_source(path.clone(), line_no);
                         }
-                        section.insert(k, v);
+                        section.insert(self.cache_k.get_shared_string(k), v);
                     }
                 }
             }
@@ -140,7 +179,7 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P> {
     }
 }
 
-impl<R: io::BufRead, P: Pattern> Iterator for ConfigParser<R, P> {
+impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> Iterator for ConfigParser<R, P, K, V> {
     type Item = Result<Section<P>, ParseError>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.read_section() {
@@ -151,9 +190,14 @@ impl<R: io::BufRead, P: Pattern> Iterator for ConfigParser<R, P> {
     }
 }
 
-impl<R: io::BufRead, P: Pattern> std::iter::FusedIterator for ConfigParser<R, P> {}
+impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> std::iter::FusedIterator
+    for ConfigParser<R, P, K, V>
+{
+}
 
-impl<R: io::BufRead, P: Pattern> crate::PropertiesSource for &mut ConfigParser<R, P> {
+impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> crate::PropertiesSource
+    for &mut ConfigParser<R, P, K, V>
+{
     fn apply_to(
         self,
         props: &mut crate::Properties,

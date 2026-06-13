@@ -249,17 +249,35 @@ impl Display for SpellingLanguage {
     }
 }
 
-/// All the keys of the standard properties.
-///
-/// Can be used to determine if a property is defined in the specification or not.
-pub static STANDARD_KEYS: &[&str] = &[
+macro_rules! standard_keys {
+    ($($key:literal,)*) => {
+        #[doc = "The standard keys in sorted order."]
+        #[doc = ""]
+        #[doc = "The exact value of this static may change between minor versions."]
+        pub static STANDARD_KEYS: &[&str] = &[
+            $($key,)*
+        ];
+
+        #[doc = "Looks up a `&'static` version of `value` from the set of standard keys."]
+        #[doc = ""]
+        #[doc = "This function may be used to check whether a key is standard or not."]
+        pub fn lookup_standard_key(value: &str) -> Option<&'static str> {
+            match value {
+                $($key => Some($key),)*
+                _ => None
+            }
+        }
+    };
+}
+
+standard_keys!(
+    "charset",
+    "end_of_line",
     "indent_size",
     "indent_style",
-    "tab_width",
-    "end_of_line",
-    "charset",
-    "trim_trailing_whitespace",
     "insert_final_newline",
-    "spelling_language",
     // NOT "max_line_length".
-];
+    "spelling_language",
+    "tab_width",
+    "trim_trailing_whitespace",
+);

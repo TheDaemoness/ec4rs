@@ -21,6 +21,7 @@
 #![allow(clippy::missing_errors_doc)] // reason = "TODO: Fix."
 #![cfg_attr(doc_unstable, feature(doc_auto_cfg))]
 
+pub mod cache;
 mod error;
 mod fallback;
 mod file;
