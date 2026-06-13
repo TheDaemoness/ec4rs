@@ -13,7 +13,7 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseError::Eof => write!(f, "end of data"),
-            ParseError::Io(e) => write!(f, "io failure: {}", e),
+            ParseError::Io(e) => write!(f, "io failure: {e}"),
             ParseError::InvalidLine => write!(f, "invalid line"),
         }
     }
@@ -42,11 +42,11 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::Parse(error) => write!(f, "{}", error),
+            Error::Parse(error) => write!(f, "{error}"),
             Error::InFile(path, line, error) => {
                 write!(f, "{}:{}: {}", path.to_string_lossy(), line, error)
             }
-            Error::InvalidCwd(ioe) => write!(f, "invalid cwd: {}", ioe),
+            Error::InvalidCwd(ioe) => write!(f, "invalid cwd: {ioe}"),
         }
     }
 }

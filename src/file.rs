@@ -58,7 +58,7 @@ impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
         match self.reader.apply_to(props, path) {
             Ok(()) => Ok(()),
             Err(crate::Error::Parse(e)) => Err(self.add_error_context(e)),
-            Err(e) => panic!("unexpected error variant {:?}", e),
+            Err(e) => panic!("unexpected error variant {e:?}"),
         }
     }
 }
