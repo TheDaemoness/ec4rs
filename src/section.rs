@@ -1,4 +1,5 @@
 use crate::glob::Pattern;
+use crate::properties::PropertiesSink;
 use crate::string::{ParseError, ToSharedString};
 use crate::Properties;
 
@@ -68,13 +69,25 @@ impl<P: Pattern> Section<P> {
     }
 }
 
+impl<P: Pattern> PropertiesSink for Section<P> {
+    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+        self.props.property(key, val)
+    }
+    fn properties(
+        &mut self,
+        iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
+    ) {
+        self.props.properties(iter)
+    }
+}
+
 impl<P: Pattern> crate::PropertiesSource for &Section<P> {
     /// Adds this section's properties to a [`Properties`].
     ///
     /// This implementation is infallible.
     fn apply_to(
         self,
-        props: &mut Properties,
+        props: &mut (impl PropertiesSink + ?Sized),
         path: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
         let path_ref = path.as_ref();

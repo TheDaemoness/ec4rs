@@ -7,6 +7,7 @@ use crate::cache::CommonKeyCache;
 use crate::cache::CommonValueCache;
 use crate::glob::Pattern;
 use crate::linereader::LineReader;
+use crate::properties::PropertiesSink;
 use crate::ParseError;
 use crate::Section;
 use std::io;
@@ -200,10 +201,11 @@ impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> crate::PropertiesSource
 {
     fn apply_to(
         self,
-        props: &mut crate::Properties,
+        props: &mut (impl PropertiesSink + ?Sized),
         path: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
         let path = path.as_ref();
+        // TODO: Don't buffer entire sections.
         for section_result in self {
             match section_result {
                 Ok(section) => {

@@ -266,7 +266,7 @@ impl<'a> IntoIterator for &'a mut Properties {
     }
 }
 
-impl<K: Into<SharedString>, V: Into<SharedString>> FromIterator<(K, V)> for Properties {
+impl<K: ToSharedString, V: ToSharedString> FromIterator<(K, V)> for Properties {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut result = Properties::new();
         result.extend(iter);
@@ -274,38 +274,81 @@ impl<K: Into<SharedString>, V: Into<SharedString>> FromIterator<(K, V)> for Prop
     }
 }
 
-impl<K: Into<SharedString>, V: Into<SharedString>> Extend<(K, V)> for Properties {
+impl<K: ToSharedString, V: ToSharedString> Extend<(K, V)> for Properties {
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         let iter = iter.into_iter();
         let min_len = iter.size_hint().0;
         self.pairs.reserve(min_len);
         self.idxes.reserve(min_len);
         for (k, v) in iter {
-            let k = k.into();
-            let v = v.into();
+            let k = k.to_shared_string();
+            let v = v.to_shared_string();
             self.insert_raw_for_key(k, v);
         }
     }
 }
 
-/// Trait for types that can add properties to a [`Properties`] map.
+/// Trait for types that can accept properties.
+pub trait PropertiesSink {
+    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString);
+    fn properties(
+        &mut self,
+        iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
+    ) {
+        for (key, value) in iter {
+            self.property(key, value);
+        }
+    }
+}
+
+impl<F: FnMut(SharedString, SharedString)> PropertiesSink for F {
+    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+        self(key.to_shared_string(), val.to_shared_string())
+    }
+}
+
+impl PropertiesSink for Properties {
+    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+        self.insert_raw_for_key(key, val);
+    }
+
+    fn properties(
+        &mut self,
+        iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
+    ) {
+        self.extend(iter)
+    }
+}
+
+/// Trait for types that can add properties to any [`PropertiesSink`].
 pub trait PropertiesSource {
     /// Adds properties that apply to a file at the specified path
-    /// to the provided [`Properties`].
+    /// to the provided [`PropertiesSink`].
     fn apply_to(
         self,
-        props: &mut Properties,
+        props: &mut (impl PropertiesSink + ?Sized),
         path: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error>;
+}
+
+impl<T: IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>> PropertiesSource for T {
+    fn apply_to(
+        self,
+        props: &mut (impl PropertiesSink + ?Sized),
+        _: impl AsRef<std::path::Path>,
+    ) -> Result<(), crate::Error> {
+        props.properties(self);
+        Ok(())
+    }
 }
 
 impl PropertiesSource for &Properties {
     fn apply_to(
         self,
-        props: &mut Properties,
+        props: &mut (impl PropertiesSink + ?Sized),
         _: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
-        props.extend(self.pairs.iter().cloned());
+        props.properties(self.pairs.iter().cloned());
         Ok(())
     }
 }

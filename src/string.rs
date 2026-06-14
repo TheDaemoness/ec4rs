@@ -185,7 +185,7 @@ impl SharedString {
     /// As [`SharedString::new`] but only accepts a `&'static str`.
     ///
     /// This function does not copy the string.
-    pub fn new_static(value: &'static str) -> Self {
+    pub const fn new_static(value: &'static str) -> Self {
         SharedString {
             value: SharedStringInner::Static(value),
             #[cfg(feature = "track-source")]

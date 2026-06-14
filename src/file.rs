@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    glob::Pattern, ConfigParser, Error, ParseError, Properties, PropertiesSource, Section,
+    glob::Pattern, properties::PropertiesSink, ConfigParser, Error, ParseError, PropertiesSource,
+    Section,
 };
 
 /// Convenience wrapper for an [`ConfigParser`] that reads files.
@@ -47,7 +48,11 @@ impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
     ///
     /// Uses [`ConfigFile::path`] when determining applicability to stop `**` from going too far.
     /// Returns parse errors wrapped in an [`Error::InFile`].
-    fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {
+    fn apply_to(
+        self,
+        props: &mut (impl PropertiesSink + ?Sized),
+        path: impl AsRef<Path>,
+    ) -> Result<(), crate::Error> {
         let get_parent = || self.path.parent();
         let path = if let Some(parent) = get_parent() {
             let path = path.as_ref();
@@ -138,7 +143,11 @@ impl<P: Pattern> PropertiesSource for ConfigFiles<P> {
     /// Adds properties from the files' sections to the specified [`Properties`] map.
     ///
     /// Ignores the files' paths when determining applicability.
-    fn apply_to(self, props: &mut Properties, path: impl AsRef<Path>) -> Result<(), crate::Error> {
+    fn apply_to(
+        self,
+        props: &mut (impl PropertiesSink + ?Sized),
+        path: impl AsRef<Path>,
+    ) -> Result<(), crate::Error> {
         let path = path.as_ref();
         for mut file in self {
             file.apply_to(props, path)?;
