@@ -10,7 +10,7 @@ fn validate<'a>(
     let path = std::path::Path::new(".editorconfig");
     let mut parser = ConfigParser::<_, Glob>::new_buffered_with_path(text.as_bytes(), Some(path))
         .expect("Should have created the parser");
-    assert_eq!(parser.is_root, should_be_root);
+    assert_eq!(parser.preamble.is_root(), should_be_root);
     for section_expected in expected {
         let section = parser.next().unwrap().unwrap();
         let mut iter = section.props().iter();

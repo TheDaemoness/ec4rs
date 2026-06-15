@@ -7,6 +7,7 @@ use crate::cache::CommonKeyCache;
 use crate::cache::CommonValueCache;
 use crate::glob::Pattern;
 use crate::linereader::LineReader;
+use crate::preamble::Preamble;
 use crate::properties::PropertiesSink;
 use crate::ParseError;
 use crate::Section;
@@ -19,8 +20,8 @@ use std::path::Path;
 /// It eagerly parses the preamble on construction.
 /// [`Section`]s may then be parsed by calling [`ConfigParser::read_section`].
 pub struct ConfigParser<R: io::BufRead, P: Pattern, K = CommonKeyCache, V = CommonValueCache> {
-    /// Incidates if a `root = true` line was found in the preamble.
-    pub is_root: bool,
+    /// The preamble for this EditorConfig file.
+    pub preamble: Preamble,
     eof: bool,
     reader: LineReader<R>,
     cache_k: K,
@@ -80,7 +81,7 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P, CommonKeyCache, CommonValueC
             }
         };
         Ok(ConfigParser {
-            is_root,
+            preamble: Preamble::new().with_root(is_root),
             eof,
             reader,
             cache_k: CommonKeyCache,
@@ -113,7 +114,7 @@ impl<R: io::BufRead, P: Pattern, K, V> ConfigParser<R, P, K, V> {
     /// Returns a version of `self` with the provided cache for keys.
     pub fn with_key_cache<C>(self, cache_k: C) -> ConfigParser<R, P, C, V> {
         ConfigParser {
-            is_root: self.is_root,
+            preamble: self.preamble,
             eof: self.eof,
             reader: self.reader,
             cache_k,
@@ -127,7 +128,7 @@ impl<R: io::BufRead, P: Pattern, K, V> ConfigParser<R, P, K, V> {
     /// Returns a version of `self` with the provided cache for values.
     pub fn with_value_cache<C>(self, cache_v: C) -> ConfigParser<R, P, K, C> {
         ConfigParser {
-            is_root: self.is_root,
+            preamble: self.preamble,
             eof: self.eof,
             reader: self.reader,
             cache_k: self.cache_k,

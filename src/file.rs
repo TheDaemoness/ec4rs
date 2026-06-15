@@ -106,7 +106,7 @@ impl<P: Pattern> ConfigFiles<P> {
             let mut vec = Vec::new();
             while let Some(dir) = path.parent() {
                 if let Ok(file) = ConfigFile::open(dir.join(filename)) {
-                    let should_break = file.reader.is_root;
+                    let should_break = file.reader.preamble.is_root();
                     vec.push(file);
                     if should_break {
                         break;

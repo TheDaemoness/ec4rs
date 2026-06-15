@@ -28,6 +28,7 @@ mod file;
 pub mod glob;
 mod linereader;
 mod parser;
+pub mod preamble;
 mod properties;
 pub mod property;
 mod section;
