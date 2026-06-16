@@ -41,7 +41,7 @@ pub mod version;
 pub use error::{Error, ParseError};
 pub use file::{ConfigFile, ConfigFiles};
 pub use parser::ConfigParser;
-pub use properties::{Properties, PropertiesSource};
+pub use properties::{Properties, PropertiesSink, PropertiesSource};
 pub use section::Section;
 pub use traits::*;
 

@@ -5,7 +5,7 @@ use crate::{
     Section,
 };
 
-/// Convenience wrapper for an [`ConfigParser`] that reads files.
+/// Convenience wrapper for a [`ConfigParser`] that reads files.
 pub struct ConfigFile<P: Pattern> {
     /// The path to the open file.
     pub path: PathBuf,
@@ -44,8 +44,6 @@ impl<P: Pattern> Iterator for ConfigFile<P> {
 impl<P: Pattern> std::iter::FusedIterator for ConfigFile<P> {}
 
 impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
-    /// Adds properties from the file's sections to the specified [`Properties`] map.
-    ///
     /// Uses [`ConfigFile::path`] when determining applicability to stop `**` from going too far.
     /// Returns parse errors wrapped in an [`Error::InFile`].
     fn apply_to(
@@ -72,8 +70,8 @@ impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
 ///
 /// All the contained files are open for reading and have not had any sections read.
 /// When iterated over, either by using it as an [`Iterator`]
-/// or by calling [`ConfigFiles::iter`],
-/// returns [`ConfigFile`]s in the order that they would apply to a [`Properties`] map.
+/// or by calling [`ConfigFiles::iter`], returns [`ConfigFile`]s in the order that they would apply
+/// to a [`Properties`][crate::Properties] map.
 pub struct ConfigFiles<P: Pattern>(Vec<ConfigFile<P>>);
 
 impl<P: Pattern> ConfigFiles<P> {
@@ -140,9 +138,6 @@ impl<P: Pattern> Iterator for ConfigFiles<P> {
 impl<P: Pattern> std::iter::FusedIterator for ConfigFiles<P> {}
 
 impl<P: Pattern> PropertiesSource for ConfigFiles<P> {
-    /// Adds properties from the files' sections to the specified [`Properties`] map.
-    ///
-    /// Ignores the files' paths when determining applicability.
     fn apply_to(
         self,
         props: &mut (impl PropertiesSink + ?Sized),

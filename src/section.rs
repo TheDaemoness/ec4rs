@@ -70,14 +70,14 @@ impl<P: Pattern> Section<P> {
 }
 
 impl<P: Pattern> PropertiesSink for Section<P> {
-    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
-        self.props.property(key, val)
+    fn add_property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+        self.props.add_property(key, val)
     }
-    fn properties(
+    fn add_properties(
         &mut self,
         iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
     ) {
-        self.props.properties(iter)
+        self.props.add_properties(iter)
     }
 }
 

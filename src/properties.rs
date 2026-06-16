@@ -9,9 +9,9 @@ use crate::{
     PropertyKey, PropertyValue,
 };
 
-/// Map of property names to property values.
+/// Map of key-value pairs ("properties").
 ///
-/// It features O(log n) lookup and preserves insertion order,
+/// It features `O(log n)` lookup and preserves insertion order,
 /// as well as convenience methods for type-safe access and parsing of values.
 ///
 /// This structure is case-sensitive.
@@ -288,31 +288,35 @@ impl<K: ToSharedString, V: ToSharedString> Extend<(K, V)> for Properties {
     }
 }
 
-/// Trait for types that can accept properties.
+/// Trait for types that can accept EditorConfig key-value pairs ("properties").
 pub trait PropertiesSink {
-    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString);
-    fn properties(
+    /// Adds one key-value pair to `self`.
+    fn add_property(&mut self, key: impl ToSharedString, val: impl ToSharedString);
+    /// Adds multiple key-value pairs to `self`.
+    ///
+    /// This can be more-efficient than repeatedly calling [`PropertiesSink::add_property`].
+    fn add_properties(
         &mut self,
         iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
     ) {
         for (key, value) in iter {
-            self.property(key, value);
+            self.add_property(key, value);
         }
     }
 }
 
 impl<F: FnMut(SharedString, SharedString)> PropertiesSink for F {
-    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+    fn add_property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
         self(key.to_shared_string(), val.to_shared_string())
     }
 }
 
 impl PropertiesSink for Properties {
-    fn property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
+    fn add_property(&mut self, key: impl ToSharedString, val: impl ToSharedString) {
         self.insert_raw_for_key(key, val);
     }
 
-    fn properties(
+    fn add_properties(
         &mut self,
         iter: impl IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>,
     ) {
@@ -337,7 +341,7 @@ impl<T: IntoIterator<Item = (impl ToSharedString, impl ToSharedString)>> Propert
         props: &mut (impl PropertiesSink + ?Sized),
         _: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
-        props.properties(self);
+        props.add_properties(self);
         Ok(())
     }
 }
@@ -348,7 +352,7 @@ impl PropertiesSource for &Properties {
         props: &mut (impl PropertiesSink + ?Sized),
         _: impl AsRef<std::path::Path>,
     ) -> Result<(), crate::Error> {
-        props.properties(self.pairs.iter().cloned());
+        props.add_properties(self.pairs.iter().cloned());
         Ok(())
     }
 }

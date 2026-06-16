@@ -1,4 +1,4 @@
-//! Enums for common EditorConfig properties.
+//! Data types for common EditorConfig key-value pairs (hereafter "properties").
 //!
 //! This crate contains every current universal property specified by standard,
 //! plus others that are common enough to be worth supporting.
