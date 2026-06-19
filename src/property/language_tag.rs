@@ -48,6 +48,7 @@ impl LanguageTag {
         }
     }
     /// Returns the language subtag, e.g. the "en" in "en-US".
+    #[must_use]
     pub fn primary_language(&self) -> &str {
         #[cfg(not(feature = "bcp_47"))]
         {
@@ -60,6 +61,7 @@ impl LanguageTag {
         }
     }
     /// Returns the region subtag, if any, e.g. the "US" in "en-US".
+    #[must_use]
     pub fn region(&self) -> Option<&str> {
         #[cfg(not(feature = "bcp_47"))]
         {
@@ -81,6 +83,7 @@ impl LanguageTag {
     ///
     /// Without the `bcp_47` feature, this method will always return `None`
     /// because the parser rejects inputs that would contain a script subtag.
+    #[must_use]
     pub fn script(&self) -> Option<&str> {
         #[cfg(not(feature = "bcp_47"))]
         {
@@ -97,15 +100,18 @@ impl LanguageTag {
     }
     #[cfg(feature = "bcp_47")]
     /// Returns a reference to the inner [`unic_locale::Locale`].
+    #[must_use]
     pub fn as_inner(&self) -> &unic_locale::Locale {
         &self.0
     }
     #[cfg(feature = "bcp_47")]
     /// Returns a mutable reference to the inner [`unic_locale::Locale`].
+    #[must_use]
     pub fn as_inner_mut(&mut self) -> &mut unic_locale::Locale {
         &mut self.0
     }
     #[cfg(feature = "bcp_47")]
+    #[must_use]
     /// Returns the inner [`unic_locale::Locale`].
     pub fn into_inner(self) -> unic_locale::Locale {
         self.0

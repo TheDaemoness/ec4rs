@@ -14,7 +14,6 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::doc_markdown)] // reason = "False positives on EditorConfig".
 #![allow(clippy::module_name_repetitions)] // reason = "Affects re-exports from private modules."
-#![allow(clippy::must_use_candidate)] // reason = "Too pedantic."
 #![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
 #![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
 #![allow(clippy::missing_errors_doc)] // reason = "Too verbose in moste cases."

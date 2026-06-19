@@ -29,6 +29,7 @@ impl<P: Pattern> ConfigFile<P> {
     /// Wraps a [`ParseError`] in an [`Error::InFile`].
     ///
     /// Uses the path and current line number from this instance.
+    #[must_use] 
     pub fn add_error_context(&self, error: ParseError) -> Error {
         Error::InFile(self.path.clone(), self.reader.line_no(), error)
     }

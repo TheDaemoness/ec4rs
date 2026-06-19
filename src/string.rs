@@ -185,6 +185,7 @@ impl SharedString {
     /// As [`SharedString::new`] but only accepts a `&'static str`.
     ///
     /// This function does not copy the string.
+    #[must_use] 
     pub const fn new_static(value: &'static str) -> Self {
         SharedString {
             value: SharedStringInner::Static(value),
@@ -193,6 +194,7 @@ impl SharedString {
         }
     }
     /// Extracts a string slice containing the entire `SharedString`.
+    #[must_use] 
     pub fn as_str(&self) -> &str {
         self
     }
