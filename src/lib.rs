@@ -17,7 +17,6 @@
 #![allow(clippy::must_use_candidate)] // reason = "Too pedantic."
 #![allow(clippy::semicolon_if_nothing_returned)] // reason = "Too pedantic."
 #![allow(clippy::let_underscore_untyped)] // reason = "Too pedantic."
-#![allow(clippy::needless_pass_by_value)] // reason = "FPs on Option<impl AsRef>"
 #![allow(clippy::missing_errors_doc)] // reason = "Too verbose in moste cases."
 #![cfg_attr(doc_unstable, feature(doc_auto_cfg))]
 
@@ -76,7 +75,7 @@ pub fn properties_of<P: crate::glob::Pattern>(
 #[inline]
 pub fn properties_from_config_of<P: crate::glob::Pattern>(
     target_path: impl AsRef<std::path::Path>,
-    config_name: Option<impl AsRef<std::path::Path>>,
+    config_name: Option<&(impl AsRef<std::path::Path> + ?Sized)>,
 ) -> Result<Properties, Error> {
     let mut retval = Properties::new();
     ConfigFiles::<P>::open(

@@ -45,7 +45,7 @@ impl<R: io::Read, P: Pattern> ConfigParser<io::BufReader<R>, P, CommonKeyCache, 
     /// See [`ConfigParser::new_with_path`].
     pub fn new_buffered_with_path(
         source: R,
-        path: Option<impl AsRef<Path>>,
+        path: Option<&(impl AsRef<Path> + ?Sized)>,
     ) -> Result<ConfigParser<io::BufReader<R>, P>, ParseError> {
         Self::new_with_path(io::BufReader::new(source), path.as_ref())
     }
@@ -59,7 +59,7 @@ impl<R: io::BufRead, P: Pattern> ConfigParser<R, P, CommonKeyCache, CommonValueC
     /// otherwise returns `Err` with the error that occurred during reading.
     pub fn new_with_path(
         buf_source: R,
-        #[allow(unused)] path: Option<impl AsRef<Path>>,
+        #[allow(unused)] path: Option<&(impl AsRef<Path> + ?Sized)>,
     ) -> Result<Self, ParseError> {
         let mut reader = LineReader::new(buf_source);
         let mut is_root = false;
