@@ -169,7 +169,8 @@ impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> ConfigParser<R, P, K, V> {
                         let mut v = self.cache_v.get_shared_string(v);
                         #[cfg(feature = "track-source")]
                         if let Some(path) = self.path.as_ref() {
-                            v.set_source(path.clone(), line_no);
+                            use crate::string::Source;
+                            v.set_source(Source::new(path, line_no));
                         }
                         section.insert(self.cache_k.get_shared_string(k), v);
                     }
@@ -212,7 +213,8 @@ impl<R: io::BufRead, P: Pattern, K: Cache, V: Cache> crate::PropertiesSource
                 Ok(section) => {
                     let _ = section.apply_to(props, path);
                 }
-                Err(error) => return Err(crate::Error::Parse(error)),
+                // TODO: Better errors.
+                Err(error) => return Err(crate::Error::Parse(error, None)),
             }
         }
         Ok(())

@@ -21,7 +21,7 @@ fn validate<'a>(
             assert_eq!(value_test.as_str(), *value, "unexpected value");
             #[cfg(feature = "track-source")]
             assert_eq!(
-                value_test.source().map(|(_, idx)| idx),
+                value_test.source().map(|src| src.get().1),
                 Some(*line_no),
                 "unexpected line number"
             )

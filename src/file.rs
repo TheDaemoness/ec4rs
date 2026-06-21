@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::{
-    glob::Pattern, properties::PropertiesSink, ConfigParser, Error, ParseError, PropertiesSource,
-    Section,
+    glob::Pattern, properties::PropertiesSink, string::Source, ConfigParser, Error, ParseError,
+    PropertiesSource, Section,
 };
 
 /// Convenience wrapper for a [`ConfigParser`] that reads files.
@@ -26,12 +26,13 @@ impl<P: Pattern> ConfigFile<P> {
         })
     }
 
-    /// Wraps a [`ParseError`] in an [`Error::InFile`].
+    /// Wraps a [`ParseError`] in an [`Error::Parse`]
+    /// with the
     ///
     /// Uses the path and current line number from this instance.
-    #[must_use] 
+    #[must_use]
     pub fn add_error_context(&self, error: ParseError) -> Error {
-        Error::InFile(self.path.clone(), self.reader.line_no(), error)
+        Error::Parse(error, Some(Source::new(&self.path, self.reader.line_no())))
     }
 }
 
@@ -46,7 +47,7 @@ impl<P: Pattern> std::iter::FusedIterator for ConfigFile<P> {}
 
 impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
     /// Uses [`ConfigFile::path`] when determining applicability to stop `**` from going too far.
-    /// Returns parse errors wrapped in an [`Error::InFile`].
+    /// Returns parse errors wrapped in an [`Error::Parse`].
     fn apply_to(
         self,
         props: &mut (impl PropertiesSink + ?Sized),
@@ -61,7 +62,8 @@ impl<P: Pattern> PropertiesSource for &mut ConfigFile<P> {
         };
         match self.reader.apply_to(props, path) {
             Ok(()) => Ok(()),
-            Err(crate::Error::Parse(e)) => Err(self.add_error_context(e)),
+            Err(crate::Error::Parse(e, None)) => Err(self.add_error_context(e)),
+            Err(e @ crate::Error::Parse(_, _)) => Err(e),
             Err(e) => panic!("unexpected error variant {e:?}"),
         }
     }
@@ -116,7 +118,7 @@ impl<P: Pattern> ConfigFiles<P> {
             vec
         } else {
             // TODO: Better errors.
-            vec![ConfigFile::open(filename).map_err(Error::Parse)?]
+            vec![ConfigFile::open(filename).map_err(|e| Error::Parse(e, None))?]
         }))
     }
 

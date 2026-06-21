@@ -1,3 +1,5 @@
+use crate::string::Source;
+
 /// Possible errors that can occur while parsing EditorConfig data.
 #[derive(Debug)]
 pub enum ParseError {
@@ -31,10 +33,8 @@ impl std::error::Error for ParseError {
 /// All errors that can occur during operation.
 #[derive(Debug)]
 pub enum Error {
-    /// An error occured durign parsing.
-    Parse(ParseError),
-    /// An error occured during parsing of a file.
-    InFile(std::path::PathBuf, usize, ParseError),
+    /// An error occured during parsing.
+    Parse(ParseError, Option<Source>),
     /// The current working directory is invalid (e.g. does not exist).
     InvalidCwd(std::io::Error),
 }
@@ -42,8 +42,9 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::Parse(error) => write!(f, "{error}"),
-            Error::InFile(path, line, error) => {
+            Error::Parse(error, None) => write!(f, "{error}"),
+            Error::Parse(error, Some(source)) => {
+                let (path, line) = source.get();
                 write!(f, "{}:{}: {}", path.to_string_lossy(), line, error)
             }
             Error::InvalidCwd(ioe) => write!(f, "invalid cwd: {ioe}"),
@@ -54,7 +55,7 @@ impl std::fmt::Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::Parse(pe) | Error::InFile(_, _, pe) => pe.source(),
+            Error::Parse(pe, _) => pe.source(),
             Error::InvalidCwd(ioe) => Some(ioe),
         }
     }

@@ -20,7 +20,7 @@ impl<P: Pattern> Section<P> {
     /// If pattern parsing errors, the error will be retained internally
     /// and no paths will be considered to match the pattern. Errors can be detected with
     /// either [`or_err`][Self::or_err] or [`pattern`][Self::pattern].
-    #[must_use] 
+    #[must_use]
     pub fn new(pattern: &str) -> Self {
         Section {
             pattern: P::parse(pattern).map_err(|error| ParseError {

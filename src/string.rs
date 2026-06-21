@@ -7,40 +7,12 @@ pub use convert::*;
 pub(crate) use lowercase::into_lowercase;
 
 use std::borrow::Cow;
+use std::path::Path;
 
 // Shared is a purely internal type alias.
 // Its usage requires it to implement From<T> and Deref<Target = T>.
 
 pub(crate) type Shared<T> = std::sync::Arc<T>;
-
-#[cfg(feature = "track-source")]
-mod source {
-    use std::path::Path;
-
-    #[derive(Clone)]
-    pub struct Source {
-        path: super::Shared<Path>,
-        line: usize,
-    }
-
-    impl std::fmt::Debug for Source {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}:{}", self.path.to_string_lossy(), self.line)
-        }
-    }
-
-    impl Source {
-        pub fn new(path: &std::path::Path, line: usize) -> Self {
-            Source {
-                path: super::Shared::from(path),
-                line,
-            }
-        }
-        pub fn get(&self) -> (&std::path::Path, usize) {
-            (super::Shared::as_ref(&self.path), self.line)
-        }
-    }
-}
 
 // TODO: Eventually add support for an Arc-like type that uses a thin pointer here.
 // Probably not triomphe::ThinArc, since we'd need to use unsafe to use it.
@@ -92,7 +64,7 @@ impl std::ops::Deref for SharedStringInner {
 pub struct SharedString {
     value: SharedStringInner,
     #[cfg(feature = "track-source")]
-    source: Option<source::Source>,
+    source: Option<Source>,
 }
 
 /// A `SharedString` equal to `"unset"`.
@@ -185,7 +157,7 @@ impl SharedString {
     /// As [`SharedString::new`] but only accepts a `&'static str`.
     ///
     /// This function does not copy the string.
-    #[must_use] 
+    #[must_use]
     pub const fn new_static(value: &'static str) -> Self {
         SharedString {
             value: SharedStringInner::Static(value),
@@ -194,32 +166,43 @@ impl SharedString {
         }
     }
     /// Extracts a string slice containing the entire `SharedString`.
-    #[must_use] 
+    #[must_use]
     pub fn as_str(&self) -> &str {
         self
     }
-    #[cfg(feature = "track-source")]
-    /// Returns the path to the file and the line number that this value originates from.
+    /// Returns the [`Source`] of this string.
     ///
-    /// The line number is 1-indexed to match convention;
-    /// the first line will have a line number of 1 rather than 0.
-    pub fn source(&self) -> Option<(&std::path::Path, usize)> {
-        self.source.as_ref().map(source::Source::get)
+    /// If the `track-source` feature is not enabled, this function will always return `None`.
+    #[must_use]
+    pub fn source(&self) -> Option<&Source> {
+        #[cfg(feature = "track-source")]
+        {
+            self.source.as_ref()
+        }
+        #[cfg(not(feature = "track-source"))]
+        {
+            None
+        }
     }
 
-    #[cfg(feature = "track-source")]
     /// Sets the path and line number from which this value originated.
     ///
-    /// The line number should be 1-indexed to match convention;
-    /// the first line should have a line number of 1 rather than 0.
-    pub fn set_source(&mut self, path: impl AsRef<std::path::Path>, line: usize) {
-        self.source = Some(source::Source::new(path.as_ref(), line))
+    /// If the `track-source` feature is not enabled, this function is a no-op.
+    pub fn set_source(&mut self, #[allow(unused)] source: Source) {
+        #[cfg(feature = "track-source")]
+        {
+            self.source = Some(source)
+        }
     }
 
-    #[cfg(feature = "track-source")]
     /// Efficiently clones the source from `other`.
-    pub fn set_source_from(&mut self, other: &SharedString) {
-        self.source.clone_from(&other.source);
+    ///
+    /// If the `track-source` feature is not enabled, this function is a no-op.
+    pub fn set_source_from(&mut self, #[allow(unused)] other: &SharedString) {
+        #[cfg(feature = "track-source")]
+        {
+            self.source.clone_from(&other.source);
+        }
     }
 
     /// Clears the path and line number from which this value originated.
@@ -259,5 +242,64 @@ impl std::fmt::Display for SharedString {
 impl From<&str> for SharedString {
     fn from(value: &str) -> Self {
         Self::new(value)
+    }
+}
+
+/// An immutable shared [`Path`] and line number for tracking the origins of strings and errors.
+///
+/// This type assumes that line numbers shall not exceed the maximum value of `usize`.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Source {
+    path: crate::string::Shared<Path>,
+    line: usize,
+}
+
+impl std::fmt::Debug for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut swriter = f.debug_struct("Source");
+        swriter.field("path", &self.path);
+        swriter.field("line", &self.line);
+        swriter.finish()
+    }
+}
+
+impl std::fmt::Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.path.to_string_lossy(), self.line)
+    }
+}
+
+impl Source {
+    /// Constructs a new [`Source`] from the provided path and line number.
+    ///
+    /// The line number should be 1-indexed to match convention;
+    /// the first line should have a line number of 1 rather than 0.
+    #[must_use]
+    pub fn new(path: &(impl AsRef<Path> + ?Sized), line: usize) -> Self {
+        Source {
+            path: crate::string::Shared::from(path.as_ref()),
+            line,
+        }
+    }
+    /// Returns a reference to the path and a copy of the line number.
+    #[must_use]
+    pub fn get(&self) -> (&Path, usize) {
+        (crate::string::Shared::as_ref(&self.path), self.line)
+    }
+    /// As [`Source::get`] but returns a reference to the line number.
+    #[must_use]
+    pub fn get_ref(&self) -> (&Path, &usize) {
+        (crate::string::Shared::as_ref(&self.path), &self.line)
+    }
+    /// As [`Source::get`] but returns a mut reference to the line number.
+    #[must_use]
+    pub fn get_mut(&mut self) -> (&Path, &mut usize) {
+        (crate::string::Shared::as_ref(&self.path), &mut self.line)
+    }
+}
+
+impl AsRef<Path> for Source {
+    fn as_ref(&self) -> &Path {
+        self.get().0
     }
 }

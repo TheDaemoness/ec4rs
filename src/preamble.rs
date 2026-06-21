@@ -21,14 +21,14 @@ pub struct Preamble {
 
 impl Preamble {
     /// Returns a new default [`Preamble`].
-    #[must_use] 
+    #[must_use]
     pub fn new() -> Self {
         Preamble { root: false }
     }
 
     /// Returns `true` if `self` the `root` property was specified and has a value
     /// case-insensitively equal to `"true"`.
-    #[must_use] 
+    #[must_use]
     pub fn is_root(&self) -> bool {
         self.root
     }
@@ -37,7 +37,7 @@ impl Preamble {
     ///
     /// EditorConfig does not meaningfully distingush between `root` not being set and
     /// `root` being set to `"false"`.
-    #[must_use] 
+    #[must_use]
     pub fn with_root(mut self, value: bool) -> Self {
         self.root = value;
         self

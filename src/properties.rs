@@ -29,7 +29,7 @@ pub struct Properties {
 
 impl Properties {
     /// Constructs a new empty [`Properties`].
-    #[must_use] 
+    #[must_use]
     pub const fn new() -> Properties {
         Properties {
             pairs: Vec::new(),
@@ -38,13 +38,13 @@ impl Properties {
     }
 
     /// Returns the number of key-value pairs, including those with empty values.
-    #[must_use] 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.pairs.len()
     }
 
     /// Returns `true` if `self` contains no key-value pairs.
-    #[must_use] 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.pairs.is_empty()
     }
@@ -66,7 +66,7 @@ impl Properties {
     }
 
     /// Returns the unparsed "raw" value for the specified property.
-    #[must_use] 
+    #[must_use]
     pub fn get_raw<T: PropertyKey>(&self) -> Option<&SharedString> {
         self.get_raw_for_key(T::key())
     }
@@ -100,7 +100,7 @@ impl Properties {
     /// Otherwise, they will be returned as normal.
     ///
     /// Pairs are returned from oldest to newest.
-    #[must_use] 
+    #[must_use]
     pub fn iter(&self) -> Iter<'_> {
         Iter(self.pairs.iter())
     }

@@ -62,7 +62,8 @@ fn print_config(
                 } else {
                     value
                 };
-                if let Some((path, line_no)) = value_ref.source() {
+                if let Some(source) = value_ref.source() {
+                    let (path, line_no) = source.get();
                     if display.with_filename {
                         print!(
                             "{}{}",
