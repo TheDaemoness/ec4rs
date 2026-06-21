@@ -2,6 +2,7 @@ use crate::string::Source;
 
 /// Possible errors that can occur while parsing EditorConfig data.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ParseError {
     /// End-of-file was reached.
     Eof,
@@ -9,6 +10,9 @@ pub enum ParseError {
     Io(std::io::Error),
     /// An invalid line was read.
     InvalidLine,
+    /// A line contains a section header,
+    /// but either the header is empty or there is non-comment data after it.
+    InvalidSection(Option<Box<str>>),
 }
 
 impl std::fmt::Display for ParseError {
@@ -17,6 +21,10 @@ impl std::fmt::Display for ParseError {
             ParseError::Eof => write!(f, "end of data"),
             ParseError::Io(e) => write!(f, "io failure: {e}"),
             ParseError::InvalidLine => write!(f, "invalid line"),
+            ParseError::InvalidSection(None) => write!(f, "empty section header"),
+            ParseError::InvalidSection(Some(v)) => {
+                write!(f, "invalid data {:?} after section header", Box::as_ref(v))
+            }
         }
     }
 }

@@ -34,17 +34,18 @@ pub fn parse_line(line: &str) -> LineReadResult<'_> {
         };
         // Tolerate inline comments after section headers.
         if bracket + 1 < line.len() {
-            for c in line[bracket + 1..].chars() {
+            let trailing = &line[bracket + 1..];
+            for c in trailing.chars() {
                 if is_comment(c) {
                     break;
                 } else if !c.is_whitespace() && !c.is_control() {
-                    return Err(ParseError::InvalidLine);
+                    return Err(ParseError::InvalidSection(Some(Box::from(trailing))));
                 }
             }
         }
         let s = &line[1..bracket];
         if s.is_empty() {
-            Err(ParseError::InvalidLine)
+            Err(ParseError::InvalidSection(None))
         } else {
             Ok(Line::Section(s))
         }

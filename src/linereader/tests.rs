@@ -31,7 +31,9 @@ fn valid_sections() {
         ("[foo]", Section("foo")),
         ("[[foo]]", Section("[foo]")),
         ("[ foo ]", Section(" foo ")),
-        ("[][]]", Section("][]")),
+        ("[[]", Section("[")),
+        ("[]]", Section("]")),
+        ("[][]", Section("][")),
         ("[Foo]", Section("Foo")),
         (" [foo] ", Section("foo")),
         ("[a=b]", Section("a=b")),
@@ -58,20 +60,42 @@ fn valid_nothing() {
 }
 
 #[test]
-fn invalid() {
+fn invalid_lines() {
+    // Invalid lines.
     let lines = [
-        "[]",
         "[close",
         "open]",
         "][",
         "nonproperty",
         "=",
         "  = nokey",
+        "// C++-style comment"
     ];
     for line in lines {
         assert!(matches!(
             parse_line(line).unwrap_err(),
             ParseError::InvalidLine
         ))
+    }
+}
+
+#[test]
+fn invalid_sections() {
+    assert!(matches!(
+        parse_line("[]").unwrap_err(),
+        ParseError::InvalidSection(None)
+    ));
+    let pairs = [
+        ("[foo][", "["),
+        ("[foo] bar", " bar"),
+        ("[foo] bar ; baz", " bar ; baz"),
+        ("[foo]=bar", "=bar"),
+    ];
+    for (line, expected) in pairs {
+        let e = match parse_line(line) {
+            Err(ParseError::InvalidSection(Some(v))) => v,
+            e => panic!("unexpected result {e:?}")
+        };
+        assert_eq!(&*e, expected, "mismatch in expected error data");
     }
 }
