@@ -4,11 +4,11 @@ static BASIC_KEYS: [&str; 4] = ["2", "3", "0", "1"];
 static ALT_VALUES: [&str; 4] = ["a", "b", "c", "d"];
 
 fn zip_self() -> impl Iterator<Item = (&'static str, &'static str)> {
-    BASIC_KEYS.iter().cloned().zip(BASIC_KEYS.iter().cloned())
+    BASIC_KEYS.iter().copied().zip(BASIC_KEYS.iter().copied())
 }
 
 fn zip_alts() -> impl Iterator<Item = (&'static str, &'static str)> {
-    BASIC_KEYS.iter().cloned().zip(ALT_VALUES.iter().cloned())
+    BASIC_KEYS.iter().copied().zip(ALT_VALUES.iter().copied())
 }
 
 fn test_basic_keys(props: &Properties) {
@@ -20,7 +20,7 @@ fn test_basic_keys(props: &Properties) {
         )
     }
     // Ensure that they keys are returned in order.
-    assert!(props.iter().map(|k| k.0).eq(BASIC_KEYS.iter().cloned()))
+    assert!(props.iter().map(|k| k.0).eq(BASIC_KEYS.iter().copied()))
 }
 
 #[test]

@@ -95,10 +95,6 @@ impl Properties {
 
     /// Returns an iterator over the key-value pairs.
     ///
-    /// If the `allow-empty-values` feature is NOT used,
-    /// key-value pairs where the value is empty will be skipped.
-    /// Otherwise, they will be returned as normal.
-    ///
     /// Pairs are returned from oldest to newest.
     #[must_use]
     pub fn iter(&self) -> Iter<'_> {
@@ -106,10 +102,6 @@ impl Properties {
     }
 
     /// Returns an iterator over the key-value pairs that allows mutation of the values.
-    ///
-    /// If the `allow-empty-values` feature is NOT used,
-    /// key-value pairs where the value is empty will be skipped.
-    /// Otherwise, they will be returned as normal.
     ///
     /// Pairs are returned from oldest to newest.
     pub fn iter_mut(&mut self) -> IterMut<'_> {

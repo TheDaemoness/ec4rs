@@ -50,6 +50,7 @@ impl Cache for CommonKeyCache {
 impl Cache for CommonValueCache {
     fn get_shared_string(&self, value: &str) -> SharedString {
         make_cache_match!(value {
+            "",
             "0",
             "1",
             "2",
