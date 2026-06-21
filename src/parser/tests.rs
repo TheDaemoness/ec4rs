@@ -100,3 +100,13 @@ fn section_with_comment_after_it() {
 fn duplicate_key() {
     validate("[*]\nfoo=bar\nfoo=baz", false, expect![[("foo", "baz", 3)]]);
 }
+
+#[test]
+fn bom() {
+    // The BOM is U+FEFF, encoded in UTF-8 as EF BB BF.
+    validate("\u{feff}", false, expect![]);
+    validate("\u{feff}\n", false, expect![]);
+    validate("\u{feff}# This is a comment!", false, expect![]);
+    validate("\u{feff}root=true", true, expect![]);
+    validate("\u{feff}[*]\nfoo=bar", false, expect![[("foo", "bar", 2)]]);
+}
