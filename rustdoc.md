@@ -37,17 +37,40 @@ let indent_style: IndentStyle = cfg.get::<IndentStyle>()
     .unwrap_or(IndentStyle::Tabs);
 
 // Get a string value, with a default.
-// ec4rs has a string type designed for immutability and minimal allocations.
+// ec4rs has a basic string type designed to reduce allocations.
+// See [`ec4rs::string::SharedString`] for more information.
 let charset = cfg.get_raw::<Charset>()
     .cloned()
     .unwrap_or(ec4rs::string::SharedString::new_static("utf-8"));
 
 // Parse a non-standard property.
-let hard_wrap = cfg.get_raw_for_key("max_line_length")
+let hard_wrap = cfg.get_raw_for_key("wildcard_import_limit")
     .unwrap_or_default()
     .parse::<usize>();
 # }
 ```
+
+## Glob Engine Support
+
+The EditorConfig specification calls for some unusual glob features,
+so for full specification compliance, `ec4rs_glob` exists as a
+relatively-lightweight option. Support for it is controlled by the
+`ec4rs_glob` feature flag, which is enabled by default.
+
+However, if you don't need perfect spec compliance, there may be benefits
+to using other glob engines. For instance:
+
+- You may want stronger protections against absurdly complex patterns in
+  untrusted EditorConfig files than the spec permits.
+- You may already be using a different engine and don't want to redundantly
+  import another one.
+- You may have performance or resource usage requirements that `ec4rs_glob`
+  cannot satisfy.
+
+`ec4rs` has built-in support for [`globset`](https://crates.io/crates/globset)
+which can be enabled with the `globset` feature flag. Otherwise,
+you can bring your own glob engine by implementing the
+[`Pattern`][crate::glob::Pattern] trait.
 
 ## Features
 
