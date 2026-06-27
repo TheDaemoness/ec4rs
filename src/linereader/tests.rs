@@ -69,7 +69,7 @@ fn invalid_lines() {
         "nonproperty",
         "=",
         "  = nokey",
-        "// C++-style comment"
+        "// C++-style comment",
     ];
     for line in lines {
         assert!(matches!(
@@ -94,7 +94,7 @@ fn invalid_sections() {
     for (line, expected) in pairs {
         let e = match parse_line(line) {
             Err(ParseError::InvalidSection(Some(v))) => v,
-            e => panic!("unexpected result {e:?}")
+            e => panic!("unexpected result {e:?}"),
         };
         assert_eq!(&*e, expected, "mismatch in expected error data");
     }
