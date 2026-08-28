@@ -78,9 +78,6 @@ impl AltBuilder {
                 self.glob
             }
             _ => {
-                self.options
-                    .sort_by(|a, b| (!a.0.is_empty()).cmp(&!b.0.is_empty()));
-                self.options.dedup();
                 self.glob.push(Matcher::Any(self.options.into()));
                 self.glob
             }
