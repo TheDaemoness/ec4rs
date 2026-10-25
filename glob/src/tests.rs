@@ -99,6 +99,7 @@ fn charclass_basic() {
     test("[a]", ["/a"], ["/aa", "/b"]);
     test("[a][b]", ["/ab"], ["/aa", "/ba", "/cab"]);
     test("[ab]", ["/a", "/b"], ["/ab"]);
+    test("[!a]", ["/b"], ["/a"]);
     test("[!ab]", ["/c"], ["/a", "/b", "/ab", "/ac"])
 }
 
