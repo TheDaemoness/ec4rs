@@ -64,7 +64,7 @@ pub fn parse(mut glob: Glob, mut chars: Chars<'_>) -> (Glob, Chars<'_>) {
                 }
             }
             // Don't use BTreeSet::first here (stable: 1.66).
-            1 => glob.append_escaped(*charclass.iter().next().unwrap()),
+            1 if !invert => glob.append_escaped(*charclass.iter().next().unwrap()),
             _ => glob.push(Matcher::CharClass(charclass.into(), !invert)),
         }
         (glob, chars)
