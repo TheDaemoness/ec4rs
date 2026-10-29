@@ -46,6 +46,7 @@ macro_rules! property_choice {
             type Err = UnknownValueError;
             fn from_str(raw: &str) -> Result<Self, Self::Err> {
                 match &*crate::string::into_lowercase(raw) {
+                    "unset" => Ok($prop_id::Unset),
                     $($string => Ok($prop_id::$variant),)+
                     _ => Err(UnknownValueError)
                 }
