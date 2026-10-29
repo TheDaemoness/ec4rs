@@ -54,3 +54,21 @@ fn spelling_language() {
 fn language_tag_rejects_root() {
     LanguageTag::try_from("root").expect_err("Language name 'root' not rejected");
 }
+
+#[test]
+fn unset_parses() {
+    use crate::property::*;
+    use crate::traits::test_reparse;
+    assert_eq!(
+        "unset".parse::<IndentStyle>().ok(),
+        Some(IndentStyle::Unset)
+    );
+    assert_eq!("UNSET".parse::<EndOfLine>().ok(), Some(EndOfLine::Unset));
+    assert!("bogus".parse::<Charset>().is_err());
+    test_reparse(&IndentStyle::Unset);
+    test_reparse(&EndOfLine::Unset);
+    test_reparse(&Charset::Unset);
+    test_reparse(&IndentSize::Unset);
+    test_reparse(&MaxLineLen::Unset);
+    test_reparse(&SpellingLanguage::Unset);
+}
