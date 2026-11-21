@@ -1,31 +1,55 @@
 use super::LanguageTag;
+use crate::property::*;
+
+macro_rules! test_each {
+    (for $prop:ident in ($($item:path),+) $test:block) => {{
+        $({
+            type $prop = $item;
+            $test;
+        })+
+    }};
+    (for $prop:ident in standard $test:block) => {
+        test_each!(for $prop in (
+            IndentStyle,
+            IndentSize,
+            TabWidth,
+            EndOfLine,
+            Charset,
+            TrimTrailingWs,
+            FinalNewline,
+            SpellingLanguage
+        ) $test)
+    };
+    (for $prop:ident in all $test:block) => {
+        test_each!(for $prop in (
+            IndentStyle,
+            IndentSize,
+            TabWidth,
+            EndOfLine,
+            Charset,
+            TrimTrailingWs,
+            FinalNewline,
+            SpellingLanguage,
+            MaxLineLen
+        ) $test )
+    }
+}
 
 #[test]
 fn standard_keys_matches() {
-    use crate::property::*;
-    macro_rules! contained {
-        ($prop:ident) => {
-            assert!(
-                STANDARD_KEYS.contains(&$prop::key()),
-                "STANDARD_KEYS is missing {}",
-                $prop::key()
-            )
-        };
-    }
-    contained!(IndentStyle);
-    contained!(IndentSize);
-    contained!(TabWidth);
-    contained!(EndOfLine);
-    contained!(Charset);
-    contained!(TrimTrailingWs);
-    contained!(FinalNewline);
-    contained!(SpellingLanguage);
+    assert_eq!(STANDARD_KEYS.len(), 8);
+    test_each!(for Prop in standard {
+        assert!(
+            STANDARD_KEYS.contains(&Prop::key()),
+            "STANDARD_KEYS is missing {}",
+            Prop::key()
+        )
+    });
     assert!(!STANDARD_KEYS.contains(&MaxLineLen::key())); // Not MaxLineLen
 }
 
 #[test]
 fn spelling_language() {
-    use crate::property::SpellingLanguage;
     use crate::string::SharedString;
     use crate::PropertyValue;
     // This is more testing language-tags than anything,
@@ -57,18 +81,25 @@ fn language_tag_rejects_root() {
 
 #[test]
 fn unset_parses() {
-    use crate::property::*;
-    use crate::traits::test_reparse;
-    assert_eq!(
-        "unset".parse::<IndentStyle>().ok(),
-        Some(IndentStyle::Unset)
-    );
-    assert_eq!("UNSET".parse::<EndOfLine>().ok(), Some(EndOfLine::Unset));
-    assert!("bogus".parse::<Charset>().is_err());
-    test_reparse(&IndentStyle::Unset);
-    test_reparse(&EndOfLine::Unset);
-    test_reparse(&Charset::Unset);
-    test_reparse(&IndentSize::Unset);
-    test_reparse(&MaxLineLen::Unset);
-    test_reparse(&SpellingLanguage::Unset);
+    test_each!(for Prop in all {
+        use crate::string::ToSharedString;
+        // crate::traits::test_reparse exists but shouldn't be used here
+        // so that we can ensure that the parsed value is "unset".
+        assert_eq!("unset".parse::<Prop>().ok(), Some(Prop::Unset));
+        assert_eq!(Prop::Unset.to_shared_string(), "unset".into());
+        // Test case-insensitivity here for lack of a better place to test it.
+        assert_eq!("UnSeT".parse::<Prop>().ok(), Some(Prop::Unset));
+    })
+}
+
+#[test]
+fn bogus_values() {
+    test_each!(for Prop in all {
+        "unaccep7abl3arbi7rag3"
+            .parse::<Prop>()
+            .expect_err("Nonsense value not rejected");
+        // Negative values are not currently allowed in any key-value pair.
+        "-1".parse::<Prop>()
+            .expect_err("Negative value not rejected");
+    })
 }

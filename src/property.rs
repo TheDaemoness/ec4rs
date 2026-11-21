@@ -5,6 +5,11 @@
 //! All of them are non-exhaustive enums in order to support future additions to the standard
 //! as well as handle the common special value `"unset"`.
 
+// --!--
+// NOTE: Upon adding a property,
+// be sure that it's added to the macros in the tests module.
+// --!--
+
 mod language_tag;
 #[cfg(test)]
 mod tests;
